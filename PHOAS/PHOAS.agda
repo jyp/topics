@@ -185,26 +185,58 @@ module PHOAS where
   cpsType Boo = Boo!
   cpsType (Arr τ1 τ2) = Not (cpsType τ1 × (Not (cpsType τ2)))
 
-
+  -- lots of details are hidden in the paper, and Coq syntax is really not helping.
+  -- it would help to study CPS separately I guess ;)
   mutual
-    data Primop (V : Type! -> Set) : (τ : Type!) -> Set where 
-      Tru! : Primop V Boo!
-      Fals! : Primop V Boo!
-      Var! : {τ : Type!} -> (v : V τ) -> Primop V τ
-      Abs! : {τ1 τ2 : Type!} -> (V τ1 -> Term! V) -> Primop V (Not τ1)
-      _,_ : {τ1 τ2 : Type!} -> Primop V τ1 -> Primop V τ2 -> Primop V (τ1 × τ2)    
-      π1 : {τ1 τ2 : Type!} -> Primop V (τ1 × τ2) -> Primop V τ1
-      π2 : {τ1 τ2 : Type!} -> Primop V (τ1 × τ2) -> Primop V τ2
+    data Primop (V : Type! -> Set) (ρ : Type!) : (τ : Type!) -> Set where 
+      Tru! : Primop V ρ Boo!
+      Fals! : Primop V ρ Boo!
+      Var! : {τ : Type! } -> (v : V τ) -> Primop V ρ τ
+      Abs! : {τ1 : Type! } -> (V τ1 -> Term! V ρ) -> Primop V ρ (Not τ1)
+      _,_ : {τ1 τ2 : Type! } -> V τ1 -> V τ2 -> Primop V ρ (τ1 × τ2)    
+      π1 : {τ1 τ2 : Type! } -> V (τ1 × τ2) -> Primop V ρ τ1
+      π2 : {τ1 τ2 : Type! } -> V (τ1 × τ2) -> Primop V ρ τ2
   
 
-    data Term! (V : Type! -> Set) : Set where 
-      Halt! : {τ : Type!} -> (v : V τ) -> Term! V
-      App!  : {τ1 : Type!} -> V (Not τ1) -> V τ1 -> Term! V
-      Let   : {τ1 τ2 : Type!} -> Primop V τ1 -> (V τ1 -> Term! V) -> Term! V
+    data Term! (V : Type! -> Set) : (ρ : Type!) -> Set where 
+      Halt! : {τ : Type! } -> (v : V τ) -> Term! V τ -- this is dependent here! (but not in Coq ??!)
+      App!  : {ρ τ1 : Type! } -> V (Not τ1) -> V τ1 -> Term! V ρ
+      Let   : {ρ τ1 : Type! } -> Primop V ρ τ1 -> (V τ1 -> Term! V ρ) -> Term! V ρ
 
-  cps : {τ : Type} -> {V : Type! -> Set} -> Term (V ∘ cpsType) τ -> Term! V -- (cpsType τ)
-  cps = ?
-  
+  mutual 
+    splice : {V : Type! -> Set} {τ1 τ2 : Type! } 
+             (e1 : Term! V τ1) 
+             (e2 : V τ1 -> Term! V τ2) -> Term! V τ2
+    splice (Halt! v) e2 = e2 v
+    splice (App! f x) e2 = App! f x
+    splice (Let p e') e2 = Let (splicePrim p e2) (\x -> splice (e' x) e2)
+
+    splicePrim : forall {t} {V : Type! -> Set} {τ1 τ2 : Type! } (p : Primop V τ1 t) (e2 : V τ1 -> Term! V τ2) -> Primop V τ2 t
+    splicePrim Tru! e2 = Tru!
+    splicePrim Fals! e2 = Fals!
+    splicePrim (Var! v) e2 = Var! v
+    splicePrim (Abs! e) e2 = Abs! (\x -> splice (e x) e2)
+    splicePrim (y , y') e2 = y , y'
+    splicePrim (π1 y) e2 = π1 y
+    splicePrim (π2 y) e2 = π2 y
+
+
+  cps : {τ : Type} -> {V : Type! -> Set} -> Term (V ∘ cpsType) τ -> Term! V (cpsType τ)
+  cps Tru = Let Tru! Halt!
+  cps Fals = Let Fals! Halt!
+  cps (Var v) = Halt! v
+  cps (App e1 e2) = splice (cps e1) (\f -> 
+                    splice (cps e2) (\x ->
+                    Let (Abs! Halt!) (\k -> 
+                    Let (x , k) (\p -> 
+                    App! f p))))
+  cps (Abs e') = Let (Abs! (\p -> 
+                            Let (π1 p) (\x -> 
+                            Let (π2 p) (\k ->
+                            splice (cps (e' x)) (\r -> 
+                            App! k r)))))
+                 Halt!
+
 
 --   Inductive pterm : Type :=
 --   | PHalt :
