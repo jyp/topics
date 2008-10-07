@@ -1,4 +1,6 @@
+This directory contains projects that do not deserve their own repository. 
 
-A table of contents will appear soon.
+* [Lazy data structure with quick access](./OnlineTree)
 
-* [PHOAS](phoas) Parameterized Higher Order Abstract Syntax
+* [Parameterized Higher Order Abstract Syntax](./PHOAS)
+
