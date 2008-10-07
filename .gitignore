@@ -1,0 +1,27 @@
+# Ignore loads of file types.
+
+*#
+*.aux
+*.beam
+*.dvi
+*.gfc
+*.gfr
+*.hi
+*.log
+*.nav
+*.o
+*.pdf
+*.prof
+*.ptb
+*.tmp
+*.toc
+*.snm
+*/.svn
+*~
+.#*
+.*.agda.el
+*.agdai
+.DS_Store
+._*
+.yi.dbg
+_darcs

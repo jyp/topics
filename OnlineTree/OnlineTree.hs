@@ -1,25 +1,57 @@
-import PolishParse hiding (P)
-import Data.Maybe
 {-# OPTIONS -fglasgow-exts #-}
+
+import Prelude hiding (sum)
+import PolishParse3
+import Data.Maybe
 import qualified Data.Tree as S
 import Control.Applicative
+import Data.Traversable
+import Data.Foldable
 
 data Tree a = Node a (Tree a) (Tree a)
             | Leaf
               deriving Show
 
-factor = 2
+instance Traversable Tree where
+    traverse f (Node x l r) = Node <$> f x <*> traverse f l <*> traverse f r
+    traverse f Leaf = pure Leaf
 
-toTree ::  Int -> [a] -> Tree a
-toTree _ [] = Leaf
-toTree level (x:xs) = let (l,r) = splitAt level xs -- should be lazy (?)
-                      in Node x (toTree' l) (toTree (level * factor) r)
+instance Foldable Tree where
+    foldMap = foldMapDefault
+
+instance Functor Tree where
+    fmap = fmapDefault
+
+factor = 2 
+
+initialLeftSize = 2
+
+toTree = fst . toTree' maxBound initialLeftSize -- where maxBound stands for infinity.
+(.!) = look initialLeftSize
+
+
+toTree' :: Int -> Int -> [a] -> (Tree a, [a])
+toTree' _ _ [] = (Leaf, [])
+toTree' budget leftsize (x:xs) 
+    | budget <= 0 = (Leaf, x:xs)
+    | otherwise = let (l,xs')  = toTree' leftBugdet                initialLeftSize     xs
+                      (r,xs'') = toTree' (budget - leftBugdet - 1) (leftsize * factor) xs'
+                      -- it's possible that actual leftsize is smaller,
+                      -- but in that case xs' is null, so it does not matter.
+                      leftBugdet = min (budget - 1) leftsize
+                  in (Node x l r, xs'')
+
+look :: Int -> Tree a -> Int -> a
+look leftsize Leaf index  = error "online tree: index out of bounds"
+look leftsize (Node x l r) index 
+    | index == 0 = x
+    | index <= leftsize = look initialLeftSize l (index - 1)
+    | otherwise = look (leftsize * factor) r (index - 1 - leftsize)
 
 fromTree :: Tree a -> [a]
 fromTree (Node a l r) = a : fromTree l ++ fromTree r
 fromTree Leaf = []
 
-toTree' = toTree factor
 
 shape :: Show a => Tree a -> [S.Tree String]
 shape Leaf = [] -- [S.Node "o"[]]
@@ -50,43 +82,11 @@ getNextItem sz
     | sz <= 0 = empty
     | otherwise = symbol (const True)
 
+tt = parse
+
 test1 = tt factor 30 <* eof
 
 -- main = putStrLn $ S.drawForest $ shape $ snd $ fromJust $ unP test1 [1..100]
 tree = runPolish test1 [1..100]
 main = putStrLn $ S.drawForest  $ shape $ tree
-
-{-
-newtype P s a = P ([s] -> Maybe ([s], a))
-
-unP (P f) ss = f ss
-
-
-instance Functor (P s) where
-    fmap f (P x) = P $ \i -> case x i of
-                               Nothing -> Nothing
-                               Just (i', xx) -> Just (i', f xx)
-
-instance Applicative (P s) where
-    pure x = P $ \i -> Just (i,x)
-    (P f) <*> (P x) = P $ \i -> case f i of
-                      Nothing -> Nothing
-                      Just (i', ff) -> let ~(Just (i'',xx)) = x i' 
-                                         -- notice the rhs of <*> can never fail.
-                                       in Just (i'',ff xx)
-                      
-                           
-
-instance Alternative (P s) where
-    empty = P $ \i -> Nothing
-    (P x) <|> (P y) = P $ \i -> case x i of
-                      Nothing -> y i
-                      r -> r
-
-getItem :: P s s
-getItem = P $ \ i -> case i of
-                       [] -> Nothing
-                       (x:xs) -> Just (xs, x)
-
--}
 

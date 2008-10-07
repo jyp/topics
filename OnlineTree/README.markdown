@@ -29,10 +29,21 @@ A partial result can be represented as
 
 with
 
+    initial :: Partial a
     continue :: [a] -> Partial a -> Partial a
     finish :: Partial a -> T a
 
-We could say that finish must cost only propotional to $log n$;
-and continue is proportional to $length (1st arg)$ 
+(These can be derived from toTree' by CPS-transform)
+
+Given this, we can express the incremental performance as follows:
+
+    p1 := continue l1 initial
+    f1 := spine (finish p1)  -- O (|l1|)
+    p2 := continue l2 p1
+    f2 := spine (finish p2)  -- O (|l2| + log |l1|)
+
+
+
+
 
     

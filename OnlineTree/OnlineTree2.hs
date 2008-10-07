@@ -1,6 +1,7 @@
+{-# OPTIONS -fglasgow-exts #-}
+
 import PolishParse3
 import Data.Maybe
-{-# OPTIONS -fglasgow-exts #-}
 import qualified Data.Tree as S
 import Control.Applicative
 
@@ -33,6 +34,7 @@ trans f n@(S.Node x xs) = S.Node (f n) (map (trans f) xs)
 
 ev f (S.Node x xs) = S.Node (f x) (map (ev f) xs)
 
+-- leftBound, rightBound
 parse leftSize lB rB
    | rB <= lB = pure Leaf
    | otherwise 
