@@ -43,7 +43,7 @@ parse leftSize lB rB
               <*> parse (leftSize * factor)  midB rB
         <|> (isAfter rB *> pure Leaf) 
   where midB = min rB (lB + leftSize)
-    -- NOTE: eof here is important for performance (otherwise the
+    -- NOTE: eof (isAfter) here is important for performance (otherwise the
     -- parser would have to keep this case until the very end of input
     -- is reached.
          

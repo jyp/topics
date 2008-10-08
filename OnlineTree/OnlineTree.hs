@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
 
-import Prelude hiding (sum)
+import Prelude hiding (sum, foldl, drop)
 import PolishParse3
 import Data.Maybe
 import qualified Data.Tree as S
@@ -48,9 +48,38 @@ look leftsize (Node x l r) index
     | index <= leftsize = look initialLeftSize l (index - 1)
     | otherwise = look (leftsize * factor) r (index - 1 - leftsize)
 
-fromTree :: Tree a -> [a]
-fromTree (Node a l r) = a : fromTree l ++ fromTree r
-fromTree Leaf = []
+toReverseList :: Tree a -> [a]
+toReverseList = foldl (flip (:)) []
+
+type E a = a -> a
+
+toEndo Leaf = id
+toEndo (Node x l r) = (x :) . toEndo l . toEndo r
+
+dropBut amount t = drop' initialLeftSize id t amount []
+  where
+    drop' :: Int -> E [a] -> Tree a -> Int -> E [a]
+    drop' leftsize prec Leaf n = prec
+    drop' leftsize prec t@(Node x l r) index
+        | index == 0 = prec . toEndo t
+        | index <= leftsize = drop' initialLeftSize     (x :)         l (index - 1)            . toEndo r
+        | otherwise         = drop' (leftsize * factor) (last prec l) r (index - 1 - leftsize)
+    last :: E [a] -> Tree a -> [a] -> [a]
+    last prec t = case toReverseList t of
+        (x:xs) -> (x :)
+        _ -> prec
+
+
+drop amount t = dropHelp initialLeftSize t amount []
+
+dropHelp :: Int -> Tree a -> Int -> [a] -> [a]
+dropHelp leftsize Leaf n = id
+dropHelp leftsize t@(Node x l r) index
+    | index == 0 = (x :) . recL 0 . recR 0
+    | index <= leftsize = recL (index - 1) . recR 0
+    | otherwise = recR  (index - 1 - leftsize)
+  where recL = dropHelp initialLeftSize     l 
+        recR = dropHelp (leftsize * factor) r
 
 
 shape :: Show a => Tree a -> [S.Tree String]
