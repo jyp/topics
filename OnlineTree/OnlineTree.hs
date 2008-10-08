@@ -12,6 +12,19 @@ data Tree a = Node a (Tree a) (Tree a)
             | Leaf
               deriving Show
 
+{-
+
+Why not the more classical definition?
+
+data Bin a = Bin (Tree a) (Tree a)
+           | Leaf a
+           | Nil
+
+Leaf or Bin? 
+We cannot to decide which constructor to return with a minimal look ahead!
+
+-}
+
 instance Traversable Tree where
     traverse f (Node x l r) = Node <$> f x <*> traverse f l <*> traverse f r
     traverse f Leaf = pure Leaf

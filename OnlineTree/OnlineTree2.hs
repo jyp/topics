@@ -9,25 +9,23 @@ data Tree a = Node a (Tree a) (Tree a)
             | Leaf
               deriving Show
 
+instance Traversable Tree where
+    traverse f (Node x l r) = Node <$> f x <*> traverse f l <*> traverse f r
+    traverse f Leaf = pure Leaf
+
+instance Foldable Tree where
+    foldMap = foldMapDefault
+
+instance Functor Tree where
+    fmap = fmapDefault
+
+
 factor = 2
-
-toTree ::  Int -> [a] -> Tree a
-toTree _ [] = Leaf
-toTree level (x:xs) = let (l,r) = splitAt level xs -- should be lazy (?)
-                      in Node x (toTree' l) (toTree (level * factor) r)
-
-fromTree :: Tree a -> [a]
-fromTree (Node a l r) = a : fromTree l ++ fromTree r
-fromTree Leaf = []
-
-toTree' = toTree factor
+initialSize = 5
 
 shape :: Show a => Tree a -> [S.Tree String]
 shape Leaf = [] -- [S.Node "o"[]]
 shape (Node x l r) = [S.Node (show x) (shape l ++ shape r)]
-
-sz :: S.Tree a -> Int
-sz (S.Node a xs) = 1 + sum (map sz xs)
 
 trans :: (S.Tree a -> b) -> (S.Tree a -> S.Tree b)
 trans f n@(S.Node x xs) = S.Node (f n) (map (trans f) xs)
@@ -58,7 +56,7 @@ getNextItem sz
     | sz <= 0 = empty
     | otherwise = symbol (const True)
 
-test1 = parse 5 0 40 -- <* symbol (== 50)
+test1 = parse initialSize 0 40 -- <* symbol (== 50)
 
 sym x = symbol (== x)
 
