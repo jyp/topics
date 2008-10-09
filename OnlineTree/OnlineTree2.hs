@@ -56,7 +56,7 @@ getNextItem sz
     | sz <= 0 = empty
     | otherwise = symbol (const True)
 
-test1 = parse initialSize 0 40 -- <* symbol (== 50)
+test1 = parse initialSize 0 40 <* symbol (== 41)
 
 sym x = symbol (== x)
 

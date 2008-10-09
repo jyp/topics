@@ -164,6 +164,7 @@ symbol f = P (\fut -> Suspend (symHelper fut))
                 Just (s:ss) -> if f s then push (Just ss) (Shift (Val s (fut)))
                                else epicFail
 
+
 symbol' :: Eq s => s -> P s s
 symbol' s0 = P (\fut -> Suspend (symHelper fut))
     where symHelper fut input = 

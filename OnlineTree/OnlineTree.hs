@@ -96,7 +96,7 @@ dropHelp leftsize t@(Node x l r) index
 
 
 shape :: Show a => Tree a -> [S.Tree String]
-shape Leaf = [] -- [S.Node "o"[]]
+shape Leaf = []
 shape (Node x l r) = [S.Node (show x) (shape l ++ shape r)]
 
 sz :: S.Tree a -> Int
