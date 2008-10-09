@@ -4,3 +4,4 @@ This directory contains projects that do not deserve their own repository.
 
 * [Parameterized Higher Order Abstract Syntax](master/PHOAS)
 
+* [What is the connection between the Zipper and direct traversal?](master/CPSZipper)
