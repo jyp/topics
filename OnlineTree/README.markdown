@@ -12,38 +12,47 @@ Requirements on the data type:
   
 * $t[i]$ in $O(\log i)$
 
-  note that access does not depend on the size of the tree!
-  In particular the above still holds if bottoms are present.
+  This is the most important property.x
+  Note that access does not depend on the size of the tree!
+  In particular the above still holds if bottoms are present
+  in the non-accessed part of the tree.
 
 * $fromList (l ++ \bottom) [i]$ will work for all $i < |l|$
 
 
-Disentangling the construction from the parsing is not easily done.
+Disentangling the construction from the parsing can be done by
+CPS-transforming the direct construction algorithm. 
 
-The above (fromList) is too restrictive: how can we express partially
-constructed trees?
-
-A partial result can be represented as
-
-    type Partial a = [a] -> T a
-
-with
+we obtain the following functions:
 
     initial :: Partial a
     continue :: [a] -> Partial a -> Partial a
     finish :: Partial a -> T a
 
-(These can be derived from toTree' by CPS-transform)
+where partial result is represented as
+
+    type Partial a = [a] -> T a
+
 
 Given this, we can express the incremental performance as follows:
 
     p1 := continue l1 initial
-    f1 := spine (finish p1)  -- O (|l1|)
+    f1 := spine (finish p1)  -- O (|l1|), where spine evaluates the spine.
     p2 := continue l2 p1
     f2 := spine (finish p2)  -- O (|l2| + log |l1|)
 
 
+We could also assign amortized costs as such:
 
+   
+function       cost
+------------   --------------------
+initial        O(1)
+continue l p   O(length l)
+finish p       O(log (length p))
+f[i]           O(log i)
 
+However, this is not really descriptive of what we want, because
+we want to make explicit that we don't pay the cost for "continue"
+until we actually access the corresponding elements.
 
-    
