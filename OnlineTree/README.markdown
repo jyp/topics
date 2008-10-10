@@ -1,3 +1,6 @@
+references:
+http://hackage.haskell.org/cgi-bin/hackage-scripts/package/lazyarray
+http://citeseer.ist.psu.edu/95126.html
 
 
 Requirements on the data type:
