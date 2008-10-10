@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, EmptyDataDecls, TypeFamilies #-}
+module Dissect where
 
 -- Copied directly from McBride's  Jokers & Clowns.
 
