@@ -1,14 +1,15 @@
 {-# LANGUAGE TypeOperators, EmptyDataDecls, TypeFamilies #-}
 
 -- Copied directly from McBride's  Jokers & Clowns.
+-- http://portal.acm.org/citation.cfm?id=1328438.1328474&coll=GUIDE&dl=GUIDE&CFID=4573058&CFTOKEN=30689630
 
--- Constant functor
+-- Polynomial functors
 data K1 a x = K1 a
+data Id a = Id a
 data (p :+ q) x =  L1 (p x) | R1 (q x)
 data (p :* q) x = (p x) :* (q x)      
 
--- Identity functor ?
-data Id a = Id a
+type T11 = K1 ()
 
 -- Constant bifunctor
 data K2 a x y = K2 a
@@ -71,12 +72,36 @@ data JJ p c j = JJ (p j)
 instance Functor f => Bifunctor (JJ f) where
     bimap f g (JJ pj) = JJ (fmap g pj)
 
--- dissection
-type family DD a :: * -> *
+-- dissection: turns a functor into a bifunctor
+type family DD (a :: * -> *) :: (* -> * -> *)
 
-type instance DD (K1 a x) = T02 x -- this is an \eta-expanded version...
-type instance DD (Id x) = T12
-type instance DD ((p :+ q) x) = DD (p x) :++ DD (q x)
+type instance DD (K1 a) = T02
+type instance DD (Id) = T12
+type instance DD (p :+ q) = DD p :++ DD q
+type instance DD (p :* q) = (DD p :** JJ q) :++ (CC p :** DD q)
 
 
 
+class Right p where
+    right :: Either (p j) (DD p c j, c) -> Either (j, DD p c j) (p c)
+
+instance Right (K1 a) where
+    right (Left (K1 a))     = Right (K1 a)
+    right (Right (K2 z, c)) = refute z
+
+instance Right Id where
+    right (Left (Id j)) = Left (j, K2 ())
+    right (Right (K2 (), c)) = Right (Id c)
+
+instance (Right p, Right q) => Right (p :+ q) where
+    right x = case x of
+        (Left (L1 pj)) -> mindp (right (Left pj))
+        (Left (R1 qj)) -> mindq (right (Left qj))
+        (Right ((L2 pd, c))) -> mindp (right (Right (pd, c)))
+        (Right ((R2 qd, c))) -> mindq (right (Right (qd, c)))
+        where mindp (Left (j,pd)) = Left (j, L2 pd)
+              mindp (Right pc) = Right (L1 pc)
+              mindq (Left (j,pd)) = Left (j, R2 pd)
+              mindq (Right pc) = Right (R1 pc)
+              
+        
