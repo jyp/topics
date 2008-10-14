@@ -1,6 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 
-import Prelude hiding (sum, foldl)
+import Prelude hiding (sum, foldl, drop)
+import qualified Prelude
 import PolishParse3
 import Data.Maybe
 import qualified Data.Tree as S
@@ -39,11 +40,14 @@ factor = 2
 
 initialLeftSize = 2
 
+toTree = fst . toTree' maxBound initialLeftSize -- where maxBound stands for infinity.
+(.!) = look initialLeftSize
+
 -- constructing the tree in "direct" style
 direct :: Int -> [a] -> Tree a
 direct leftSize [] = Leaf
 direct leftSize (x:xs) = Node x (direct initialLeftSize (take leftSize xs)) 
-                                (direct (leftSize * factor) (drop leftSize xs))
+                                (direct (leftSize * factor) (Prelude.drop leftSize xs))
 
 -- expand in the drop
 toTree' :: Int -> Int -> [a] -> (Tree a, [a])
@@ -56,7 +60,6 @@ toTree' budget leftsize (x:xs)
                       -- but in that case xs' is null, so it does not matter.
                       leftBugdet = min (budget - 1) leftsize
                   in (Node x l r, xs'')
-toTree = fst . toTree' maxBound initialLeftSize -- where maxBound stands for infinity.
 
 -- CPS toTree'
 ttCPS :: Int -> Int -> [a] -> ((Tree a, [a]) -> b) -> b
@@ -72,32 +75,35 @@ ttCPSMain :: [a] -> (Tree a, [a])
 ttCPSMain list = ttCPS maxBound initialLeftSize list id
 
 -- When finding the empty list, don't want to close the tree right now, but return the continuation (so we can continue :))
--- So, we want b = fctArgs * ((Tree a, [a]) -> b) + Result
+-- So, we want b = fctArgs * ((Tree a, [a]) -> b) + ((Tree a, [a]) -> b) + end
 -- No prolem! Just introduce a data type being the fixpoint.
 data K a 
- = S Int Int ((Tree a, [a]) -> K a)
+ = K ((Tree a, [a]) -> K a)
+ | S Int Int ((Tree a, [a]) -> K a)
  | I (Tree a, [a])
 instance Show (K a) where
+    show (K _) = "k"
     show (S _ _ _) = "s"
     show (I _) = "i"
 
 ttC :: Int -> Int -> [a] -> ((Tree a, [a]) -> K a) -> K a
 -- note that this function fails when presented a suspension.
-ttC budget leftsize [] k = S budget leftsize k
+ttC budget leftsize [] (K k) = S budget leftsize k
 -- note that the semantics of [] have changed! it now means "suspend" instead of end of list.
-ttC budget leftsize (x:xs) k
+ttC budget leftsize (x:xs) (K k)
     | budget <= 0 = k (Leaf, x:xs)
-    | otherwise = ttC leftBugdet                initialLeftSize     xs $ \(l,xs')  ->
-                  ttC (budget - leftBugdet - 1) (leftsize * factor) xs'$ \(r,xs'') ->
+    | otherwise = ttC leftBugdet                initialLeftSize     xs $ K $ \(l,xs')  ->
+                  ttC (budget - leftBugdet - 1) (leftsize * factor) xs'$ K $ \(r,xs'') ->
                   k (Node x l r, xs'')
    where leftBugdet = min (budget - 1) leftsize
 
 --- continue :: K a -> [a] -> K a
-continue list (S budget leftsize k) = ttC budget leftsize list k
+continue list (S budget leftsize k) = ttC budget leftsize list (K k)
 
 finish :: K t -> (Tree t, [t])
 finish (I r) = r
-finish (S budget leftsize k) = finish (k (Leaf, [])) -- Will create a suspension that we'll remove right after, but that's ok.
+finish (S budget leftsize k) = finish (K k)
+finish (K k) = finish (k (Leaf, [])) -- Will create a suspension that we'll remove right after, but that's ok.
 -- indeed, that's necessary to ensure that 
 initial :: K a
 initial = S maxBound initialLeftSize (\x -> I x)
@@ -129,7 +135,9 @@ apply (End extract) (result,xs) = extract result
 
 lb bugget leftSize = min (bugget - 1) leftSize
 
-(.!) = look initialLeftSize
+
+
+
 look :: Int -> Tree a -> Int -> a
 look leftsize Leaf index  = error "online tree: index out of bounds"
 look leftsize (Node x l r) index 
@@ -159,7 +167,7 @@ dropBut amount t = drop' initialLeftSize id t amount []
         _ -> prec
 
 
-dropTopLevel amount t = dropHelp initialLeftSize t amount []
+drop amount t = dropHelp initialLeftSize t amount []
 
 dropHelp :: Int -> Tree a -> Int -> [a] -> [a]
 dropHelp leftsize Leaf n = id
@@ -204,7 +212,9 @@ tt = parse
 
 test1 = tt factor 30 <* eof
 
+disp t = putStrLn $ S.drawForest  $ shape $ t
+
 -- main = putStrLn $ S.drawForest $ shape $ snd $ fromJust $ unP test1 [1..100]
 tree = runPolish test1 [1..100]
-main = putStrLn $ S.drawForest  $ shape $ tree
+main = disp tree
 
