@@ -115,16 +115,20 @@ module PHOAS where
   Ω = App (Abs (\x -> App (Var x) (Var x))) (Abs (\x -> App (Var x) (Var x)))
 
 
-  -- Claim: We'll ensure that we don't store data in variables by always parameterizing on V.
+  -- Claim: We'll ensure that we don't store data in
+  -- variables by always parameterizing on V.
   -- ie. instantiation does not incurr loss in generality.
 
-  -- UsedTerm = {V : Set} -> Term V
+  UsedTerm = {V : Set} -> Term V
 
   -- count variable uses
   numVars : Term ⊤ -> ℕ
   numVars (Var _) = 1
   numVars (App e1 e2) = numVars e1 + numVars e2
   numVars (Abs e') = numVars (e' tt)
+
+  nV : UsedTerm -> ℕ
+  nV t = numVars t 
 
   -- is function a candidate for η-reduction?
   -- \v -> (term where v does not appear) v
@@ -139,6 +143,9 @@ module PHOAS where
   ... | _ = false
   canEta _ = false
 
+  canη : UsedTerm -> Bool
+  canη t = canEta t 
+
   -- there is actually a mistake in the paper probably;
   -- they forget treat the top-level abstraction.
 
@@ -150,7 +157,11 @@ module PHOAS where
   -- turns out very easy.
   -- (cleverness: nest terms!)
 
-  
+  -- Type of terms with one free variable
+  UsedTerm1 = {V : Set} -> (V -> Term V)
+
+  subst' : UsedTerm1 -> UsedTerm -> UsedTerm
+  subst' e1 e2 {V} = subst ((e1 {Term V}) (e2 {V}))
 
  module SimplyTypedLambdaCalculus where
 
