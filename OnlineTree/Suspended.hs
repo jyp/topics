@@ -61,34 +61,16 @@ toTree' budget leftsize (x:xs)
                       leftBugdet = min (budget - 1) leftsize
                   in (Node x l r, xs'')
 
--- CPS toTree'
-ttCPS :: Int -> Int -> [a] -> ((Tree a, [a]) -> b) -> b
-ttCPS _ _ [] k = k (Leaf, [])
-ttCPS budget leftsize (x:xs) k
-    | budget <= 0 = k (Leaf, x:xs)
-    | otherwise = ttCPS leftBugdet                initialLeftSize     xs $ \(l,xs')  ->
-                  ttCPS (budget - leftBugdet - 1) (leftsize * factor) xs'$ \(r,xs'') ->
-                  k (Node x l r, xs'')
-   where leftBugdet = min (budget - 1) leftsize
-
-ttCPSMain :: [a] -> (Tree a, [a])
-ttCPSMain list = ttCPS maxBound initialLeftSize list id
-
-
 data Expr s a where
     Val :: !a -> Expr s a
     App :: Expr s (a -> b) -> Expr s a -> Expr s b
     Abs :: (a -> Expr s b) -> Expr s (a -> b)
-    Suspend ::(s -> Expr s a) -> Expr s a ->  Expr s a
+    Sus :: (s -> Expr s a) -> Expr s (s -> a)
 
 instance Show (Expr s a) where
     showsPrec d (Val x) = showString "."
     showsPrec d (Abs f) = showString "\\"
     showsPrec d (App t1 t2) = showParen (d > 1) (showsPrec 1 t1 . showString " " . showsPrec 2 t2)
-    showsPrec d (Suspend _ _) = showString "?"
-
-instance Show (a -> b) where
-    show _ = "<function>"
 
 instance Applicative (Expr s) where
     (<*>) = App
@@ -114,11 +96,27 @@ ttE budget leftSize = Abs $
 
 ttX = ttE maxBound initialLeftSize
 
-eval :: Expr s a -> a
-eval (Val v) = v
-eval (App f x) = (eval f) (eval x)
-eval (Abs f) = \a -> eval (f a)
-eval (Suspend _ finish) = eval finish
+type State = (Expr s a, Stack)
+type Stack = [Closure]
+
+lookupEnv :: Sym -> Env -> Closure
+lookupEnv x [] = error $ x ++ " not found in env!"
+lookupEnv x ((y,v):rho) = if x == y then v else lookupEnv x rho
+
+step (Val f    , x:s) = step (Val (f x), s) 
+step (Lam t    , v:s) = step (t v, s)
+step (App t1 t2, s)   = step (t1, t2:s)
+step x = x
+
+
+
+eval :: Expr s a -> (a, [s -> Expr s a])
+eval (Val v) = (v, [])
+eval (App f0 x0) = let (f, s) = eval f0
+                       (x, s') = eval x0
+                       in (f x, s ++ s') -- yeah, I know.
+eval (Abs f) = (\a -> fst $ eval (f a), [])
+eval (Sus f) = (\s -> )
 
 appVal :: Expr s (s -> b) -> s -> Expr s (s -> b)
 appVal e v = case evalP $ e <*> pure v of 
@@ -130,10 +128,9 @@ evalP (Suspend s _) = Left s -- by definition
 evalP (Val v) = Right (Val v)
 evalP (App f0 x0) = case evalP f0 of
     Left f -> Left (\s -> evalQ (f s <*> x0))
-    Right f -> case evalP x0 of
+    Right f -> case evalP f0 of
         Left x -> Left (\s -> evalQ (f <*> x s))
         Right x -> Right (evalQ (f <*> x))
- 
 evalP (Abs f) = Right (Abs f)
 
 -- Evaluate an expression as far as possible
