@@ -42,10 +42,11 @@ initialLeftSize = 2
 -- constructing the tree in "direct" style
 direct :: Int -> [a] -> Tree a
 direct leftSize [] = Leaf
-direct leftSize (x:xs) = Node x (direct initialLeftSize (take leftSize xs)) 
-                                (direct (leftSize * factor) (drop leftSize xs))
-
--- expand in the drop
+direct leftSize (x:xs) = Node x (direct initialLeftSize xl)
+                                (direct (leftSize * factor) xr)
+  where (xl, xr) = splitAt leftSize xs
+        
+-- fuse with splitAt
 toTree' :: Int -> Int -> [a] -> (Tree a, [a])
 toTree' _ _ [] = (Leaf, [])
 toTree' budget leftsize (x:xs) 
@@ -92,13 +93,13 @@ ttC budget leftsize (x:xs) k
                   k (Node x l r, xs'')
    where leftBugdet = min (budget - 1) leftsize
 
---- continue :: K a -> [a] -> K a
-continue list (S budget leftsize k) = ttC budget leftsize list k
+continue :: [a] -> K a -> K a
+continue list ~(S budget leftsize k) = ttC budget leftsize list k
 
 finish :: K t -> (Tree t, [t])
 finish (I r) = r
-finish (S budget leftsize k) = finish (k (Leaf, [])) -- Will create a suspension that we'll remove right after, but that's ok.
--- indeed, that's necessary to ensure that 
+finish (S budget leftsize k) = finish (k (Leaf, [])) -- Will create a suspension that we'll remove right after.
+
 initial :: K a
 initial = S maxBound initialLeftSize (\x -> I x)
 
@@ -128,6 +129,8 @@ apply (Lam1 bugget leftSize k x) (l, xs') = ttDef (bugget - lb bugget leftSize -
 apply (End extract) (result,xs) = extract result
 
 lb bugget leftSize = min (bugget - 1) leftSize
+
+index = flip (.!)
 
 (.!) = look initialLeftSize
 look :: Int -> Tree a -> Int -> a
@@ -204,7 +207,9 @@ tt = parse
 
 test1 = tt factor 30 <* eof
 
+disp t = putStrLn $ S.drawForest  $ shape $ t
+
 -- main = putStrLn $ S.drawForest $ shape $ snd $ fromJust $ unP test1 [1..100]
 tree = runPolish test1 [1..100]
-main = putStrLn $ S.drawForest  $ shape $ tree
+main = disp $ tree
 
