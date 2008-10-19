@@ -1,0 +1,32 @@
+Down the rabbit hole!
+
+1. Let's try to CPS the shit
+Whoops. I used CPS cbv... It's strict alright.
+
+2. I don't have the guts to find the correct transform;
+AND it's probably not going to work anyway: doing one step 
+of computation will always require to do some pattern matching
+(was this a suspension?). Probably 
+
+3. I guess I have to represent the computation explicitly, and
+do partial evaluation by hand. Back into the wonderful realm of
+abstract machines.
+
+Brain explodes; let's go back to good ol' parsers.
+
+3': (Intermission) Oh yeah... I /do/ represent the computation in my Steps type,
+it's just hand-taylored computation for parsing.
+
+4. I want to have a freakin' monadic interface for my parsers.
+Re-read relevant section in Polish Parsers. re-re-re-re-re-read. Does not make sense!!!
+Test. Fail.
+
+Read Doaitse stuff: The cunning wizard had found out already. Implement the Horizon/Future 
+parsers using my own progress data type. It works. It looks like the shit is compatible
+with my generalized error correction stuff. Great!
+
+5. Doaitse has the same "stack" representation as I got in my agda version. I get it now!
+I never figured you could do it in Haskell! This means I can port back all my agda stuff!
+AND I can use the "almost tail recursive version of evalR"
+
+6. This pro'lly means I can do the evalL and evalL stuff in // to tie them up. Back to work!
