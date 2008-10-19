@@ -1,16 +1,13 @@
+{-# LANGUAGE EmptyDataDecls, ScopedTypeVariables #-}
 -- Copyright (c) JP Bernardy 2008
-{-# LANGUAGE BangPatterns #-}
-{-# OPTIONS -fglasgow-exts #-}
 module Yi.IncrementalParse (Process, Void, 
-                            recoverWith, symbol, eof, runPolish, 
-                            runP, profile, pushSyms, pushEof, evalR,
+                            recoverWith, symbol, eof, runPolish,
                             P, AlexState (..), scanner) where
 import Yi.Lexer.Alex (AlexState (..))
 import Yi.Prelude
-import Prelude (Ordering(..))
+import Prelude ()
 import Yi.Syntax
-import Data.List hiding (map, minimumBy)
-import Data.Char
+import Data.List hiding (map)
 
 {- ----------------------------------------
 
@@ -18,6 +15,7 @@ import Data.Char
   and "Parallel Parsing Processes (Claessen)"
   
   It's strongly advised to read the papers! :)
+
 - The parser has "online" behaviour.
 
   This is a big advantage because we don't have to parse the whole file to
@@ -114,55 +112,6 @@ data Steps s a r where
     -- continuation is a whole chunk of text; [] represents the
     -- end of the input
    
-    Best :: Steps s a r -> Steps s a r -> Steps s a r
-
-type Profile = Prof Int -- profile !! s = number of Dislikes found to do s Shifts
-
-data Prof a = PSusp | PFail | PRes a | a :> Prof a
-    deriving Show
-
-instance Functor Prof where
-    fmap _ PSusp = PSusp
-    fmap _ PFail = PFail
-    fmap f (PRes x) = PRes (f x) 
-    fmap f (x :> xs) = f x :> fmap f xs
-
--- Map lookahead to maximum dislike difference we accept. When looking much further,
--- we are more prone to discard smaller differences. It's essential that this drops to zero when
--- its argument increases, so that we can discard things with dislikes using only
--- finite lookahead.
-dislikeThreshold :: Int -> Int
--- dislikeThreshold n | n < 2 = 1
-dislikeThreshold n = 0
-
-better :: Int -> Profile -> Profile -> Ordering
-better _ PFail _ = GT -- avoid failure
-better _   _ PFail = LT
-better _ PSusp _ = EQ -- could not decide before suspension => leave undecided.
-better _ _ PSusp = EQ
-better _     (PRes x) (PRes y) = if x <= y then LT else GT  -- two results, just pick the best.
-better lk xs@(PRes x) (y:>ys) = if x == 0 || y-x > dislikeThreshold lk then LT else better (lk+1) xs ys
-better lk (y:>ys) xs@(PRes x) = if x == 0 || y-x > dislikeThreshold lk then GT else better (lk+1) ys xs
-better lk (x:>xs) (y:>ys)
-    | x == 0 && y == 0 = rec -- never drop things with no error: this ensures to find a correct parse if it exists.
-    | y - x > threshold = LT -- if at any point something is too disliked, drop it.
-    | x - y > threshold = GT
-    | otherwise = rec
-    where threshold = dislikeThreshold lk
-          rec =  better (lk + 1) xs ys
-
-profile :: Steps s a r -> Profile
-profile (Val _ p) = profile p
-profile (App p) = profile p
-profile (Stop) = error "profile: Stop" -- this should always be "hidden" by Done
-profile (Shift p) = 0 :> profile p
-profile (Done _) = PRes 0 -- success with zero dislikes
-profile (Fails) = PFail
-profile (Dislike p) = fmap succ (profile p)
-profile (Suspend _) = PSusp
-profile (Best p q) = PSusp -- if any was best it was eliminated by iBest before.
-
-
 
 instance Show (Steps s a r) where
     show (Val _ p) = "v" ++ show p
@@ -173,28 +122,30 @@ instance Show (Steps s a r) where
     show (Dislike p) = "?" ++ show p
     show (Fails) = "0"
     show (Suspend _) = "..."
-    show (Best p q) = "(" ++ show p ++ ")" ++ show q
 
-iBest p q = case better 0 pp pq of
-                     LT -> p
-                     EQ -> Best p q
-                     GT -> q
-    where [pp, pq] = fmap profile [p,q]
+-- data F a b where
+--     Snoc :: F a b -> (b -> c) -> F a c
+--     Nil  :: F a b
+-- 
+-- data S s a r where
+--     S :: F a b -> Steps s a r -> S s a r
+
 
 -- | Right-eval a fully defined process (ie. one that has no Suspend)
 -- Returns value and continuation.
 evalR :: Steps s a r -> (a, r)
-evalR z@(Val a r) = (a,r)
+evalR (Val a r) = (a,r)
 evalR (App s) = let (f, s') = evalR s
                     (x, s'') = evalR s'
                 in (f x, s'')
 evalR Stop = error "evalR: Can't create values of type Void"
 evalR (Shift v) = evalR v
 evalR (Done v)  = evalR v
-evalR (Dislike v) = evalR v
+evalR (Dislike v) = -- trace "Yuck!" $ 
+                    evalR v
 evalR (Fails) = error "evalR: No parse!"
 evalR (Suspend _) = error "evalR: Not fully evaluated!"
-evalR (Best p q) = error $ "evalR: Ambiguous parse: " ++ show p ++ " ~~~ " ++ show q
+
 
 -- | Pre-compute a left-prefix of some steps (as far as possible)
 evalL :: Steps s a r -> Steps s a r
@@ -222,7 +173,6 @@ push ss p = case p of
                   (App p') -> App (push ss p')
                   Stop -> Stop
                   Fails -> Fails
-                  Best p' q' -> iBest (push ss p') (push ss q')
 
 -- | Push some symbols.
 pushSyms :: [s] -> Steps s a r -> Steps s a r
@@ -244,9 +194,70 @@ instance Applicative (P s) where
 
 instance Alternative (P s) where
     empty = P $ \_fut -> Fails
-    P a <|> P b = P $ \fut -> iBest (a fut) (b fut)
+    P a <|> P b = P $ \fut -> best (a fut) (b fut)
 
-runP :: forall s a. P s a -> Process s a
+
+
+-- | Advance in the result steps, pushing results in the continuation.
+-- (Must return one of: Done, Shift, Fail)
+getProgress :: (Steps s a r -> Steps s b t) -> Steps s a r -> Steps s b t
+getProgress f (Val a s) = getProgress (f . Val a) s
+getProgress f (App s)   = getProgress (f . App) s
+-- getProgress f Stop   = f Stop
+getProgress f (Done p)  = Done (f p)
+getProgress f (Shift p) = Shift (f p)
+getProgress f (Dislike p) = Dislike (f p)
+getProgress _ (Fails) = Fails
+getProgress _ Stop = error "getProgress: try to enter void"
+getProgress f (Suspend p) = Suspend (\input -> f (p input))
+
+
+
+best :: Steps x a s -> Steps x a s ->  Steps x a s
+--l `best` r | trace ("best: "++show (l,r)) False = undefined
+Suspend f `best` Suspend g = Suspend (\input -> f input `best` g input)
+
+Fails   `best` p       = p
+p `best` Fails         = p
+
+Dislike a `best` b = bestD a b
+a `best` Dislike b = bestD b a
+
+Done a  `best` Done _  = Done a -- error "ambiguous grammar"
+                                -- There are sometimes many ways to fix an error. Pick the 1st one.
+Done a  `best` _       = Done a
+_       `best` Done a  = Done a
+
+Shift v `best` Shift w = Shift (v `best` w)
+
+p       `best` q       = getProgress id p `best` getProgress id q
+
+
+-- as best, but lhs is disliked.
+bestD :: Steps x a s -> Steps x a s ->  Steps x a s
+
+Suspend f `bestD` Suspend g = Suspend (\input -> f input `bestD` g input)
+
+Fails   `bestD` p       = p
+p `bestD` Fails         = Dislike p
+
+a `bestD` Dislike b = Dislike (best a b)  -- back to equilibrium (prefer to do this, hence 1st case)
+Dislike _ `bestD` b = b -- disliked twice: forget it.
+
+Done _  `bestD` Done a  = Done a -- we prefer rhs in this case
+Done a  `bestD` _       = Dislike (Done a)
+_       `bestD` Done a  = Done a
+
+Shift v `bestD` Shift w = Shift (v `bestD` w)
+_       `bestD` Shift w = Shift w -- prefer shifting than keeping a disliked possibility forever
+
+
+p       `bestD` q       = getProgress id p `bestD` getProgress id q
+
+
+
+runP :: forall t t1.
+                                    P t t1 -> Steps t t1 (Steps t Void Void)
 runP (P p) = p (Done Stop)
 
 -- | Run a parser.
@@ -261,12 +272,11 @@ symbol f = P $ \fut -> Suspend $ \input ->
                 (s:ss) -> if f s then push (Just ss) (Shift (Val s (fut)))
                                  else Fails
 
-
 -- | Parse the eof
 eof :: P s ()
 eof = P $ \fut -> Suspend $ \input ->
               case input of
-                [] -> Shift (Val () (push Nothing fut))
+                [] -> Val () fut
                 _ -> Fails
 
 -- | Parse the same thing as the argument, but will be used only as
@@ -298,22 +308,4 @@ scanner parser input = Scanner
             where nextState =       evalL $           pushSyms [tok]           $ curState
                   result    = fst $ evalR $ pushEof $ pushSyms (fmap snd toks) $ curState
 
-
-------------------
-
-data Expr = V Int | Add Expr Expr
-            deriving Show
-
-pExprParen = symbol (== '(') *> pExprTop <* symbol (== ')')
-
-pExprVal = V <$> toInt <$> symbol (isDigit)
-    where toInt c = ord c - ord '0'
-
-pExprAtom = pExprVal <|> pExprParen
-
-pExprAdd = pExprAtom <|> Add <$> pExprAtom <*> (symbol (== '+') *> pExprAdd) 
-
-pExprTop = pExprAdd
-
-pExpr = pExprTop <* eof
 
