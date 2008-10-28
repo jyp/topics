@@ -39,7 +39,7 @@ factor = 2
 
 initialLeftSize = 2
 
--- constructing the tree in "direct" style
+-- | constructing the tree in "direct" style
 direct :: Int -> [a] -> Tree a
 direct leftSize [] = Leaf
 direct leftSize (x:xs) = Node x (direct initialLeftSize xl)
@@ -59,76 +59,21 @@ toTree' budget leftsize (x:xs)
                   in (Node x l r, xs'')
 toTree = fst . toTree' maxBound initialLeftSize -- where maxBound stands for infinity.
 
--- CPS toTree'
-ttCPS :: Int -> Int -> [a] -> ((Tree a, [a]) -> b) -> b
-ttCPS _ _ [] k = k (Leaf, [])
-ttCPS budget leftsize (x:xs) k
-    | budget <= 0 = k (Leaf, x:xs)
-    | otherwise = ttCPS leftBugdet                initialLeftSize     xs $ \(l,xs')  ->
-                  ttCPS (budget - leftBugdet - 1) (leftsize * factor) xs'$ \(r,xs'') ->
-                  k (Node x l r, xs'')
-   where leftBugdet = min (budget - 1) leftsize
+-- | Replace the "tail" of the tree, starting at a given index.
+continue :: Int -> [a] -> Int -> Tree a -> Tree a
+continue leftsize input 0 t = direct leftsize input
+continue leftSize input at Leaf = error "trying to continue past the end of the tree" 
+-- in other words, we don't need to pattern match on the tree; so this can be made lazy in the tree.
+continue leftSize input at (Node x0 l0 r0)
+  | at <= leftSize = Node x0 (continue initialLeftSize xl (at-1) l0) (direct (leftSize * factor) xr)
+  | otherwise = Node x0 l0 (continue (leftSize * factor) input (at - leftSize - 1) r0)
+  where (xl, xr) = splitAt leftBudget input
+        leftBudget = leftSize - at + 1
 
-ttCPSMain :: [a] -> (Tree a, [a])
-ttCPSMain list = ttCPS maxBound initialLeftSize list id
-
--- When finding the empty list, don't want to close the tree right now, but return the continuation (so we can continue :))
--- So, we want b = fctArgs * ((Tree a, [a]) -> b) + Result
--- No prolem! Just introduce a data type being the fixpoint.
-data K a 
- = S Int Int ((Tree a, [a]) -> K a)
- | I (Tree a, [a])
-instance Show (K a) where
-    show (S _ _ _) = "s"
-    show (I _) = "i"
-
-ttC :: Int -> Int -> [a] -> ((Tree a, [a]) -> K a) -> K a
--- note that this function fails when presented a suspension.
-ttC budget leftsize [] k = S budget leftsize k
--- note that the semantics of [] have changed! it now means "suspend" instead of end of list.
-ttC budget leftsize (x:xs) k
-    | budget <= 0 = k (Leaf, x:xs)
-    | otherwise = ttC leftBugdet                initialLeftSize     xs $ \(l,xs')  ->
-                  ttC (budget - leftBugdet - 1) (leftsize * factor) xs'$ \(r,xs'') ->
-                  k (Node x l r, xs'')
-   where leftBugdet = min (budget - 1) leftsize
-
-continue :: [a] -> K a -> K a
-continue list ~(S budget leftsize k) = ttC budget leftsize list k
-
-finish :: K t -> (Tree t, [t])
-finish (I r) = r
-finish (S budget leftsize k) = finish (k (Leaf, [])) -- Will create a suspension that we'll remove right after.
-
-initial :: K a
-initial = S maxBound initialLeftSize (\x -> I x)
-
-
--- Defun ttCPS
-data Lam a b -- (Tree a, [a]) -> b
-   = Lam2 -- \r,rs'' -> k (Node x l r, xs'')
-     (Lam a b) -- k
-     a -- x
-     (Tree a) -- l
-   | Lam1 -- \l,xs' ...
-     Int -- bugget
-     Int -- leftSize
-     (Lam a b) -- k
-     a -- x
-   | End (Tree a -> b)
-
-
-ttDef :: Int -> Int -> [a] -> (Lam a b) -> b
-ttDef _ _ [] k = apply k (Leaf, [])
-ttDef budget leftSize (x:xs) k
-    | budget <= 0 = apply k (Leaf, x:xs)
-    | otherwise = ttDef (lb budget leftSize) initialLeftSize xs $ (Lam1 budget leftSize k x)
-
-apply (Lam2                 k x l) (r,xs'') = apply k (Node x l r, xs'')
-apply (Lam1 bugget leftSize k x) (l, xs') = ttDef (bugget - lb bugget leftSize - 1) (leftSize * factor) xs' (Lam2 k x l)
-apply (End extract) (result,xs) = extract result
-
-lb bugget leftSize = min (bugget - 1) leftSize
+size = sz initialLeftSize
+  where sz leftSize Leaf = 0
+        sz leftSize (Node _ l Leaf) = 1 + sz initialLeftSize l
+        sz leftSize (Node _ _ r)    = 1 + leftSize + sz (leftSize * factor) r
 
 index = flip (.!)
 
@@ -213,3 +158,77 @@ disp t = putStrLn $ S.drawForest  $ shape $ t
 tree = runPolish test1 [1..100]
 main = disp $ tree
 
+
+
+----------------------------------------------
+-- Various derivations of the toTree function
+
+
+-- CPS toTree'
+ttCPS :: Int -> Int -> [a] -> ((Tree a, [a]) -> b) -> b
+ttCPS _ _ [] k = k (Leaf, [])
+ttCPS budget leftsize (x:xs) k
+    | budget <= 0 = k (Leaf, x:xs)
+    | otherwise = ttCPS leftBugdet                initialLeftSize     xs $ \(l,xs')  ->
+                  ttCPS (budget - leftBugdet - 1) (leftsize * factor) xs'$ \(r,xs'') ->
+                  k (Node x l r, xs'')
+   where leftBugdet = min (budget - 1) leftsize
+
+ttCPSMain :: [a] -> (Tree a, [a])
+ttCPSMain list = ttCPS maxBound initialLeftSize list id
+
+-- When finding the empty list, don't want to close the tree right now, but return the continuation (so we can continue :))
+-- So, we want b = fctArgs * ((Tree a, [a]) -> b) + Result
+-- No prolem! Just introduce a data type being the fixpoint.
+data K a 
+ = S Int Int ((Tree a, [a]) -> K a)
+ | I (Tree a, [a])
+instance Show (K a) where
+    show (S _ _ _) = "s"
+    show (I _) = "i"
+
+ttC :: Int -> Int -> [a] -> ((Tree a, [a]) -> K a) -> K a
+-- note that this function fails when presented a suspension.
+ttC budget leftsize [] k = S budget leftsize k
+-- note that the semantics of [] have changed! it now means "suspend" instead of end of list.
+ttC budget leftsize (x:xs) k
+    | budget <= 0 = k (Leaf, x:xs)
+    | otherwise = ttC leftBugdet                initialLeftSize     xs $ \(l,xs')  ->
+                  ttC (budget - leftBugdet - 1) (leftsize * factor) xs'$ \(r,xs'') ->
+                  k (Node x l r, xs'')
+   where leftBugdet = min (budget - 1) leftsize
+
+cps_continue :: [a] -> K a -> K a
+cps_continue list ~(S budget leftsize k) = ttC budget leftsize list k
+cps_finish :: K t -> (Tree t, [t])
+cps_finish (I r) = r
+cps_finish (S budget leftsize k) = cps_finish (k (Leaf, [])) -- Will create a suspension that we'll remove right after.
+cps_initial :: K a
+cps_initial = S maxBound initialLeftSize (\x -> I x)
+
+
+-- Defun ttCPS
+data Lam a b -- (Tree a, [a]) -> b
+   = Lam2 -- \r,rs'' -> k (Node x l r, xs'')
+     (Lam a b) -- k
+     a -- x
+     (Tree a) -- l
+   | Lam1 -- \l,xs' ...
+     Int -- bugget
+     Int -- leftSize
+     (Lam a b) -- k
+     a -- x
+   | End (Tree a -> b)
+
+
+ttDef :: Int -> Int -> [a] -> (Lam a b) -> b
+ttDef _ _ [] k = apply k (Leaf, [])
+ttDef budget leftSize (x:xs) k
+    | budget <= 0 = apply k (Leaf, x:xs)
+    | otherwise = ttDef (lb budget leftSize) initialLeftSize xs $ (Lam1 budget leftSize k x)
+
+apply (Lam2                 k x l) (r,xs'') = apply k (Node x l r, xs'')
+apply (Lam1 bugget leftSize k x) (l, xs') = ttDef (bugget - lb bugget leftSize - 1) (leftSize * factor) xs' (Lam2 k x l)
+apply (End extract) (result,xs) = extract result
+
+lb bugget leftSize = min (bugget - 1) leftSize
