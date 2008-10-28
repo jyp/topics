@@ -6,7 +6,7 @@ This directory contains various implementations of parser combinators.
 * [Simple Polish Parsers](master/SimplePolish.hs), My (simplified/clarified) version of the Polish combinators
 * [Incremental Parsing with error correction](master/IncrementalParserWithGeneralizedErrorCorrection.hs), 
   based on the Simple Polish Parsers
-* [Enhanced ways to manipulate the Polish representation](master/Polish.hs)
+* [Enhanced ways to manipulate the Polish representation](master/PolishStack.hs)
 * [Manipulation of polish expressions in a fully typed way](master/Polish.agda)
 
 And some less interesting stuff:
