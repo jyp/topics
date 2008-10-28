@@ -19,7 +19,7 @@ class Alternative (p s) => Parser p s where
 data Void
 
 data Steps a where
-    Val   :: a -> Steps r               -> Steps (a,r) -- note that pairs are used only in the type!
+    Val   :: a -> Steps r               -> Steps (a,r)
     App   :: (Steps (b -> a,(b,r)))      -> Steps (a,r)
     Done  ::                               Steps Void
     Shift ::           Steps a        -> Steps a
