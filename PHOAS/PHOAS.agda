@@ -13,7 +13,7 @@ open import Data.Bool
 open import Data.Unit
 open import Data.Function
 open import Data.List
-
+open import Data.Product hiding (_×_)
 
 module ConcreteSyntax where
   -- Let's try to represent variables by they names. 
@@ -121,6 +121,9 @@ module PHOAS where
 
   UsedTerm = {V : Set} -> Term V
 
+  -- Type of terms with one free variable
+  UsedTerm1 = {V : Set} -> (V -> Term V)
+
   -- count variable uses
   numVars : Term ⊤ -> ℕ
   numVars (Var _) = 1
@@ -157,8 +160,6 @@ module PHOAS where
   -- turns out very easy.
   -- (cleverness: nest terms!)
 
-  -- Type of terms with one free variable
-  UsedTerm1 = {V : Set} -> (V -> Term V)
 
   subst' : UsedTerm1 -> UsedTerm -> UsedTerm
   subst' e1 e2 {V} = subst ((e1 {Term V}) (e2 {V}))
@@ -169,6 +170,9 @@ module PHOAS where
      Boo : Type
      Arr : Type -> Type -> Type
 
+  ⟦_⟧ : Type -> Set 
+  ⟦ Boo ⟧ = Bool
+  ⟦ Arr τ τ' ⟧ = ⟦ τ ⟧ -> ⟦ τ' ⟧
 
   -- Terms, with additional Type index.
   data Term (V : Type -> Set) : (τ : Type) -> Set where 
@@ -178,6 +182,12 @@ module PHOAS where
      App : {τ1 τ2 : Type} -> Term V (Arr τ1 τ2) -> Term V τ1 -> Term V τ2
      Abs : {τ1 τ2 : Type} -> (V τ1 -> Term V τ2) -> Term V (Arr τ1 τ2)
 
+  eval : forall {τ} -> Term ⟦_⟧ τ -> ⟦ τ ⟧
+  eval Tru = true
+  eval Fals = false
+  eval (Var v) = v
+  eval (App y y') = eval y (eval y')
+  eval (Abs y) = \t -> eval (y t)
 
   -- Closure conversion (a.k.a. lambda-lifting)
 
@@ -249,40 +259,8 @@ module PHOAS where
                  Halt!
 
 
---   Inductive pterm : Type :=
---   | PHalt :
---     var result
---     -> pterm
---   | PApp : forall t,
---     var (t --->)
---     -> var t
---     -> pterm
---   | PBind : forall t,
---     pprimop t
---     -> (var t -> pterm)
---     -> pterm
-
---   with pprimop : ptype -> Type :=
---   | PVar : forall t,
---     var t
---     -> pprimop t
---     
---   | PTrue : pprimop Bool
---   | PFalse : pprimop Bool
---     
---   | PAbs : forall t,
---     (var t -> pterm)
---     -> pprimop (t --->)
--- 
---   | PPair : forall t1 t2,
---     var t1
---     -> var t2
---     -> pprimop (t1 ** t2)
---   | PFst : forall t1 t2,
---     var (t1 ** t2)
---     -> pprimop t1
---   | PSnd : forall t1 t2,
---     var (t1 ** t2)
---     -> pprimop t2.
   
-  
+  inferTyp : forall {V} -> (τ : Type) -> UntypedLambdaCalculus.Term (V τ) -> Σ Type (Term V)
+  inferTyp τ (UntypedLambdaCalculus.Var v) = τ , Var v
+  inferTyp τ (UntypedLambdaCalculus.App y y') = {! !} , (App {! !} {! !})
+  inferTyp τ (UntypedLambdaCalculus.Abs y) = {! !}
