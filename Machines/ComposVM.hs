@@ -45,3 +45,10 @@ instance Applicative (P s) where
     pure x = P (\fut -> push x $ fut)
 
 
+data Zip b where
+   Zip :: (a -> b) -> Steps a -> Zip b
+
+
+right :: Zip b -> Zip b
+right (Zip f (X g r)) = Zip (f . g) r
+right z = z

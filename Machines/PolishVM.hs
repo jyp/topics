@@ -49,3 +49,33 @@ evalL (App f) = case evalL f of
                   r -> App r
 evalL x = x
 
+
+-- Arbitrary expressions in Reverse Polish notation.
+-- This can also be seen as an automaton that transforms a stack.
+-- RPolish is indexed by the types in the stack consumed by the automaton.
+data RPolish input output where
+  RVal :: a -> RPolish (a :< rest) output -> RPolish rest output
+  RApp :: RPolish (b :< rest) output -> RPolish ((a -> b) :< a :< rest) output 
+  RStop :: RPolish rest rest
+
+-- execute the automaton as far as possible
+simplify :: RPolish s output -> RPolish s output
+simplify (RVal a (RVal f (RApp r))) = simplify (RVal (f a) r)
+simplify x = x
+
+-- Gluing a Polish expression and an RP automaton.
+-- This can also be seen as a zipper of Polish expressions.
+-- Zip could be indexed by the types produced in the final stack. (see the Agda file)
+data Zip output where
+   Zip :: RPolish stack output -> Steps stack -> Zip output
+   -- note that the Stack produced by the Polish expression matches
+   -- the stack consumed by the automaton.
+
+-- Move the zipper to the right, if possible.  The type gives evidence
+-- that this function does not change the (type of) output produced.
+right :: Zip output -> Zip output
+right (Zip l (Val a r)) = Zip (RVal a l) r
+right (Zip l (App r)) = Zip (RApp l) r
+right (Zip l s) = (Zip l s)
+
+
