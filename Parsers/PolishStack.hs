@@ -93,7 +93,7 @@ evalR (Best choice _ p q) = case choice of
     EQ -> error $ "evalR: Ambiguous parse: " ++ show p ++ " ~~~ " ++ show q
 
 
--- | Right-eval a fully defined process
+-- | Eval in both directions
 evalX :: Zip -> Steps s -> (s, [Zip])
 evalX z s0 = case s0 of
     Val a r -> m (a :<) (evalX z' r)

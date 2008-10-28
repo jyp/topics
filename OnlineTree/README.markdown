@@ -3,32 +3,27 @@ http://hackage.haskell.org/cgi-bin/hackage-scripts/package/lazyarray
 http://citeseer.ist.psu.edu/95126.html
 
 
-
-----------------------------
-
      class EfficientLazy t p where
        index :: Int -> t a -> a
-       initial :: p a
-       continue :: [a] -> p a -> p a
-       finish :: p a -> t a
+       initial :: t a
+       continue :: Int -> [a] -> t a -> t a
 
-     toTree l = finish $ continue l $ initial
-
-
-Best thing to do is probably to have this set of requirements:
-
-function       cost
-------------   --------------------
-initial        O(1)
-continue l p   O(length l)
-finish p       O(log (length p))
-index i t      O(log i)
+     toTree l = continue 0 l $ initial
 
 
-Note that access does not depend on the size of the tree!
-In particular the above still holds if bottoms are present
-in the non-accessed part of the tree, and indeed for infinite input lists.
+let ev(n,t) indicate that the spine of the tree is evaluated up element n.
 
+
+ev(i,t) => index i t is O(log i)
+ev(i0,t), i0 < i1 => index i1 t is O(max (log i1) (t1-t0)) and ev(i1,t)
+
+We have choices for continue: we can make it strict or lazy in the tree.
+
+strict:
+ev(i0,t), i0 < i1 => continue i1 t l is O(max (log i1) (t1-t0)) and ev(i1,t) 
+
+lazy:
+ev(i0,t), i0 < i1 => continue i1 t l is O(log i1) (amortized) and ev(i0) 
 
 
 ----------------------------
@@ -88,3 +83,8 @@ we want to make explicit that we don't pay the cost for "continue"
 until we actually access the corresponding elements.
 
 
+# Applications
+
+- Reading a file on disk
+- GUI for a PDF reader
+- Incremental parsing :)
