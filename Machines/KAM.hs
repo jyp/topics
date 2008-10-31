@@ -1,3 +1,4 @@
+import Data.Tree
 import Text.Show
 import Control.Arrow
 import Data.List
@@ -37,18 +38,35 @@ step _ = Nothing
 
 dup x = (x,x)
 
-run t = init : unfoldr (fmap dup . step) init 
-    where init = (t :+ [], [])
+-- run the KAM on a closure
+runClosure cl = init : unfoldr (fmap dup . step) init 
+    where init = (cl, []) 
+
+-- run the KAM on a term
+run t = runClosure (t :+ [])
+
+-- evaluate a term using KAM.
+eval = last . run
+
+evalClosure :: Closure -> (Closure, [Closure])
+evalClosure = last . runClosure
+
+evalFullClosure :: Closure -> Tree Sym
+evalFullClosure cl = Node v (fmap evalFullClosure args)
+   where (Con v :+ rho, args) = evalClosure cl
+ 
+
+testFull = putStrLn . drawForest . return . evalFullClosure . (:+ [])
 
 test = mapM_ print . run 
-test' = mapM_ (print . evalState) . run 
+test' = mapM_ (print . rebuildState) . run 
 
 subsAll t [] = t
 subsAll t ((v,s):rho) = substClosed v s (subsAll t rho)
 
-evalClosure (t :+ rho) = subsAll t (map (second evalClosure) rho)
+rebuildClosure (t :+ rho) = subsAll t (map (second rebuildClosure) rho)
 
-evalState (cl,s) = foldl1 App (map evalClosure (cl:s))
+rebuildState (cl,s) = foldl1 App (map rebuildClosure (cl:s))
 --------------------
 
 i_ = Lam "x" (Var "x")
@@ -70,7 +88,7 @@ testChurch = two `App` (Con "F") `App` (Con "X")
 
 delta = Lam "x" $ App (Var "x") (Var "x") 
 
-
+d
 s0 = (App delta delta, [], [])
 
 

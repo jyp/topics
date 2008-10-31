@@ -1,10 +1,7 @@
 -- Copyright (c) JP Bernardy 2008
 
 {-# OPTIONS -fglasgow-exts #-}
-module SuspendedMachine (Void, 
---                     symbol, eof, lookNext, runPolish, 
---                     runP, progress, evalR,
-                         P) where
+module SuspensionVM where
 import Control.Applicative
 import Data.Foldable
 import Data.Traversable
@@ -59,11 +56,21 @@ evalL (App f) = case evalL f of
 evalL x = x
 
 
+evalLAll :: Steps s a -> [s] -> [Steps s a]
+evalLAll = scanl (\c -> evalL . pushOne c)
+
 
 pushEof :: Steps s a -> Steps s a
 pushEof (Val x s) = Val x (pushEof s)
 pushEof (App f) = App (pushEof f)
 pushEof (Suspend nil cons) = pushEof nil
+
+
+pushOne :: Steps s a -> s -> Steps s a
+pushOne (Val x s)          ss = Val x (pushOne s ss)
+pushOne (App f)            ss = App (pushOne f ss)
+pushOne (Suspend nil cons) s  = cons s
+
 
 push :: [s] -> Steps s a -> Steps s a
 push [] x = x

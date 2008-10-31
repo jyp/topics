@@ -23,10 +23,15 @@ data Steps r where
     App   :: (Steps ((b -> a) :< b :< r))      -> Steps (a :< r)
     Done  ::                               Steps Void
 
+
+apply ~(f:< ~(a:<r)) = f a :< r
+push a = (a :<)
+
+
 -- | Right-eval with input
 evalR :: Steps r -> r
-evalR (Val a r) = a :< evalR r
-evalR (App s) = (\(f:< ~(a:<r)) -> f a :< r) (evalR s)
+evalR (Val a r) = push a $ evalR r
+evalR (App s) = apply (evalR s)
 
 
 -- | A computation segment
@@ -54,7 +59,8 @@ evalL x = x
 
 -- Arbitrary expressions in Reverse Polish notation.
 -- This can also be seen as an automaton that transforms a stack.
--- RPolish is indexed by the types in the stack consumed by the automaton.
+-- RPolish is indexed by the types in the stack consumed by the automaton (input),
+-- and the stack produced (output)
 data RPolish input output where
   RVal :: a -> RPolish (a :< rest) output -> RPolish rest output
   RApp :: RPolish (b :< rest) output -> RPolish ((a -> b) :< a :< rest) output 
@@ -86,7 +92,19 @@ right (Zip l (Val a r)) = Zip (RVal a l) r
 right (Zip l (App r)) = Zip (RApp l) r
 right (Zip l s) = (Zip l s)
 
+-- | Pre-compute a left-prefix of some steps (as far as possible)
+evalZL :: Zip output -> Zip output
+evalZL z = case right z of
+    Zip l r -> Zip (simplify l) r
+
 
 evalZ :: Zip output -> output
 evalZ (Zip rp p) = evalRP rp (evalR p)
 
+-- | Eval in both directions
+evalX :: Zip output -> Steps s -> (s, [Zip output])
+evalX z s0 = case s0 of
+    Val a r -> m (push a)  (evalX z' r)
+    App s -> m apply (evalX z' s)
+   where z' = right z
+         m f ~(s, zz) = z' `seq` (f s, z':zz) -- tie the evaluation of the intermediate stuffs
