@@ -1,20 +1,21 @@
 -- Copyright (c) JP Bernardy 2008
 -- | This is a re-implementation of the "Polish Parsers" in a clearer way. (imho)
 {-# OPTIONS -fglasgow-exts #-}
-module SimplePolishPlusMonad (Process, Void, Parser (..),
-                     runP, progress, evalR,
-                     P) where
+module SimplePolishPlusMonadInitial where
+
 import Control.Applicative
 import Data.List hiding (map, minimumBy)
 import Data.Char
 import Data.Maybe (listToMaybe)
 
-class Alternative (p s) => Parser p s where
-    symbol :: (s -> Bool) -> p s s
-    eof :: p s ()
-    parse :: p s a -> [s] -> a
-
-    
+data Parser s a where
+    Bind :: Parser s a -> (a -> Parser s b) -> Parser s b
+    Pure :: a -> Parser s a
+    Appl :: Parser s (b -> a) -> Parser s b -> Parser s a
+    Symb :: (s -> Bool) -> Parser s s
+    Eof  :: Parser s ()
+    Empt :: Parser s a
+    Disj :: Parser s a -> Parser s a -> Parser s a
 
 data Void
 
@@ -59,104 +60,61 @@ evalR (Best choice _ p q) = case choice of
     GT -> evalR q
     EQ -> error $ "evalR: Ambiguous parse: " ++ show p ++ " ~~~ " ++ show q
 
--- | A parser. (This is actually a parsing process segment)
-newtype P s a = P {fromP :: forall r. ([s] -> Steps r)  -> ([s] -> Steps (a,r))}
-newtype Q s a = Q {fromQ :: forall h r. ((h,a) -> [s] -> Steps r)  -> (h -> [s] -> Steps r)}
-data PQ s a = PQ {getQ :: Q s a, getP :: P s a}
+type P s a = forall r. ([s] -> Steps r)  -> ([s] -> Steps (a,r))
 
-instance Parser PQ s where
-    eof = PQ eof eof
-    symbol p = PQ (symbol p) (symbol p)
-    parse (PQ q p) input = parse p input
+type Q s a = forall h r. ((h,a) -> [s] -> Steps r)  -> (h -> [s] -> Steps r)
 
-instance Functor (PQ s) where
-    fmap f ~(PQ p q) = PQ (fmap f p) (fmap f q)
+instance Functor (Parser s) where
+    fmap f = (pure f <*>)
 
-instance Applicative (PQ s) where
-    PQ hp fp <*> ~(PQ hq fq) = PQ (hp <*> hq) (fp <*> fq)
-    pure a = PQ (pure a) (pure a)
+instance Applicative (Parser s) where
+    (<*>) = Appl
+    pure = Pure
 
-instance Alternative (PQ s) where
-    PQ hp fp <|> ~(PQ hq fq) = PQ (hp <|> hq) (fp <|> fq)
-    empty = PQ empty empty
-    
-    
+instance Alternative (Parser s) where
+    (<|>) = Disj
+    empty = Empt
 
-instance Monad (PQ s) where
-    PQ (Q p) _ >>= a2q = PQ (Q $ \fut -> p (\(h,a) i -> fromQ (getQ (a2q a)) fut h i))
-                            (P $ \fut -> p (\(_,a) i -> fromP (getP (a2q a)) fut i) ())
+instance Monad (Parser s) where
+    (>>=) = Bind
     return = pure
 
-instance Parser Q s where
-  -- | Parse a symbol
-  symbol f = Q $ \fut h input -> case input of
+
+toQ :: Parser s a -> Q s a
+toQ (Symb f) = \fut h input -> case input of
       [] -> Fail -- This is the eof!
       (s:ss) -> if f s then Shift (fut (h, s) ss)
                        else Fail
-  
-  -- | Parse the eof
-  eof = Q $ \fut h input -> case input of
+toQ (Eof) = \fut h input -> case input of
       [] -> Shift (fut (h, ()) input)
       _ -> Fail
+toQ (p `Appl` q) = \k -> toQ p $ toQ q $ \((h, b2a), b) -> k (h, b2a b)
+toQ (Pure a)     = \k h input -> k (h, a) input
+toQ (Disj p q)   = \k h input -> iBest (toQ p k h input) (toQ q k h input)
+toQ (Bind p a2q) = \fut -> (toQ p) (\(h,a) i -> toQ (a2q a) fut h i)
 
-  parse (Q q) input = fst $ evalR $ q (\(h,a) input -> Val a Done) () input
-
-instance Applicative (Q s) where
-  (Q p) <*> (Q q)  =  Q (\k -> p $ q $ \((h, b2a), b) -> k (h, b2a b))
-  pure a           =  Q (\k h input -> k (h, a) input)
-
-instance Alternative (Q s) where
-  (Q p) <|> (Q q)  = Q (\k h input -> iBest (p k h input) (q k h input)) 
-  empty            = Q (\k _ _ -> Fail)
-
-instance Functor (Q state) where
-    f `fmap` (Q p)      =  Q  (\k -> p $ \(h, a) -> k (h, f a))
-
--- | A complete process
-type Process a = Steps (a,Void)
-
-instance Functor (P s) where
-    fmap f x = pure f <*> x
-
-instance Applicative (P s) where
-    P f <*> P x = P ((App .) . f . x)
-    pure x = P (\fut input -> Val x $ fut input)
-
-instance Alternative (P s) where
-    empty = P $ \_fut _input -> Fail
-    P a <|> P b = P $ \fut input -> iBest (a fut input) (b fut input)
+toP :: Parser s a -> P s a 
+toP (Symb f) = \fut input -> case input of
+      [] -> Fail -- This is the eof!
+      (s:ss) -> if f s then Shift (Val s (fut ss))
+                       else Fail
+toP Eof = \fut input -> case input of
+      [] -> Shift (Val () $ fut input)
+      _ -> Fail
+toP (Appl f x) = (App .) . toP f . toP x
+toP (Pure x)   = \fut input -> Val x $ fut input
+toP Empt = \_fut _input -> Fail
+toP (Disj a b)  = \fut input -> iBest (toP a fut input) (toP b fut input)
+toP (Bind p a2q) = \fut -> (toQ p) (\(_,a) i -> (toP (a2q a)) fut i) ()
 
 iBest :: Steps a -> Steps a -> Steps a
 iBest p q = let ~(choice, pr) = better (progress p) (progress q) in Best choice pr p q
 
-runP :: forall s a. P s a -> [s] -> Process a
-runP (P p) input = p (\_input -> Done) input
-
-
-instance Parser P s where
-  -- | Parse a symbol
-  symbol f = P $ \fut input -> case input of
-      [] -> Fail -- This is the eof!
-      (s:ss) -> if f s then Shift (Val s (fut ss))
-                       else Fail
-  
-  -- | Parse the eof
-  eof = P $ \fut input -> case input of
-      [] -> Shift (Val () $ fut input)
-      _ -> Fail
-
-  -- | Run a parser.
-  parse p input = fst $ evalR $ runP p input
+parse p input = fst $ evalR $ toP p (\_ -> Done) input
 
 --------------------------------------------------
 -- Extra stuff
 
-
-lookNext :: (Maybe s -> Bool) -> P s ()
-lookNext f = P $ \fut input ->
-   if (f $ listToMaybe input) then Val () (fut input)
-                              else Fail
-        
 
 instance Show (Steps a) where
     show (Val _ p) = "v" ++ show p
@@ -186,7 +144,9 @@ evalL x = x
 data Expr = V Int | Add Expr Expr
             deriving Show
 
-type PP = PQ Char
+type PP = Parser Char
+
+symbol = Symb
 
 sym x = symbol (== x)
 
@@ -202,7 +162,7 @@ pExprAdd = pExprAtom <|> Add <$> pExprAtom <*> (symbol (== '+') *> pExprAdd)
 pExprTop = pExprAdd
 
 pExpr :: PP Expr
-pExpr = pExprTop <* eof
+pExpr = pExprTop <* Eof
 
 syms [] = pure ()
 syms (s:ss) = sym s *> syms ss
