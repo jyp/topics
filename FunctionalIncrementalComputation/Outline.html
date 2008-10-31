@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+><head
+  ><title
+    >Functional Incremental Computation</title
+    ><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"
+     /><meta name="generator" content="pandoc"
+     /><meta name="author" content="Jean-Philippe Bernardy"
+     /><link rel="stylesheet" href="home.css" type="text/css" media="all" />
+</head
+  ><body
+  ><h1 class="title"
+    >Functional Incremental Computation</h1
+    ><div id="toc"
+    ><ul
+      ><li
+	><a href="#introduction" id="TOC-introduction"
+	  >Introduction</a
+	  ><ul
+	  ><li
+	    ><a href="#outline" id="TOC-outline"
+	      >Outline</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#representing-online-computations-polish-expressions" id="TOC-representing-online-computations-polish-expressions"
+	  >Representing online computations: polish expressions</a
+	  ></li
+	><li
+	><a href="#polish-expressions-with-suspensions" id="TOC-polish-expressions-with-suspensions"
+	  >Polish expressions with suspensions</a
+	  ></li
+	><li
+	><a href="#efficient-evaluation-of-intermediate-states-zipping-through-polish-expressions" id="TOC-efficient-evaluation-of-intermediate-states-zipping-through-polish-expressions"
+	  >Efficient evaluation of intermediate states: Zipping through polish expressions</a
+	  ></li
+	><li
+	><a href="#getting-rid-of-linear-operations" id="TOC-getting-rid-of-linear-operations"
+	  >Getting rid of linear operations</a
+	  ><ul
+	  ><li
+	    ><a href="#directly-jumping-at-the-correct-place-in-the-output" id="TOC-directly-jumping-at-the-correct-place-in-the-output"
+	      >Directly jumping at the correct place in the output</a
+	      ></li
+	    ><li
+	    ><a href="#efficient-representation-of-output" id="TOC-efficient-representation-of-output"
+	      >Efficient representation of output</a
+	      ></li
+	    ><li
+	    ><a href="#directly-jumping-at-the-correct-position-in-the-cached-states" id="TOC-directly-jumping-at-the-correct-position-in-the-cached-states"
+	      >Directly jumping at the correct position in the cached states</a
+	      ></li
+	    ><li
+	    ><a href="#efficient-representation-of-intermediate-structures" id="TOC-efficient-representation-of-intermediate-structures"
+	      >Efficient representation of intermediate structures</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#related-work" id="TOC-related-work"
+	  >Related work</a
+	  ></li
+	><li
+	><a href="#conclusion" id="TOC-conclusion"
+	  >Conclusion</a
+	  ></li
+	></ul
+      ></div
+    ><h1 id="introduction"
+    ><a href="#TOC-introduction"
+      >Introduction</a
+      ></h1
+    ><p
+    >Problem we solve:</p
+    ><p
+    >function <span class="math"
+      ><em
+	>f</em
+	></span
+      >: [i] -&gt; [o]</p
+    ><p
+    >it has linear inputs and ouputs; (this is a very common case because the user interacts linearly.)</p
+    ><p
+    >Incremental modifications of input should incur incremental re-computations of the output.</p
+    ><p
+    >Additional hypothesis: * the user observes a small portion of the output at a time * (the function is not cahotic (e.g.&nbsp;not sort))</p
+    ><h2 id="outline"
+    ><a href="#TOC-outline"
+      >Outline</a
+      ></h2
+    ><ul
+    ><li
+      >Lazy evaluation solves half of the problem</li
+      ><li
+      >Solving the other half</li
+      ><li
+      >evaluating and caching partial results</li
+      ><li
+      >get rid of inefficiencies due to naive usage of linear structures</li
+      ></ul
+    ><h1 id="representing-online-computations-polish-expressions"
+    ><a href="#TOC-representing-online-computations-polish-expressions"
+      >Representing online computations: polish expressions</a
+      ></h1
+    ><h1 id="polish-expressions-with-suspensions"
+    ><a href="#TOC-polish-expressions-with-suspensions"
+      >Polish expressions with suspensions</a
+      ></h1
+    ><h1 id="efficient-evaluation-of-intermediate-states-zipping-through-polish-expressions"
+    ><a href="#TOC-efficient-evaluation-of-intermediate-states-zipping-through-polish-expressions"
+      >Efficient evaluation of intermediate states: Zipping through polish expressions</a
+      ></h1
+    ><h1 id="getting-rid-of-linear-operations"
+    ><a href="#TOC-getting-rid-of-linear-operations"
+      >Getting rid of linear operations</a
+      ></h1
+    ><h2 id="directly-jumping-at-the-correct-place-in-the-output"
+    ><a href="#TOC-directly-jumping-at-the-correct-place-in-the-output"
+      >Directly jumping at the correct place in the output</a
+      ></h2
+    ><h2 id="efficient-representation-of-output"
+    ><a href="#TOC-efficient-representation-of-output"
+      >Efficient representation of output</a
+      ></h2
+    ><h2 id="directly-jumping-at-the-correct-position-in-the-cached-states"
+    ><a href="#TOC-directly-jumping-at-the-correct-position-in-the-cached-states"
+      >Directly jumping at the correct position in the cached states</a
+      ></h2
+    ><h2 id="efficient-representation-of-intermediate-structures"
+    ><a href="#TOC-efficient-representation-of-intermediate-structures"
+      >Efficient representation of intermediate structures</a
+      ></h2
+    ><h1 id="related-work"
+    ><a href="#TOC-related-work"
+      >Related work</a
+      ></h1
+    ><ul
+    ><li
+      >Polish parsers</li
+      ><li
+      >Attribute grammars</li
+      ><li
+      >Carlsson&rsquo;s recomputations</li
+      ><li
+      >All the incremental computing stuff</li
+      ></ul
+    ><h1 id="conclusion"
+    ><a href="#TOC-conclusion"
+      >Conclusion</a
+      ></h1
+    ></body
+  ></html
+>
+
