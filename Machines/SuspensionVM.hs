@@ -72,11 +72,11 @@ pushOne (App f)            ss = App (pushOne f ss)
 pushOne (Suspend nil cons) s  = cons s
 
 
-push :: [s] -> Steps s a -> Steps s a
-push [] x = x
-push ss (Val x s) = Val x (push ss s)
-push ss (App f) = App (push ss f)
-push (s:ss) (Suspend nil cons) = push ss (cons s)
+pushSyms :: [s] -> Steps s a -> Steps s a
+pushSyms [] x = x
+pushSyms ss (Val x s) = Val x (pushSyms ss s)
+pushSyms ss (App f) = App (pushSyms ss f)
+pushSyms (s:ss) (Suspend nil cons) = pushSyms ss (cons s)
 
 
 --------------
