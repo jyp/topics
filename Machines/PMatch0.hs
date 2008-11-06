@@ -4,13 +4,12 @@
 import Control.Applicative
 
 
-data Term a where
-     Lam :: (Term a -> Term b) -> Term (a -> b)
-     App :: Term (a -> b) -> Term a -> Term b
-     Con :: a -> Term a
+data Term input output where
+     App :: Term input (a -> b) -> Term input a -> Term input b
+     Con :: a -> Term input a
 
-     Disj :: Term (f a -> c) -> Term (g a -> c) -> Term ((f :+: g) a -> c)
-     Conj :: Term (f a -> g a -> c) -> Term ((f :*: g) a -> c)
+     Disj :: Term f c -> Term g c -> Term (f :+: g) c
+     Conj :: Term (f a -> g a -> c) -> Term (f :*: g) c
      Kons :: (x -> Term c) -> Term (K x a -> c)
      Wrap :: Term (f (T f) -> c) -> Term ((T f) -> c)
 
@@ -34,7 +33,6 @@ eval (Disj f g) = \x -> case x of
     Inl a -> eval (f <*> pure a)
     Inr a -> eval (g <*> pure a)
 eval (Conj f) = \(x :*: y) -> eval (f <*> pure x <*> pure y)
-eval (Wrap f) = \(In x) -> eval (f <*> pure x)
 
 
 instance Monad Term where
@@ -43,7 +41,6 @@ instance Monad Term where
 
 data T (f :: * -> *) where
     In :: f (T f) -> T f
-    Suspend :: T f
 out (In x) = x
 
 infixr :+:
@@ -80,3 +77,7 @@ prod = Wrap $ Disj
 
 
 
+---------------------------
+-- Data-driven evaluation
+
+deval 

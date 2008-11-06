@@ -1,4 +1,4 @@
-% Functional Incremental Computation
+% Functional Incremental Parsing
 % Jean-Philippe Bernardy
 
 Questions: can we use function composition?
@@ -7,18 +7,20 @@ Questions: can we use function composition?
 
 Problem we solve:
 
-function $f$: [i] -> [o]
-
-it has linear inputs and ouputs; (this is a very common case because the user
-interacts linearly.)
-
-Incremental modifications of input should incur incremental re-computations of
-the output.
+functions
+ * parse : String -> t
+ * view : t -> String
 
 Additional hypothesis:
   * the user observes a small portion of the output at a time (window)
   * the window moves by small steps.
-  * (the function is not cahotic (e.g. not sort))
+  * the view function has online behaviour as well.
+
+
+Result: 
+Incremental modifications of input should incur incremental re-computations of
+the output.
+
 
 
 ## Outline
@@ -31,6 +33,8 @@ Additional hypothesis:
 # Representing online computations: polish expressions
 
 # Polish expressions with suspensions
+
+# Parsing: disjunction and error correction
 
 # Efficient evaluation of intermediate states: Zipping through polish expressions
 

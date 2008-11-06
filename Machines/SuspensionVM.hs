@@ -28,6 +28,12 @@ data Steps s r where
     -- note3. the 2nd argument cannot depend on the tail of the list,
     -- because this will be provided in further steps.
 
+profile :: Steps s r -> String
+profile (Val x s) = '.' : profile s
+profile (App s) = '$' : profile s
+profile (Suspend _ _) = "?"
+profile (Done) = "!"
+
 -- | Right-eval with input
 evalR :: [s] -> Steps s r -> r
 evalR ss (Val a r) = a :< evalR ss r
@@ -38,6 +44,8 @@ evalR (s:ss)(Suspend nil cons) = evalR ss (cons s)
 -- | A computation segment
 newtype P s a = P {fromP :: forall r. Steps s r  -> Steps s (a :< r)}
 
+toProc :: P s a -> Steps s (a :< Void)
+toProc (P p) = p Done
 
 instance Functor (P s) where
     fmap f x = pure f <*> x
@@ -51,7 +59,7 @@ evalL :: Steps s a -> Steps s a
 evalL (Val x r) = Val x (evalL r)
 evalL (App f) = case evalL f of
                   (Val a (Val b r)) -> Val (a b) r
-                  (Val f1 (App (Val f2 r))) -> App (Val (f1 . f2) r)
+--                   (Val f1 (App (Val f2 r))) -> App (Val (f1 . f2) r)
                   r -> App r
 evalL x = x
 

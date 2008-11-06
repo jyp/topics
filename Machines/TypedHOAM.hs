@@ -15,7 +15,23 @@ instance Applicative Term where
    pure = Con
    (<*>) = App
 
+
 ex1 = Lam $ \a -> Lam $ \b -> Con (+) `App` a `App` b
+
+----------------------------
+-- Direct evaluation
+
+eval :: Term t -> t
+eval (App t1 t2) = eval t1 (eval t2)
+eval (Lam f) = \x -> eval (f (Con x))
+eval (Con x) = x
+
+instance Monad Term where
+    return = Con
+    k >>= f = f (eval k)
+
+---------------------------
+-- Call by name machinery
 
 data State output where
    State :: Term fct -> Stack fct output -> State output
@@ -29,21 +45,24 @@ step (State (App t1 t2) s)      = State t1 (Cons t2 s)
 step (State (Lam f) (Cons a s)) = State (f a) s
 
 
-fullEval :: State t -> t
-fullEval (State (App t1 t2) s)      = fullEval (State t1 (Cons t2 s))
-fullEval (State (Lam f) (Cons a s)) = fullEval (State (f a) s)
-fullEval (State (Lam f) Nil) = \x -> fullEval (State (f (Con x)) Nil)
+cbnExec :: State t -> t
+cbnExec (State (App t1 t2) s)      = cbnExec (State t1 (Cons t2 s))
+cbnExec (State (Lam f) (Cons a s)) = cbnExec (State (f a) s)
+cbnExec (State (Lam f) Nil) = \x -> cbnExec (State (f (Con x)) Nil)
 -- this is a rule that cannot be in the untyped version.
-fullEval (State (Con x) s) = app x s
+cbnExec (State (Con x) s) = app x s
 
 app :: fct -> Stack fct output -> output
 app x s = case s of
     Nil -> x
-    (Cons y z) -> app (x (fullEval (State y Nil))) z
+    (Cons y z) -> app (x (cbnExec (State y Nil))) z
 
 state t = State t Nil
 
-eval = fullEval . state
+cbnEval = cbnExec . state
+
+-----------------------------------------------
+-- Examples
 
 cyc :: Term [[Char]]
 cyc = Con (:) `App` Con "k" `App` cyc
@@ -68,8 +87,6 @@ list1 = cons <*> Con 2 <*> (cons <*> Con 3 <*> nil)
 
 test = prod <*> list1
 
-err = eval $ (fromList <$> (List <$> (Lam $ \n -> Lam $ \c -> n))) <*> Con 1 <*> error "sdf"
-err1 = eval $ ((Lam $ \n -> Lam $ \c -> n) <*> Con 1 <*> error "sdf")
 
 -- why this works is a bit misterious to me. :)
-main = print $ take 10 $ fullEval $ state cyc
+main = print $ take 10 $ cbnEval cyc
