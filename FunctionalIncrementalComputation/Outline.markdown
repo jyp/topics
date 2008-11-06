@@ -1,6 +1,8 @@
 % Functional Incremental Computation
 % Jean-Philippe Bernardy
 
+Questions: can we use function composition?
+
 # Introduction
 
 Problem we solve:

@@ -26,6 +26,14 @@ is "quasi linear"), it suffices to cache partially computed results for each
 point in the input, to obtain a system that responds to changes in the input
 irrespectively of the total size of that input.
 
+# Polish Expressions
+
+In order to represent partially evaluated results, we will need a
+representation for for expresions. We choose a "linear type" because
+it matches the way the input will be processed in the later sections.
+
+⟨Give the datatype and explain it⟩
+
+# Adding suspensions
 
 
-# 
