@@ -34,9 +34,9 @@ the output.
 
 # Polish expressions with suspensions
 
-# Parsing: disjunction and error correction
-
 # Efficient evaluation of intermediate states: Zipping through polish expressions
+
+# Parsing: disjunction and error correction
 
 # Getting rid of linear operations
 
