@@ -1,5 +1,4 @@
 -- Copyright (c) JP Bernardy 2008
--- | This is a re-implementation of the "Polish Parsers" in a clearer way. (imho)
 {-# OPTIONS -fglasgow-exts #-}
 module FullIncrParser where
 
@@ -10,6 +9,7 @@ import Data.Maybe (listToMaybe)
 
 data a :< b = a :< b
 
+-- | Parser specification
 data Parser s a where
     Pure :: a -> Parser s a
     Appl :: Parser s (b -> a) -> Parser s b -> Parser s a
@@ -19,9 +19,11 @@ data Parser s a where
     Case :: Parser s a -> (s -> Parser s a) -> Parser s a
     Empt :: Parser s a
     Disj :: Parser s a -> Parser s a -> Parser s a
+    Yuck :: Parser s a -> Parser s a
 
 data Void
 
+-- | Parser process
 data Steps s a where
     Val   :: a -> Steps s r                      -> Steps s (a :< r)
     App   :: Steps s ((b -> a) :< (b :< r))      -> Steps s (a :< r)
@@ -30,6 +32,7 @@ data Steps s a where
     Fail ::                                Steps s a
     Sus :: Steps s a -> (s -> Steps s a) -> Steps s a
     Best :: Ordering -> Progress -> Steps s a -> Steps s a -> Steps s a
+    Dislike :: Steps s a -> Steps s a
 
 -- | Push a chunk of symbols or eof in the process. This forces some suspensions.
 push :: Maybe [s] -> Steps s r -> Steps s r
@@ -47,26 +50,45 @@ push ss p = case p of
                   Fail -> Fail
                   Best _ _ p' q' -> iBest (push ss p') (push ss q')
 
-
-data Progress = PFail | PDone | PShift Progress
+data Progress = PSusp | PFail | PRes Int | !Int :> Progress
     deriving Show
 
-better :: Progress -> Progress -> (Ordering, Progress)
-better PFail p = (GT, p) -- avoid failure
-better p PFail = (LT, p)
-better p PDone = (GT, PDone)
-better PDone p = (LT, PDone)
-better (PShift p) (PShift q) = pstep (better p q)
+mapSucc PSusp = PSusp
+mapSucc PFail = PFail
+mapSucc (PRes x) = PRes (succ x) 
+mapSucc (x :> xs) = succ x :> mapSucc xs
 
-pstep ~(ordering, xs) = (ordering, PShift xs)
+dislikeThreshold _ = 0
 
-progress :: Steps s a -> Progress
+-- | Compute the combination of two profiles, as well as which one is the best.
+better :: Int -> Progress -> Progress -> (Ordering, Progress)
+better _ PFail p = (GT, p) -- avoid failure
+better _ p PFail = (LT, p)
+better _ PSusp _ = (EQ, PSusp) -- could not decide before suspension => leave undecided.
+better _ _ PSusp = (EQ, PSusp)
+better _ (PRes x) (PRes y) = if x <= y then (LT, PRes x) else (GT, PRes y)  -- two results, just pick the best.
+better lk xs@(PRes x) (y:>ys) = if x == 0 || y-x > dislikeThreshold lk then (LT, xs) else min x y +> better (lk+1) xs ys
+better lk (y:>ys) xs@(PRes x) = if x == 0 || y-x > dislikeThreshold lk then (GT, xs) else min x y +> better (lk+1) ys xs
+better lk (x:>xs) (y:>ys)
+    | x == 0 && y == 0 = rec -- never drop things with no error: this ensures to find a correct parse if it exists.
+    | y - x > threshold = (LT, x:>xs) -- if at any point something is too disliked, drop it.
+    | x - y > threshold = (GT, y:>ys)
+    | otherwise = rec
+    where threshold = dislikeThreshold lk
+          rec = min x y +> better (lk + 1) xs ys
+
+x +> ~(ordering, xs) = (ordering, x :> xs)
+
+progress :: Steps s r -> Progress
 progress (Val _ p) = progress p
 progress (App p) = progress p
-progress (Shift p) = PShift (progress p)
-progress (Done) = PDone
+progress (Shift p) = 0 :> progress p
+progress (Done) = PRes 0 -- success with zero dislikes
 progress (Fail) = PFail
+progress (Dislike p) = mapSucc (progress p)
+progress (Sus _ _) = PSusp
 progress (Best _ pr _ _) = pr
+
 
 -- | Right-eval a fully defined process
 evalR :: Steps s (a :< r) -> (a, Steps s r)
@@ -103,6 +125,8 @@ toQ (p `Appl` q) = \k -> toQ p $ toQ q $ \((h, b2a), b) -> k (h, b2a b)
 toQ (Pure a)     = \k h -> k (h, a)
 toQ (Disj p q)   = \k h -> iBest (toQ p k h) (toQ q k h)
 toQ (Bind p a2q) = \k -> (toQ p) (\(h,a) -> toQ (a2q a) k h)
+toQ Empt = \_k _h -> Fail
+toQ (Yuck p) = \k h -> Dislike $ toQ p k h
 
 type P s a = forall r. (Steps s r)  -> (Steps s (a :< r))
 toP :: Parser s a -> P s a 
@@ -112,9 +136,10 @@ toP (Pure x)   = Val x
 toP Empt = \_fut -> Fail
 toP (Disj a b)  = \fut -> iBest (toP a fut) (toP b fut)
 toP (Bind p a2q) = \fut -> (toQ p) (\(_,a) -> (toP (a2q a)) fut) ()
+toP (Yuck p) = Dislike . toP p 
 
 iBest :: Steps s a -> Steps s a -> Steps s a
-iBest p q = let ~(choice, pr) = better (progress p) (progress q) in Best choice pr p q
+iBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
 
 -- parse p = fst $ evalR $ toP p (\_ -> Done) 
 
