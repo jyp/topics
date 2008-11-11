@@ -254,6 +254,23 @@ data Tree a = Node a (Tree a) (Tree a)
             | Leaf
 ~~~~
 
+The only choice that remains is the size of the subtrees. There are
+many possible choices here, so we chose simple rules:
+
+1. Each node will be assigned a 'maximum size'. If the input contains
+enough elements, then the size of the subtree will be its maximum size.
+
+2. Let us define $leftSize$ to be the maximum size of the left subtree of a node.
+We assign $leftSize$ for each subtree by the following recusive rule: 
+    - $leftSize$ of a left child is $1$.
+    - $leftSize$ of a right child is twice the $leftSize$ of the node.
+
+3. The above rule leaves the maximum size for the whole tree undefined, but we
+know that it must be unbounded to be able to store arbitrary number of elements.
+
+
+
+> Can we prove that the requirements are fulfilled?
 
 ~~~~
 direct :: Int -> [a] -> Tree a
@@ -262,6 +279,7 @@ direct leftSize (x:xs) = Node x (direct initialLeftSize xl)
                                 (direct (leftSize * factor) xr)
   where (xl, xr) = splitAt leftSize xs
 ~~~~
+
 
 ~~~~
 (.!) = look initialLeftSize
