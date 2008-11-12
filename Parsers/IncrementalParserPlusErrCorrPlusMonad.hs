@@ -21,8 +21,6 @@ data Parser s a where
     Disj :: Parser s a -> Parser s a -> Parser s a
     Yuck :: Parser s a -> Parser s a
 
-data Void
-
 -- | Parser process
 data Steps s a where
     Val   :: a -> Steps s r                      -> Steps s (a :< r)
@@ -42,7 +40,7 @@ push ss p = case p of
                       Nothing -> push ss nil
                       Just [] -> p
                       Just (s:ss') -> push (Just ss') (cons s)
---                  (Dislike p') -> Dislike (push ss p')
+                  (Dislike p') -> Dislike (push ss p')
                   (Shift p') -> Shift (push ss p')
                   (Val x p') -> Val x (push ss p')
                   (App p') -> App (push ss p')
@@ -169,9 +167,9 @@ evalL x@(Best choice _ p q) = case choice of
 evalL x = x
 
 symbol f = Case empty $ \s -> if f s then pure s else empty
-eof f = Case (pure ()) (const empty)
+eof = Case (pure ()) (const empty)
 
-{------------------
+parse p input = evalR $ push Nothing $ push (Just input) $ toP p Done
 
 data Expr = V Int | Add Expr Expr
             deriving Show
@@ -215,4 +213,3 @@ p2 :: PP Int
 p2 = p0 >>= p1
 
 test = parse (p0 >>= p1) "ab"
--}
