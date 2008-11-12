@@ -308,32 +308,45 @@ will be in $O(log~n)$.
 
 The second requirement suggests are tree-like structure, and the first
 requirement implies that whether the structure is empty or not can be determined
-by entering only the root constructor. This suggests the following data type.
+by entering only the root constructor. This suggests the following data type,
+with the idea that it will be traversed in preorder.
 
 ~~~~
-data Tree a = Node a (Tree a) (Tree a)
-            | Leaf
+data Tree a  = Node a (Tree a) (Tree a)
+             | Leaf
 ~~~~
 
-The only choice that remains is the size of the subtrees. 
+
+The only choice that remains is the size of the subtrees. The specific choice
+we make is not important as long as we make sure that each element is reachable
+in $O(log~n)$ steps. A simple choice is have a list of complete trees with
+increasing depth $k$, yielding a tree of size sizes $2^{k} - 1$. To make things
+more uniform we can encode the list using the same datatype.
+
+> picture
+
+A complete tree of total depth $2 d$ can therefore store at least $\sum_{k=1}^d
+2^{k}-1$ elements, fulfilling the second requirement.
+
+## Quick access
+
+A key observation is that, given the above structure, one can access an element
+without pattern matching on any other node that is not the direct path to it.
+This allows efficient access without loosing any property of laziness. Thus,
+we can avoid the other source of inefficiencies of our implementation.
+
+1. We can fetch the partial result that corresponds to the user change without
+traversing the whole list of partial results or forcing its length to be computed.
+Of course, the first time it is accessed intermediate results up to the one
+we require stil have to be computed.
+
+2. The final results that the user observe will be in linear form as well. We
+don't want to store them in a structure that forces the length, otherwise our
+parser will be forced to process the whole input. Still, we want to access the
+part corresponding to the window being viewed efficiently. Storing the results
+in the same type of structure saves the day again.
 
 
-There are many possible choices here. We chose this simple rules:
-
-1. Each node will be assigned a 'maximum size'. If the input contains
-enough elements, then the size of the subtree will be its maximum size.
-
-2. Let us define $leftSize$ to be the maximum size of the left subtree of a node.
-We assign $leftSize$ for each subtree by the following recusive rule: 
-    - $leftSize$ of a left child is $1$.
-    - $leftSize$ of a right child is twice the $leftSize$ of the node.
-
-3. The above rule leaves the maximum size for the whole tree undefined, but we
-know that it must be unbounded to be able to store arbitrary number of elements.
-
-
-
-> Can we prove that the requirements are fulfilled?
 
 ~~~~
 direct :: Int -> [a] -> Tree a
@@ -354,11 +367,12 @@ look leftsize (Node x l r) index
     | otherwise = look (leftsize * factor) r (index - 1 - leftsize)
 ~~~~
 
-    
-
-
 
 # Results
+
+We carried out development of a parser combinator library for incremental
+parsing with support for error correction. We argumented that the complexity
+of the parsing is linear, and that is can cost
 
 
 ~~~~
