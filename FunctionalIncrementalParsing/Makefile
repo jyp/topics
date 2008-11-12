@@ -14,7 +14,7 @@
 	pandoc --smart --standalone --from=markdown --to=latex --output=$@ $<
 
 %.tex: %.lhs
-	lhs2tex $< > $@
+	lhs2TeX $< > $@
 
 
 %.pdf: %.tex

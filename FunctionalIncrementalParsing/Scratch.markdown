@@ -14,6 +14,8 @@ our parsing machinery can be improved to support error-correction.
 
 # Introduction
 
+(Introduce example Expr = Int | Add Expr Expr / SExpr ?)
+
 In an interactive system, a lazy evaluation strategy provides a special form
 of incremental computation: the amount of output that is demanded drives the
 computation to be performed. In other words, the systems responds to incremental
@@ -31,14 +33,15 @@ In this paper we show how this can be done in practice.
 
 ## Contributions
 
-* We describe a novel way to implement incremental parsing in 
-by taking advantage of lazy evaluation;
+* We describe a novel way to implement incremental parsing in by taking
+advantage of lazy evaluation;
 
 * We have implemented such a system and made use of it to provide syntax-dependent
 feedback in the Yi editor. For example, we give parenthesis matching information
 for the Haskell language;
 
-* We craft a data structure to be used in place of lists to provide efficient algorithms;
+* We craft a data structure to be used in place of lists, which is more
+efficient but has the same properies for laziness.
 
 * (error correction)
 
