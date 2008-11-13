@@ -42,9 +42,8 @@ efficient but has the same properies for laziness;
 * We show a complete implementation of a parser combinator library for
 incremental parsing and error correction;
 
-* We have implemented such a system and made use of it to provide syntax-dependent
-feedback in the Yi editor. For example, we give parenthesis matching information
-for the Haskell language.
+* We have implemented such a system and made use of it to provide
+syntax-dependent feedback in a production-quality editor.
 
 
 # Polish Expressions
@@ -221,7 +220,7 @@ a value.
 
 # Parsing
 
-## disjunction
+## Disjunction
 
 
 We kept the discussion of actual parsing out of the discussion so far. This is
@@ -234,6 +233,9 @@ However, the most common way to produce such structured values is by *parsing* t
 input string. To support convenient parsing, we can introduce a disjunction operator,
 exactly as Swierstra and Hughes do: the addition of the `Suspend` operator does not
 undermine their treatment of disjunction in any way. 
+
+> The zipper cannot go beyond an unresolved disjunction. That is ok if we assume that
+> the parser has indeed online behaviour. 
 
 ## Error correction
 
