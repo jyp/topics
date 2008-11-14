@@ -7,8 +7,8 @@
 
 
 
-# %.tex: %.markdown
-#	pandoc --smart --standalone --from=markdown --to=latex --output=$@ $<
+%.direct.tex: %.markdown
+	pandoc --smart --standalone --from=markdown --to=latex --output=$@ $<
 
 %.lhs: %.markdown
 	pandoc --smart --standalone --from=markdown --to=latex --output=$@ $<
