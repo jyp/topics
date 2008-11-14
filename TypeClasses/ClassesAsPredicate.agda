@@ -70,11 +70,6 @@ module ClassesAsPredicate where
     mapMaybe f nothing = nothing
     mapMaybe f (just x) = just (f x)   
 
-    zipWith : forall {a b c} -> (a -> b -> c) -> List a -> List b -> List c
-    zipWith f [] _ = []
-    zipWith f _ [] = []
-    zipWith f (a ∷ as) (b ∷ bs) = f a b ∷ zipWith f as bs
-
     -- Instances for the Eq class
     eqClassInstances : (c : Code) -> Maybe1 (EqClassSig ⟦ c ⟧)
     eqClassInstances boolCode = just (record {equality = boolTest})

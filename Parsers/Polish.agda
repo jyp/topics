@@ -1,7 +1,7 @@
 module Polish where
 
 open import Data.Nat
-open import Data.List
+open import Data.List hiding (zip)
 
 data List1 (T : Set1) : Set1 where
   Nil : List1 T

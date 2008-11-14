@@ -1,4 +1,4 @@
-module CJ2 where
+module CJ where
 
 open import Data.Nat
 open import Data.Maybe
@@ -11,7 +11,6 @@ open import Data.Bool
 open import Data.List
 open import Relation.Binary.PropositionalEquality1
   
-
 data Funct : ℕ -> Set1 where
   K : forall n -> Set -> Funct n
   _⊕_ : forall {n} -> Funct n -> Funct n -> Funct n
@@ -121,17 +120,17 @@ mutual
   mndq p q pc (inj₂ qc) = inj₂ ( pc , qc)
 
   right : forall {j c : Set} -> (p : Funct 1) -> ([[ p ]] j ⊎ ([[ △ p ]] c j × c)) -> (j × [[ △ p ]] c j) ⊎ [[ p ]] c
-  right (K .1 y) (inj₁ x) = inj₂ x
-  right (K .1 y) (inj₂ (() , y'))
-  right (p ⊕ q) (inj₁ (inj₁ pj)) = mindp (right p (inj₁ pj))
-  right (p ⊕ q) (inj₁ (inj₂ qj)) = mindq (right q (inj₁ qj))
-  right (p ⊕ q) (inj₂ (inj₁ pd , c)) = mindp (right p (inj₂ (pd , c)))
-  right (p ⊕ q) (inj₂ (inj₂ qd , c)) = mindq (right q (inj₂ (qd , c)))
-  right (p ⊗ q) (inj₁ (pj , qj)) = mndp p q (right p (inj₁ pj)) qj 
+  right (K .1 y) (inj₁ x)                   = inj₂ x
+  right (K .1 y) (inj₂ (() , y'))           
+  right (p ⊕ q) (inj₁ (inj₁ pj))            = mindp (right p (inj₁ pj))
+  right (p ⊕ q) (inj₁ (inj₂ qj))            = mindq (right q (inj₁ qj))
+  right (p ⊕ q) (inj₂ (inj₁ pd , c))        = mindp (right p (inj₂ (pd , c)))
+  right (p ⊕ q) (inj₂ (inj₂ qd , c))        = mindq (right q (inj₂ (qd , c)))
+  right (p ⊗ q) (inj₁ (pj , qj))            = mndp p q (right p (inj₁ pj)) qj 
   right (p ⊗ q) (inj₂ (inj₁ (pd , qj) , c)) = mndp p q (right p (inj₂ (pd , c))) (cvt (lem {q}) qj)
   right (p ⊗ q) (inj₂ (inj₂ (pc , qd) , c)) = mndq p q (cvt (lem {p}) pc) (right q (inj₂ (qd , c))) 
-  right (π zero) (inj₁ j) = inj₁ (j , tt)
-  right (π zero) (inj₂ (tt , c)) = inj₂ c
+  right (π zero) (inj₁ j)                   = inj₁ (j , tt)
+  right (π zero) (inj₂ (tt , c))            = inj₂ c
   right (π (suc ())) x
 
 

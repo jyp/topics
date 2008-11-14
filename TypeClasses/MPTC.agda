@@ -4,7 +4,7 @@ open import Data.Bool
 open import Data.Maybe
 open import Data.Vec
 
-module Classes2 where
+module MPTC where
 
   -- test if two boolean values are equal
   boolTest : Bool -> Bool -> Bool 
@@ -28,8 +28,8 @@ module Classes2 where
     _∷₁_ : forall {n} -> a -> Vec₁ a n -> Vec₁ a (suc n)
 
   lookup₁ : forall {a n} -> Fin n -> Vec₁ a n -> a
-  lookup₁ fz     (x ∷₁ xs) = x
-  lookup₁ (fs i) (x ∷₁ xs) = lookup₁ i xs
+  lookup₁ zero     (x ∷₁ xs) = x
+  lookup₁ (suc i) (x ∷₁ xs) = lookup₁ i xs
 
 
   map₀₁ : forall {a b n} -> (a -> b) -> Vec a n -> Vec₁ b n
@@ -63,7 +63,7 @@ module Classes2 where
   -- Signature for Eq class
   record EqClassSig (t : Vec₁ Set 2) : Set where
      field 
-       == : lookup₁ fz t -> lookup₁ (fs fz) t -> Bool
+       == : lookup₁ zero t -> lookup₁ (suc zero) t -> Bool
    
   -- Instances for the Eq class
   eqClassInstances : (c : Vec Code 2) -> Maybe (EqClassSig ⟦ c ⟧ⁿ)
@@ -103,3 +103,18 @@ module Classes2 where
   -- Note: we can define a "wrong" function, and leave the burden of proof to the caller.
   -- (I think this is akin to so called "axiomatic classes" in Isabelle.)
 
+
+  ----------------------------------------------------------------
+  -- Signature for zero-parameter class
+  record ZeroClassSig (t : Vec₁ Set 0) : Set where
+     field 
+       hello : ℕ
+  -- Instances for the Zero class
+  zeroClassInstances : ℕ -> (c : Vec Code 0) -> Maybe (ZeroClassSig ⟦ c ⟧ⁿ)
+  zeroClassInstances n _ = just (record { hello = n })
+
+  -- Definition of the Zero class
+  zero5Class : Class
+  zero5Class = record {arity = 0; sig = ZeroClassSig; instances = zeroClassInstances 5}
+
+  -- The zero-parameter concepts are basically records.
