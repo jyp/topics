@@ -7,19 +7,19 @@ In the context of an interactive application where the user observes only a
 small window of the ouput (that is, one that corresponds to a small window of
 the input), we show that combining lazy evaluation and caching of intermediate (partial)
 results provides incremental parsing. We also introduce a general purpose,
-simple data structure, to get rid of the linear complexity of lazy lists
+simple data structure, to get rid of the linear complexity caused by lazy lists
 traversals while retaining its lazy properties. Finally, we complete our 
 treatment of incremental parsing in an interactive system by showing how
 our parsing machinery can be improved to support error-correction.
 
 # Introduction
 
-(Introduce example Expr = Int | Add Expr Expr / SExpr ?)
+> Introduce example Expr = Int | Add Expr Expr / SExpr ?
 
 In an interactive system, a lazy evaluation strategy provides a special form
 of incremental computation: the amount of output that is demanded drives the
-computation to be performed. In other words, the systems responds to incremental
-movement of the potion of the output being viewed by the user (window) by
+computation to be performed. In other words, the system responds to incremental
+movement of the portion of the output being viewed by the user (window) by
 incremental computation of the intermediate structures.
 
 This suggests that we can take advantage of lazy evaluation to implement
@@ -33,7 +33,7 @@ In this paper we show how this can be done in practice.
 
 ## Contributions
 
-* We describe a novel way to implement incremental parsing in by taking
+* We describe a novel way to implement incremental parsing by taking
 advantage of lazy evaluation;
 
 * We craft a data structure to be used in place of lists, which is more
@@ -48,12 +48,12 @@ syntax-dependent feedback in a production-quality editor.
 
 # Polish Expressions
 
-In order to represent partially evaluated results, we will need a
+In order to represent partially evaluated results, we need a
 representation for expresions. Following Swierstra and Hughes, we use a type
-with at most one recursive position. This gives it a linear structure. This is 
-necessary to the linear processing of the input that we use in parsing algorithms.
-In contrast to Swierstra however, we use GADTs to capture the matching
-of types between functions and arguments, instead of nested types.
+with at most one recursive position, giving it a linear structure. This is 
+necessary to match the linear processing of the input in parsing algorithms.
+In contrast to Swierstra however, we capture the matching
+of types between functions and arguments in a GADT, instead of nested types.
 
 ~~~~
 data a :< b
@@ -106,7 +106,7 @@ This evaluation procedure possesses the "online" property: parts of the polish
 expression are demanded only if the corresponding parts of the input is
 demanded. This preserves the incremental properties of lazy evaluation.
 
-# Adding suspensions
+# Adding input
 
 The polish expresssions presented so far do not depend on input. We introduce
 the `Suspend` constructor to fulfill this role: it expresses that the rest of
@@ -153,7 +153,7 @@ $n^{th}$ element of the partial results list and feed it the new input's tail (f
 that position).
 
 This suffers from a major issue: partial results remain in their "polish
-expression form", and reusing offers no almost benefit, because no computation is
+expression form", and reusing offers almost no benefit, because no computation is
 shared beyond construction of the expression in polish form.
 Fortunately, it is possible to partially evaluate prefixes of polish expressions.
 
@@ -225,8 +225,8 @@ a value.
 
 We kept the discussion of actual parsing out of the discussion so far. This is
 for good reason: the machinery for incremental computation and reuse of partial
-results is indepenent from it. Indeed, given any procedure to compute structured
-values from a linear input of symbols, one can use the procedure discribed above
+results is independent from it. Indeed, given any procedure to compute structured
+values from a linear input of symbols, one can use the procedure described above
 to transform it into an incremental algorithm.
 
 However, the most common way to produce such structured values is by *parsing* the
@@ -248,7 +248,7 @@ algorithm itself is necessary. However, most interesting grammars produce
 a highly structured result, and are correspondingly restrictive on the input
 they accept. Augmenting the parser with error correction is therefore desirable.
 
-We can do so by introducting an other constructor in the `Steps` type to represent
+We can do so by introducing an other constructor in the `Steps` type to represent
 less desirable parses. The idea is that the grammar contains permissive rules,
 but those are tagged as less desirable. The parsing algorithm can then maximize
 the desirability of the set of rules used.
@@ -297,7 +297,7 @@ structure can be ignored when traversing the result.
 
 Let us summarize the requirements we put on the data structure:
 
-* It must provide the same laziness properties as a list: accessing the
+* It must provide the same laziness properties as a list: accessing
 an element in the structure should not force to parse the input further than
 necessary if we had used a list.
 
@@ -308,7 +308,7 @@ no more than $O(log~n)$ partial applications on the stack of the corresponding
 partial result. This in turn means that the resuming cost for that partial result
 will be in $O(log~n)$.
 
-The second requirement suggests are tree-like structure, and the first
+The second requirement suggests tree-like structure, and the first
 requirement implies that whether the structure is empty or not can be determined
 by entering only the root constructor. This suggests the following data type,
 with the idea that it will be traversed in preorder.
@@ -340,7 +340,7 @@ we can avoid the other source of inefficiencies of our implementation.
 1. We can fetch the partial result that corresponds to the user change without
 traversing the whole list of partial results or forcing its length to be computed.
 Of course, the first time it is accessed intermediate results up to the one
-we require stil have to be computed.
+we require still have to be computed.
 
 2. The final results that the user observe will be in linear form as well. We
 don't want to store them in a structure that forces the length, otherwise our

@@ -8,6 +8,11 @@ data Term a where
      App :: Term (a -> b) -> Term a -> Term b
      Con :: a -> Term a
 
+data Code stack where
+    Push :: a -> Code stack -> Code (a :< stack)
+    Appl :: Code ((b -> a) :< b :< stack) -> Code (a :< stack)
+
+
 instance Functor Term where
      fmap f = (pure f <*>)
 
@@ -60,6 +65,9 @@ app x s = case s of
 state t = State t Nil
 
 cbnEval = cbnExec . state
+
+data BNCode = Enter BNCode | Apply BNCode | Return BNCode
+
 
 -----------------------------------------------
 -- Examples
