@@ -4,7 +4,7 @@
 # Abstract
 
 In the context of an interactive application where the user observes only a
-small window of the ouput (that is, one that corresponds to a small window of
+small window of the output (that is, one that corresponds to a small window of
 the input), we show that combining lazy evaluation and caching of intermediate (partial)
 results provides incremental parsing. We also introduce a general purpose,
 simple data structure, to get rid of the linear complexity caused by lazy lists
@@ -13,8 +13,6 @@ treatment of incremental parsing in an interactive system by showing how
 our parsing machinery can be improved to support error-correction.
 
 # Introduction
-
-> Introduce example Expr = Int | Add Expr Expr / SExpr ?
 
 In an interactive system, a lazy evaluation strategy provides a special form
 of incremental computation: the amount of output that is demanded drives the
@@ -29,7 +27,19 @@ viewed, it suffices to cache partially computed results for each point in the
 input, to obtain a system that responds to changes in the input independently
 of the total size of that input.
 
-In this paper we show how this can be done in practice.
+In the Yi editor, we used this technique to provide features such as syntax
+highlighting and indentation hints for the Haskell language. The abstract
+syntax tree (AST) being available at all times is very convenient to implement
+all syntax-dependent functions in a consistent way.
+
+In this paper, we will use a simpler problem for the purpose of illustration:
+parenthesis matching for a lisp-like language. Given an input
+such as `1 + (5 * (3 + 4)) * 2`, the program will display `1 + {5 * [3 + 4]} *
+2`. The idea is that matching pairs are displayed using different parenthetical
+symbols for each level, making extent of each sub-expression more apparent.
+The decorated output is produced by parsing and linearizing back the syntax
+tree.
+
 
 ## Contributions
 
@@ -37,7 +47,7 @@ In this paper we show how this can be done in practice.
 advantage of lazy evaluation;
 
 * We craft a data structure to be used in place of lists, which is more
-efficient but has the same properies for laziness;
+efficient but has the same properties for laziness;
 
 * We show a complete implementation of a parser combinator library for
 incremental parsing and error correction;
@@ -45,11 +55,10 @@ incremental parsing and error correction;
 * We have implemented such a system and made use of it to provide
 syntax-dependent feedback in a production-quality editor.
 
-
 # Polish Expressions
 
 In order to represent partially evaluated results, we need a
-representation for expresions. Following Swierstra and Hughes, we use a type
+representation for expressions. Following Swierstra and Hughes, we use a type
 with at most one recursive position, giving it a linear structure. This is 
 necessary to match the linear processing of the input in parsing algorithms.
 In contrast to Swierstra however, we capture the matching
@@ -60,45 +69,58 @@ data a :< b
 infixr :<
 
 data Steps r where
-    Val   :: a -> Steps r                  -> Steps (a :< r)
+    Push  :: a -> Steps r                  -> Steps (a :< r)
     App   :: (Steps ((b -> a) :< b :< r))  -> Steps (a :< r)
     Done  ::                                  Steps ()
 ~~~~
 
-This type can be interpreted as a polish expression that produces a given stack
-of output. `Val` produces a stack with one more value than its argument. `App`
+A value of type `Steps r` can be interpreted as a polish expression that
+produces a stack of type `r`.
+
+`Push` produces a stack with one more value than its argument. `App`
 transforms the stack produced by its argument: it applies the function on the
 top to the argument on the second position. `Done` produces the empty stack.
 
-It is easy to translate from an applicative language to these polish expressions:
+It is easy to translate from an applicative language to these polish expressions, 
+and therefore syntax trees can be outputed in that form just as easily.
+
 
 ~~~~
 data Applic a where
     (:*:) :: Applic (b -> a) -> Applic b -> Applic a
     Pure :: a -> Applic a
-
+infixl :*:
 toSteps expr = toP expr Done
   where toP :: Applic a -> (Steps r -> Steps (a,r))
         toP (f :*: x)  = App . toP f . toP x
-        toP (Pure x)   = Val x
+        toP (Pure x)   = Push x
+~~~~
 
 ~~~~
+-- The expression `4 * (2 + 3)` in direct, applicative and polish style.
+expr = Mul (Val 4) (Add (Val 2) (Val 3))
+expr' = Pure Mul :*: (Pure Val :*: Pure 4) :*: (Pure Add :*: (Pure Val :*: Pure 2) :*: (Pure Val :*: Pure 3))
+expr'' = App $ App $ Push Mul $ App $ Push Val $ Push 4 $ App $ App $ Push Add $ Push 2 $ App $ Push Val $ Push 3 $ Done
+~~~~
+
 
 The value of an expression can be evaluated as follows:
 
 ~~~~
-evalR :: Steps s (a :< r) -> (a, Steps s r)
-evalR (Val a r) = (a,r)
+evalR :: Steps (a :< r) -> (a, Steps r)
+evalR (Push a r) = (a,r)
 evalR (App s) = let (f, s') = evalR s
                     (x, s'') = evalR s'
                 in (f x, s'')
 ~~~~
 
-> The altenative is
+> Note that `fst . evalR . toSteps . traverse = id`.
+
+> An alternative, which builds the whole stack (and thus requires a constructor for :<) is:
 
 ~~~~
-evalR :: Steps s r -> r
-evalR (Val a r) = a :< evalR ss r
+evalR :: Steps r -> r
+evalR (Push a r) = a :< evalR ss r
 evalR (App s) = (\ ~(f:< (a:<r)) -> f a :< r) (evalR ss s)
 ~~~~
 
@@ -108,15 +130,15 @@ demanded. This preserves the incremental properties of lazy evaluation.
 
 # Adding input
 
-The polish expresssions presented so far do not depend on input. We introduce
+The polish expressions presented so far do not depend on input. We introduce
 the `Suspend` constructor to fulfill this role: it expresses that the rest of
 the expression can depend on the (first symbol of) the output. Using this we can
 extend our applicative language with a construct to pattern match on the front
-of the input.
+of the input, and write a (naive) parser for valid arithmetic expressions.
 
 ~~~~
 data Steps s r where
-    Val   :: a -> Steps s r ->                   Steps s (a :< r)
+    Push   :: a -> Steps s r ->                   Steps s (a :< r)
     App   :: (Steps s ((b -> a) :< b :< r)) ->   Steps s (a :< r)
     Done  ::                                     Steps s ()
     Suspend :: Steps s r -> (s -> Steps s r) ->  Steps s r
@@ -127,25 +149,44 @@ data Parser s a where
     Pure :: a -> Parser s a
     Case :: Parser s a -> (s -> Parser s a) -> Parser s a
 
-
 toP (Case nil cons) = \fut -> Suspend (toP nil fut) (\s -> fromP (toP (cons s) fut)
 -- other cases unchanged
-
 ~~~~
 
+~~~~
+parseList :: Parser Char [SExpr]
+parseList = Case 
+   (Pure [])
+   (\c -> case c of
+       ')' -> Pure []
+       '(' -> Pure (\arg rest -> S arg : rest ) :@: parseList :@: parseList
+       c -> Pure (Atom c :) :@: parseList)
+~~~~
 
-We can construct intermediate parsing results by feeding a symbol of the input in the expression,
-choosing the corresponding argument of the `Suspend` constructor. Similarly, we will take the
-other argument if the end of the input is reached. Given an input, we can lazily construct the 
-list of all intermediate results using `scanl`.
+Suspensions in a polish expression can be resolved by feeding input into it.
+When facing a suspension, we pattern match on the input, and choose the
+corresponding branch in the result.
 
 ~~~~
-pushOne :: Steps s a -> s -> Steps s a
-pushOne (Val x s)          ss = Val x (pushOne s ss)
-pushOne (App f)            ss = App (pushOne f ss)
-pushOne (Suspend nil cons) s  = cons s
+feed :: [s] -> Steps s r -> Steps s r
+feed ss p = case p of
+                  (Sus nil cons) -> case ss of
+                      [] -> feed [] nil
+                      Just (s:ss') -> feed (ss') (cons s)
+                  (Push x p') -> Push x (feed ss p')
+                  (App p') -> App (feed ss p')
+~~~~
 
-partialParses = scanl pushOne
+We can also obtain intermediate parsing results by feeding symbols one at a
+time. The list of all intermediate results is constructed lazily using `scanl`.
+
+~~~~
+feedOne :: Steps s a -> s -> Steps s a
+feedOne (Push x s)          ss = Push x (feedOne s ss)
+feedOne (App f)            ss = App (feedOne f ss)
+feedOne (Suspend nil cons) s  = cons s
+
+partialParses = scanl feedOne
 ~~~~
 
 Now, if the $n^{th}$ element of the input is changed, one can reuse the
@@ -157,24 +198,27 @@ expression form", and reusing offers almost no benefit, because no computation i
 shared beyond construction of the expression in polish form.
 Fortunately, it is possible to partially evaluate prefixes of polish expressions.
 
-The following definition performs this task naïvely:
+The following definition performs this task by performing applications by
+traversing the result and applying functions along the way.
 
 ~~~~
 evalL :: Steps s a -> Steps s a
-evalL (Val x r) = Val x (evalL r)
+evalL (Push x r) = Push x (evalL r)
 evalL (App f) = case evalL f of
-                  (Val a (Val b r)) -> Val (a b) r
+                  (Push a (Push b r)) -> Push (a b) r
                   r -> App r
-partialParses = scanl (\c -> evalL . pushOne c)
+partialParses = scanl (\c -> evalL . feedOne c)
 ~~~~
 
 This still suffers from a major drawback: as long as a function application is not
 saturated, the polish expression will start with a (potentially long) prefix of the
 form:
 
-      partialsP = App $ Val v_1 $ App $ Val v_2 $  ... $ App $ Suspend nil cons
+      partialsP = App $ Push v_1 $ App $ Push v_2 $  ... $ App $ Suspend nil cons
 
 which cannot be simplified. 
+
+> after parsing `(abcdefg` we get exactly this.
 
 This prefix can persist until the end of the input is reached. A possible remedy is
 to avoid writing expressions that lead to this sort of intermediate results, and
@@ -182,7 +226,7 @@ we will see in section [ref] how to do this in a particularly important case. Th
 however works only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the input). In general,
 after parsing a prefix of size $n$, it is reasonable to expect a partial application
-of depth $O(log~n), otherwise the parser discards information.
+of at least depth $O(log~n), (otherwise the parser discards information).
 
 Thus we have to use a better strategy to simplify intermediate results.
 We want to avoid the cost of traversing the structure until we find a suspension
@@ -194,14 +238,14 @@ data Zip output where
    Zip :: RPolish stack output -> Steps stack -> Zip output
 
 data RPolish input output where
-  RVal :: a -> RPolish (a :< rest) output -> RPolish rest output
+  RPush :: a -> RPolish (a :< rest) output -> RPolish rest output
   RApp :: RPolish (b :< rest) output -> RPolish ((a -> b) :< a :< rest) output 
   RStop :: RPolish rest rest
 ~~~~
 
 The data being linear, this zipper is very similar to the zipper for lists.
 The part that is already visited ("on the left"), is reversed. Note that it contains
-only values and applications, since we go past a suspension.
+only values and applications, since we never go past a suspension.
 
 The interesting features of this zipper are its type and its meaning.
 
@@ -210,20 +254,19 @@ mechanically inverting the type for polish expressions, it can be assigned
 a meaning independently: it corresponds to *reverse* polish automatons.
 Its indices are the types of the input and output stacks.
 
-Second, we note that the stack produced by the polish expresion
+Second, we note that the stack produced by the polish expression
 yet-to-visit ("on the right") is the stack consumed by the reverse polish
 automation ("on the left").
 
 We capture all these properties in the types by using GADTs. We can then
-properly type the traversal of polish expresions as well as reduction to
+properly type the traversal of polish expressions as well as reduction to
 a value.
 
 # Parsing
 
 ## Disjunction
 
-
-We kept the discussion of actual parsing out of the discussion so far. This is
+We kept the details of actual parsing out of the discussion so far. This is
 for good reason: the machinery for incremental computation and reuse of partial
 results is independent from it. Indeed, given any procedure to compute structured
 values from a linear input of symbols, one can use the procedure described above
@@ -234,8 +277,8 @@ input string. To support convenient parsing, we can introduce a disjunction oper
 exactly as Swierstra and Hughes do: the addition of the `Suspend` operator does not
 undermine their treatment of disjunction in any way. 
 
-> The zipper cannot go beyond an unresolved disjunction. That is ok if we assume that
-> the parser has indeed online behaviour. 
+> The zipper cannot go beyond an unresolved disjunction. That is OK if we assume that
+> the parser has indeed online behavior. 
 
 ## Error correction
 
@@ -254,14 +297,14 @@ but those are tagged as less desirable. The parsing algorithm can then maximize
 the desirability of the set of rules used.
 
 At each disjunction point, the parser will have to choose between two
-alternatives. Since we want online behaviour, we would like to do so by looking
+alternatives. Since we want online behavior, we would like to do so by looking
 ahead as few symbols as possible. We introduce a new type which represents this
-"progress" information. This data structure is similiar to a list where the
+"progress" information. This data structure is similar to a list where the
 $n^{th}$ element contains how much we dislike to take this path after $n$ steps
 of following it. The difference is that the list may end with success, failure
 or suspension which indicates unknown final result.
 
-If one looks at the tail of the structures, we know eactly how much the path is desirable.
+If one looks at the tail of the structures, we know exactly how much the path is desirable.
 However, as hinted before, we will look only only a few steps ahead, until we can safely
 disregard one of the paths.
 
@@ -269,7 +312,7 @@ In order for this strategy to be efficient, we cache the progress information
 in each disjunction node. 
 
 This technique can be re-formulated as dynamic programming, where we use lazy
-evaluation to automatically cut-off expantion of the search space. We first
+evaluation to automatically cut-off expansion of the search space. We first
 define a full tree of possibilities: (Steps with disjunction), then we compute a
 profile information that we tie to it; finally, finding the best path is a
 matter of looking only at a subset of the information we constructed, using any
@@ -277,13 +320,15 @@ suitable heuristic.
 
 > Here it's probably best to paste in the whole library.
 
-# Getting rid of linear behaviour
+# Getting rid of linear behavior
+
+> This is related to "Binary random access lists" in Okasaki.
 
 As we noted in a previous section, partial computations sometimes cannot be
 performed. This is indeed a very common case: if the output we construct is a
 list, then the spine of the list can only be constructed once we get hold of the
 very tail of it. In particular, our system will behave very badly for a parser
-that returns its input umodified:
+that returns its input unmodified:
 
 ~~~~
 identity = case_ 
@@ -349,138 +394,10 @@ part corresponding to the window being viewed efficiently. Storing the results
 in the same type of structure saves the day again.
 
 
-
-~~~~
-direct :: Int -> [a] -> Tree a
-direct leftSize [] = Leaf
-direct leftSize (x:xs) = Node x (direct initialLeftSize xl)
-                                (direct (leftSize * factor) xr)
-  where (xl, xr) = splitAt leftSize xs
-~~~~
-
-
-~~~~
-(.!) = look initialLeftSize
-look :: Int -> Tree a -> Int -> a
-look leftsize Leaf index  = error "online tree: index out of bounds"
-look leftsize (Node x l r) index 
-    | index == 0 = x
-    | index <= leftsize = look initialLeftSize l (index - 1)
-    | otherwise = look (leftsize * factor) r (index - 1 - leftsize)
-~~~~
-
-
 # Results
 
 We carried out development of a parser combinator library for incremental
 parsing with support for error correction. We argumented that the complexity
 of the parsing is linear, and that is can cost
 
-
-~~~~
-module FullIncrParser where
-
-data a :< b
-
--- Parser specification
-data Parser s a where
-    Pure :: a -> Parser s a
-    Appl :: Parser s (b -> a) -> Parser s b -> Parser s a
-    Case :: Parser s a -> (s -> Parser s a) -> Parser s a
-    Empt :: Parser s a
-    Disj :: Parser s a -> Parser s a -> Parser s a
-    Yuck :: Parser s a -> Parser s a
-
-data Steps s a where
-    Val   :: a -> Steps s r                      -> Steps s (a :< r)
-    App   :: Steps s ((b -> a) :< (b :< r))      -> Steps s (a :< r)
-    Done  ::                               Steps s ()
-    Shift ::           Steps s a        -> Steps s a
-    Fail ::                                Steps s a
-    Sus :: Steps s a -> (s -> Steps s a) -> Steps s a
-    Best :: Ordering -> Progress -> Steps s a -> Steps s a -> Steps s a
-    Dislike :: Steps s a -> Steps s a
-
-push :: Maybe [s] -> Steps s r -> Steps s r
-push (Just []) p = p  -- nothing more left to push
-push ss p = case p of
-                  (Sus nil cons) -> case ss of
-                      Nothing -> push ss nil
-                      Just [] -> p
-                      Just (s:ss') -> push (Just ss') (cons s)
-                  (Dislike p') -> Dislike (push ss p')
-                  (Shift p') -> Shift (push ss p')
-                  (Val x p') -> Val x (push ss p')
-                  (App p') -> App (push ss p')
-                  Done -> Done
-                  Fail -> Fail
-                  Best _ _ p' q' -> iBest (push ss p') (push ss q')
-
-data Progress = PSusp | PFail | PRes Int | !Int :> Progress
-    deriving Show
-
-mapSucc PSusp = PSusp
-mapSucc PFail = PFail
-mapSucc (PRes x) = PRes (succ x) 
-mapSucc (x :> xs) = succ x :> mapSucc xs
-
-dislikeThreshold _ = 0
-
--- Compute the combination of two profiles, as well as which one is the best.
-better :: Int -> Progress -> Progress -> (Ordering, Progress)
-better _ PFail p = (GT, p) -- avoid failure
-better _ p PFail = (LT, p)
-better _ PSusp _ = (EQ, PSusp) -- could not decide before suspension => leave undecided.
-better _ _ PSusp = (EQ, PSusp)
-better _ (PRes x) (PRes y) = if x <= y then (LT, PRes x) else (GT, PRes y)  -- two results, just pick the best.
-better lk xs@(PRes x) (y:>ys) = if x == 0 || y-x > dislikeThreshold lk then (LT, xs) else min x y +> better (lk+1) xs ys
-better lk (y:>ys) xs@(PRes x) = if x == 0 || y-x > dislikeThreshold lk then (GT, xs) else min x y +> better (lk+1) ys xs
-better lk (x:>xs) (y:>ys)
-    | x == 0 && y == 0 = rec -- never drop things with no error: this ensures to find a correct parse if it exists.
-    | y - x > threshold = (LT, x:>xs) -- if at any point something is too disliked, drop it.
-    | x - y > threshold = (GT, y:>ys)
-    | otherwise = rec
-    where threshold = dislikeThreshold lk
-          rec = min x y +> better (lk + 1) xs ys
-
-x +> ~(ordering, xs) = (ordering, x :> xs)
-
-progress :: Steps s r -> Progress
-progress (Val _ p) = progress p
-progress (App p) = progress p
-progress (Shift p) = 0 :> progress p
-progress (Done) = PRes 0 -- success with zero dislikes
-progress (Fail) = PFail
-progress (Dislike p) = mapSucc (progress p)
-progress (Sus _ _) = PSusp
-progress (Best _ pr _ _) = pr
-
-
--- Right-eval a fully defined process
-evalR :: Steps s (a :< r) -> (a, Steps s r)
-evalR (Val a r) = (a,r)
-evalR (App s) = let (f, s') = evalR s
-                    (x, s'') = evalR s'
-                in (f x, s'')
-evalR (Shift v) = evalR v
-evalR (Fail) = error "evalR: No parse!"
-evalR (Best choice _ p q) = case choice of
-    LT -> evalR p
-    GT -> evalR q
-    EQ -> error $ "evalR: Ambiguous parse: " ++ show p ++ " ~~~ " ++ show q
-
-type P s a = forall r. (Steps s r) -> (Steps s (a :< r))
-toP :: Parser s a -> P s a 
-toP (Case a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
-toP (Appl f x) = App . toP f . toP x
-toP (Pure x)   = Val x
-toP Empt = \_fut -> Fail
-toP (Disj a b)  = \fut -> iBest (toP a fut) (toP b fut)
-toP (Yuck p) = Dislike . toP p 
-
-iBest :: Steps s a -> Steps s a -> Steps s a
-iBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
-
-symbol f = Case empty $ \s -> if f s then pure s else empty
-eof f = Case (pure ()) (const empty)
-~~~~
+> The full code is in Code.hs
