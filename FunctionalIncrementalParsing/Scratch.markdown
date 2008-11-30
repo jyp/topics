@@ -32,18 +32,36 @@ highlighting and indentation hints for the Haskell language. The abstract
 syntax tree (AST) being available at all times is very convenient to implement
 all syntax-dependent functions in a consistent way.
 
-In this paper, we will use a simpler problem for the purpose of illustration:
-parenthesis matching for a lisp-like language. Given an input
-such as `1 + (5 * (3 + 4)) * 2`, the program will display `1 + {5 * [3 + 4]} *
-2`. The idea is that matching pairs are displayed using different parenthetical
-symbols for each level, making extent of each sub-expression more apparent.
-The decorated output is produced by parsing and linearizing back the syntax
-tree.
+## Example
+
+For the purpose of illustration, we will demonstrate how the technique works on
+a simple problem: interactive feedback of parenthesis matching for a lisp-like
+language. Given an input such as `(+ 1 (* 5 (+ 3 4)) 2)`, the program will
+display `(+ 1 {* 5 [+ 3 4]} 2)`. The idea is that matching pairs are displayed
+using different parenthetical symbols for each level, making the extent of each
+sub-expression more apparent.
+
+The production of the output is a two-phase process. First, an AST is
+produced by parsing the input. Second, and linearizing back the syntax tree.
+
+The initial situation is depicted in figure 1. The user views the beginning of
+the file. To print the decorated output, the program has to traverse the first
+few nodes of the syntax tree (in pre-order). This in turn forces parsing the
+corresponding part of the output, but *only so far* (or maybe a few tokens
+ahead, depending on the amount of lookahead required). 
+
+As the user scrolls down in the file, more and more of the AST is demanded,
+and the parsing proceeds in lockstep. (figure 2) If the user modifies the
+input at this point, it invalidates the AST, and therefore we have to 
+re-parse the input. Here, we can again exploit the linear behaviour of
+parsing algorithm to our advantage. Indeed, it we have stored the
+parser state for the input point where the user made the modification,
+we can *resume* parsing from that point.
 
 
 ## Contributions
 
-* We describe a novel way to implement incremental parsing by taking
+* We describe a novel implementation of incremental parsing which takes
 advantage of lazy evaluation;
 
 * We craft a data structure to be used in place of lists, which is more
@@ -96,12 +114,6 @@ toSteps expr = toP expr Done
         toP (Pure x)   = Push x
 ~~~~
 
-~~~~
--- The expression `4 * (2 + 3)` in direct, applicative and polish style.
-expr = Mul (Val 4) (Add (Val 2) (Val 3))
-expr' = Pure Mul :*: (Pure Val :*: Pure 4) :*: (Pure Add :*: (Pure Val :*: Pure 2) :*: (Pure Val :*: Pure 3))
-expr'' = App $ App $ Push Mul $ App $ Push Val $ Push 4 $ App $ App $ Push Add $ Push 2 $ App $ Push Val $ Push 3 $ Done
-~~~~
 
 
 The value of an expression can be evaluated as follows:
@@ -134,7 +146,7 @@ The polish expressions presented so far do not depend on input. We introduce
 the `Suspend` constructor to fulfill this role: it expresses that the rest of
 the expression can depend on the (first symbol of) the output. Using this we can
 extend our applicative language with a construct to pattern match on the front
-of the input, and write a (naive) parser for valid arithmetic expressions.
+of the input, and write a simple parser for valid S-expressions.
 
 ~~~~
 data Steps s r where
@@ -159,6 +171,7 @@ parseList = Case
    (Pure [])
    (\c -> case c of
        ')' -> Pure []
+       ' ' -> parseList -- ignore spaces
        '(' -> Pure (\arg rest -> S arg : rest ) :@: parseList :@: parseList
        c -> Pure (Atom c :) :@: parseList)
 ~~~~
@@ -177,12 +190,14 @@ feed ss p = case p of
                   (App p') -> App (feed ss p')
 ~~~~
 
+> Hence, `feed "(+ 1 2)" (toSteps parseList)` yields back ...
+
 We can also obtain intermediate parsing results by feeding symbols one at a
 time. The list of all intermediate results is constructed lazily using `scanl`.
 
 ~~~~
 feedOne :: Steps s a -> s -> Steps s a
-feedOne (Push x s)          ss = Push x (feedOne s ss)
+feedOne (Push x s)         ss = Push x (feedOne s ss)
 feedOne (App f)            ss = App (feedOne f ss)
 feedOne (Suspend nil cons) s  = cons s
 
@@ -249,14 +264,17 @@ only values and applications, since we never go past a suspension.
 
 The interesting features of this zipper are its type and its meaning.
 
-First, we note that, while we obtained the data type for the left part by
+We note that, while we obtained the data type for the left part by
 mechanically inverting the type for polish expressions, it can be assigned
-a meaning independently: it corresponds to *reverse* polish automatons.
-Its indices are the types of the input and output stacks.
+a meaning independently: it corresponds to *reverse* polish expressions.
 
-Second, we note that the stack produced by the polish expression
-yet-to-visit ("on the right") is the stack consumed by the reverse polish
-automation ("on the left").
+In contrast to forward polish expressions, which directly produce an output
+stack, reverse expressions can be understood as automaton which transform
+a stack to another. This is captured in the type indices `input` and `output`.
+
+In our zipper type, the direct polish expression yet-to-visit ("on the right")
+has to correspond to the reverse polish automation ("on the left"): the output
+of the latter has to match the input of the former.
 
 We capture all these properties in the types by using GADTs. We can then
 properly type the traversal of polish expressions as well as reduction to
@@ -336,9 +354,10 @@ identity = case_
 
 Wagner et al. recognize this issue and propose to handle the case of repetition
 specially in the parsing. We choose a different approach, which relies on using
-a different data structure for the output. The key insight is that the performance
-problems come from the linearity of the list, but we can always use a tree whose
-structure can be ignored when traversing the result.
+a different data structure for the output. The advantage is that we do not need
+to complicate, not change at all, the parsing algorithms. The key insight is
+that the performance problems come from the linearity of the list, but we can
+always use a tree whose structure can be ignored when traversing the result.
 
 Let us summarize the requirements we put on the data structure:
 
@@ -393,6 +412,31 @@ parser will be forced to process the whole input. Still, we want to access the
 part corresponding to the window being viewed efficiently. Storing the results
 in the same type of structure saves the day again.
 
+# Related work
+
+There have been a lot of work on incremental interactive algorithm and applications
+a long time ago: (Swierstra, Snelting, Wagner et al), however, these solutions
+havent caught up in the mainstream. Editors typically work using regular expressions
+for syntax highlighting at the lexical level (Emacs, Vim, Textmate, ...) or run a 
+full compiler in the background for syntax level (Eclipse). We might argue that these
+solutions offered little benefit in comparison to their implementation cost. Our
+approach is much simpler. In particular, most imperative-oriented approaches try to
+update the tree as the user changes the text. This is a lot more complicated than
+what we do. One might argue that update of the tree 
+
+We can summarize the unique point of our approach as follows:
+
+* simple
+
+* no tree update
+
+* taking advantage of lazy evaluation: no startup cost to parse the whole file the first time
+  a file is loaded.
+
+* idea is independent of parsing algorithm details (we want an online algorithm with error correction)
+
+
+> What does Visual Haskell do?
 
 # Results
 
