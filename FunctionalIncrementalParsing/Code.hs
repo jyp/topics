@@ -128,3 +128,10 @@ parseList = Case
        c -> Pure (Atom c :) :@:  parseList)
 
 
+-- The expression `(+ 2 3)` in direct, applicative and polish style.
+expr = S [Atom 'a']
+expr = S ((:) (Atom 'a') [])
+expr' = Pure S :@: (Pure (:) :@: (Pure Atom :@: Pure 'a') :@: Pure [])
+expr'' = App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push []
+
+
