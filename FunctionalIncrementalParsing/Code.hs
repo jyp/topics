@@ -85,6 +85,7 @@ evalR (App s) = let (f, s') = evalR s
                 in (f x, s'')
 evalR (Shift v) = evalR v
 evalR (Fail) = error "evalR: No parse!"
+evalR (Dislike p) = evalR p
 evalR (Best choice _ p q) = case choice of
     LT -> evalR p
     GT -> evalR q
@@ -104,6 +105,48 @@ iBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choic
 
 symbol f = Case Empt $ \s -> if f s then Pure s else Empt
 eof f = Case (Pure ()) (const Empt)
+--------------------------------
+-- The zipper for efficient evaluation:
+
+-- Arbitrary expressions in Reverse Polish notation.
+-- This can also be seen as an automaton that transforms a stack.
+-- RPolish is indexed by the types in the stack consumed by the automaton (input),
+-- and the stack produced (output)
+data RPolish input output where
+  RPush :: a -> RPolish (a :< rest) output -> RPolish rest output
+  RApp :: RPolish (b :< rest) output -> RPolish ((a -> b) :< a :< rest) output 
+  RStop :: RPolish rest rest
+
+-- Evaluate the output of an RP automaton, given an input stack
+evalRP :: RPolish input output -> input -> output
+evalRP RStop acc = acc 
+evalRP (RPush v r) acc = evalRP r (v :< acc)
+evalRP (RApp r) (f :< a :< acc) = evalRP r (f a :< acc)
+
+
+-- execute the automaton as far as possible
+simplify :: RPolish s output -> RPolish s output
+simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
+simplify x = x
+
+-- Gluing a Polish expression and an RP automaton.
+-- This can also be seen as a zipper of Polish expressions.
+data Zip output where
+   Zip :: RPolish stack output -> Steps stack -> Zip output
+   -- note that the Stack produced by the Polish expression matches
+   -- the stack consumed by the RP automaton.
+
+-- Move the zipper to the right, if possible.  The type gives evidence
+-- that this function does not change the (type of) output produced.
+right :: Zip output -> Zip output
+right (Zip l (Val a r)) = Zip (RPush a l) r
+right (Zip l (App r)) = Zip (RApp l) r
+right (Zip l s) = (Zip l s)
+
+-- | Pre-compute a left-prefix of some steps (as far as possible)
+evalZL :: Zip output -> Zip output
+evalZL z = case right z of
+    Zip l r -> Zip (simplify l) r
 
 --------------------------------
 

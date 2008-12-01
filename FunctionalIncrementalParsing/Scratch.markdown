@@ -276,9 +276,11 @@ In our zipper type, the direct polish expression yet-to-visit ("on the right")
 has to correspond to the reverse polish automation ("on the left"): the output
 of the latter has to match the input of the former.
 
-We capture all these properties in the types by using GADTs. We can then
+We capture all these properties in the types by using GADTs. This allows
 properly type the traversal of polish expressions as well as reduction to
 a value.
+
+> show the code
 
 # Parsing
 
@@ -286,7 +288,7 @@ a value.
 
 We kept the details of actual parsing out of the discussion so far. This is
 for good reason: the machinery for incremental computation and reuse of partial
-results is independent from it. Indeed, given any procedure to compute structured
+results is independent from them. Indeed, given any procedure to compute structured
 values from a linear input of symbols, one can use the procedure described above
 to transform it into an incremental algorithm.
 
