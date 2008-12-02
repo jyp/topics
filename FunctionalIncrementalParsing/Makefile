@@ -1,6 +1,10 @@
 %.view: %.html
 	firefox $<
 
+%.pdf: %.svg
+	convert $< $@
+
+Paper.pdf: begin.pdf mid.pdf
 
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<

@@ -1,20 +1,27 @@
-\documentclass{article}
+\documentclass[preprint]{sigplanconf}
 %include lhs2TeX.fmt
 \usepackage{amsmath}
 \usepackage[mathletters]{ucs}
 \usepackage[utf8x]{inputenc}
+\usepackage{graphicx}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt plus 2pt minus 1pt}
 
 \usepackage{enumerate}
 
-\setcounter{secnumdepth}{0}
-\title{Functional Incremental Parsing }
-\author{Jean-Philippe Bernardy}
 \begin{document}
+
+\titlebanner{Draft}        % These are ignored unless
+\preprintfooter{ICFP09}   % 'preprint' option specified.
+
+\title{Functional Incremental Parsing }
+
+\authorinfo{Jean-Philippe Bernardy}
+
+
 \maketitle
 
-\section{Abstract}
+\begin{abstract}
 
 In the context of an interactive application where the user
 observes only a small window of the output (that is, one that
@@ -26,8 +33,14 @@ by lazy lists traversals while retaining its lazy properties.
 Finally, we complete our treatment of incremental parsing in an
 interactive system by showing how our parsing machinery can be
 improved to support error-correction.
+\end{abstract}
 
 \section{Introduction}
+
+\begin{figure}
+\includegraphics[width=\columnwidth]{begin}
+\label{fig:begin}
+\end{figure}
 
 In an interactive system, a lazy evaluation strategy provides a
 special form of incremental computation: the amount of output that
@@ -191,7 +204,7 @@ data Parser s a where
     Pure :: a -> Parser s a
     Case :: Parser s a -> (s -> Parser s a) -> Parser s a
 
-toP (Case nil cons) = \fut -> Suspend (toP nil fut) (\s -> fromP (toP (cons s) fut)
+toP (Case nil cons) = \fut -> Suspend (toP nil fut) (\s -> fromP (toP (cons s) fut))
 -- other cases unchanged
 \end{code}
 \begin{code}
