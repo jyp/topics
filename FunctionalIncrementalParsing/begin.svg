@@ -8,8 +8,8 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="621"
-   height="422.34018"
+   width="521.5"
+   height="482.84024"
    id="svg2"
    sodipodi:version="0.32"
    inkscape:version="0.46"
@@ -36,16 +36,17 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.7"
-     inkscape:cx="667.60475"
-     inkscape:cy="218.49913"
+     inkscape:zoom="1.4"
+     inkscape:cx="96.711806"
+     inkscape:cy="280.64199"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="786"
      inkscape:window-height="1198"
-     inkscape:window-x="812"
-     inkscape:window-y="0">
+     inkscape:window-x="24"
+     inkscape:window-y="0"
+     showguides="true">
     <inkscape:grid
        type="xygrid"
        id="grid2403"
@@ -67,29 +68,35 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-59.147812,-30.362183)">
+     transform="translate(-158.64782,-30.362183)">
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 79.64781,32.202363 L 79.64781,452.20236 L 79.64781,452.20236 L 79.64781,452.20236"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.8737154;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       d="M 358.86114,492.70236 L 679.48018,492.70236 L 679.48018,492.70236 L 679.48018,492.70236"
        id="path2405" />
     <rect
-       style="fill:#0000ff;fill-opacity:0.32663317;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="fill:#0000ff;fill-opacity:0.32663317;fill-rule:evenodd;stroke:#000000;stroke-width:1.19979644px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        id="rect2407"
-       width="40"
-       height="140"
-       x="59.647812"
-       y="32.202366" />
+       width="40.260262"
+       height="200.22878"
+       x="-513.46271"
+       y="158.41905"
+       transform="matrix(0,-1,1,0,0,0)" />
     <path
        style="fill:none;fill-opacity:0.32663317;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 159.64781,452.20236 C 419.64781,32.202363 419.64781,32.202363 419.64781,32.202363 L 679.64781,452.20236 L 159.64781,452.20236 z"
        id="path3187" />
     <path
-       style="fill:#0000ff;fill-opacity:0.32663317;fill-rule:evenodd;stroke:#000000;stroke-width:0.38357535px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 159.48799,452.36218 C 259.74399,292.10644 259.74399,292.10644 259.74399,292.10644 L 360,452.36218 L 159.48799,452.36218 z"
-       id="path3189" />
-    <path
        style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.43612336"
        d="M 420,32.362183 L 260,292.36218"
        id="path2385" />
+    <path
+       style="fill:#0000ff;fill-opacity:0.32663317;fill-rule:evenodd;stroke:#000000;stroke-width:0.38161409px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 158.64348,453.21881 C 258.66088,294.21928 258.66088,294.21928 258.66088,294.21928 L 358.67829,453.21881 L 158.64348,453.21881 z"
+       id="path3189" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 0,462.84024 C 10,452.84024 10,452.84024 10,452.84024 L 30,472.84024 L 50,452.84024 L 70,472.84024 L 90,452.84024 L 110,472.84024 L 130,452.84024 L 150,472.84024 L 170,452.84024 L 190,472.84024 L 200,462.84024 L 200,462.84024"
+       id="path3163"
+       transform="translate(158.64782,30.362183)" />
   </g>
 </svg>

@@ -5,10 +5,20 @@
 \usepackage[mathletters]{ucs}
 \usepackage[utf8x]{inputenc}
 \usepackage{graphicx}
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{6pt plus 2pt minus 1pt}
-
+% \setlength{\parindent}{0pt}
+% \setlength{\parskip}{6pt plus 2pt minus 1pt}
 \usepackage{enumerate}
+\usepackage[sort&compress,numbers]{natbib}
+
+\providecommand{\TODO}[1]{\marginpar{\footnotesize \raggedright #1}}
+
+\newenvironment{meta}{%
+\begin{quote}
+\sf
+}{%
+\end{quote}
+}
+
 
 \begin{document}
 
@@ -23,10 +33,9 @@
 \maketitle
 
 \begin{abstract}
-
 In the context of an interactive application where the user
 observes only a small window of the output (that is, one that
-corresponds to a small window of the input), we show that combining
+corresponds to a small part of the input), we show that combining
 lazy evaluation and caching of intermediate (partial) results
 provides incremental parsing. We also introduce a general purpose,
 simple data structure, to get rid of the linear complexity caused
@@ -38,23 +47,17 @@ improved to support error-correction.
 
 \section{Introduction}
 
-\begin{figure}
-\includegraphics[width=\columnwidth]{begin}
-\label{fig:begin}
-\caption{Viewing the beginning of a file. Only the beginning of the file is parsed.}
-\end{figure}
-
-\begin{figure}
-\includegraphics[width=\columnwidth]{mid}
-\label{fig:mid}
-\caption{Viewing the beginning of a file.}
-\end{figure}
-
+Yi is an editor is written in Haskell. It provides features such as syntax
+highlighting and indentation hints for the Haskell language. In order to
+implement all syntax-dependent functions in a consistent way, the abstract
+syntax tree (AST) is available at all times, kept up to date as the 
+user types. For the performance of the system to be acceptable, the editor
+must not parse the whole file at each keystroke.
 
 In an interactive system, a lazy evaluation strategy provides a
 special form of incremental computation: the amount of output that
 is demanded drives the computation to be performed. In other words,
-the system responds to incremental movement of the portion of the
+the system responds to incremental movements of the portion of the
 output being viewed by the user (window) by incremental computation
 of the intermediate structures.
 
@@ -66,15 +69,9 @@ partially computed results for each point in the input, to obtain a
 system that responds to changes in the input independently of the
 total size of that input.
 
-In the Yi editor, we used this technique to provide features such
-as syntax highlighting and indentation hints for the Haskell
-language. The abstract syntax tree (AST) being available at all
-times is very convenient to implement all syntax-dependent
-functions in a consistent way.
-
 \subsection{Example}
 
-For the purpose of illustration, we will demonstrate how the
+For the purpose of illustration, we demonstrate how the
 technique works on a simple problem: interactive feedback of
 parenthesis matching for a lisp-like language. Given an input such
 as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display
@@ -82,40 +79,74 @@ as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display
 displayed using different parenthetical symbols for each level,
 making the extent of each sub-expression more apparent.
 
-The production of the output is a two-phase process. First, an AST
-is produced by parsing the input. Second, and linearizing back the
-syntax tree.
+The production of the output is a two-phase process. First, the AST
+is produced by parsing the input. Second, it is linearized back and
+printed to the user.
 
-The initial situation is depicted in figure 1. The user views the
-beginning of the file. To print the decorated output, the program
+\begin{figure}
+\includegraphics[width=\columnwidth]{begin}
+\label{fig:begin}
+\caption{Viewing the beginning of a file. 
+The triangle represents the syntax tree. The line at the bottom represents the
+file. The zagged part indicates the part that is parsed. The viewing window is
+depicted as a rectangle.
+}
+\end{figure}
+
+The initial situation is depicted in figure~\ref{fig:begin}. The user views the
+beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
 pre-order). This in turn forces parsing the corresponding part of
 the output, but \emph{only so far} (or maybe a few tokens ahead,
-depending on the amount of lookahead required).
+depending on the amount of lookahead required). If the user modifies
+the input at this point, it invalidates the AST, but discarding it and
+re-parsing is not too costly: only a screenful of parsing needs to be
+re-done.
 
-As the user scrolls down in the file, more and more of the AST is
-demanded, and the parsing proceeds in lockstep. (figure 2) If the
-user modifies the input at this point, it invalidates the AST, and
-therefore we have to re-parse the input. Here, we can again exploit
-the linear behaviour of parsing algorithm to our advantage. Indeed,
-it we have stored the parser state for the input point where the
-user made the modification, we can \emph{resume} parsing from that
-point.
+\begin{figure}
+\includegraphics[width=\columnwidth]{mid}
+\label{fig:mid}
+
+\caption{
+Viewing the middle of a file. 
+Although only a small amount of the
+parse tree may be demanded, parsing will proceed from the beginning of the
+file.}
+
+\end{figure}
+
+As the user scrolls down in the file, more and more of the AST is demanded, and
+the parsing proceeds in lockstep (figure~\ref{fig:mid}). At this stage, a user
+modification is more serious: re-parsing naively from the beginning can be too
+costly for a big file. Fortunately we can again exploit the linear behaviour of
+parsing algorithms to our advantage. Indeed, if we have stored the parser state
+for the input point where the user made the modification, we can \emph{resume}
+parsing from that point. If we make sure to store partial results for every
+other point of the input, we can ensure that we will never parse more than a
+screenful at a time.
 
 \subsection{Contributions}
 
 \begin{itemize}
 \item
-  We describe a novel implementation of incremental parsing which
-  takes advantage of lazy evaluation;
+
+  We describe a novel, purely functional approach to incremental parsing, which
+  makes essential use of lazy evaluation. This is achieved by
+  combinining online parsers with caching of intermediate
+  results.
+
+\item
+  We complete our treatment of incremental parsing with 
+  error correction. This is essential, since online parsers
+  need to be \emph{total}: they cannot fail on any input;
+  
 
 \item
   We craft a data structure to be used in place of lists, which is
   more efficient but has the same properties for laziness;
 
 \item
-  We show a complete implementation of a parser combinator library
-  for incremental parsing and error correction;
+  We have implemented such a system in a parser-combinator library;
 
 \item
   We have implemented such a system and made use of it to provide
@@ -124,18 +155,36 @@ point.
 \end{itemize}
 \section{Polish Expressions}
 
+\begin{meta}
+    Roadmap for the paper
+\end{meta}
+
+Representing results in a way that can support online construction:
+
+\begin{code}
+data Applic a where
+    (:*:) :: Applic (b -> a) -> Applic b -> Applic a
+    Pure :: a -> Applic a
+infixl :*:
+\end{code}
+
 In order to represent partially evaluated results, we need a
-representation for expressions. Following Swierstra and Hughes, we
+representation for expressions. Following \citep{hughes_polish_2003}, we
 use a type with at most one recursive position, giving it a linear
 structure. This is necessary to match the linear processing of the
 input in parsing algorithms. In contrast to Swierstra however, we
 capture the matching of types between functions and arguments in a
 GADT, instead of nested types.
 
-\begin{code}
-data a :< b
-infixr :<
+Representing heterogeneous stacks:
 
+\begin{code}
+data top :< r = top :< r
+data Nil = Nil
+infixr :<
+\end{code}
+
+\begin{code}
 data Steps r where
     Push  :: a -> Steps r                  -> Steps (a :< r)
     App   :: (Steps ((b -> a) :< b :< r))  -> Steps (a :< r)
@@ -154,10 +203,6 @@ polish expressions, and therefore syntax trees can be outputed in
 that form just as easily.
 
 \begin{code}
-data Applic a where
-    (:*:) :: Applic (b -> a) -> Applic b -> Applic a
-    Pure :: a -> Applic a
-infixl :*:
 toSteps expr = toP expr Done
   where toP :: Applic a -> (Steps r -> Steps (a,r))
         toP (f :*: x)  = App . toP f . toP x
@@ -168,24 +213,14 @@ The value of an expression can be evaluated as follows:
 \begin{code}
 evalR :: Steps (a :< r) -> (a, Steps r)
 evalR (Push a r) = (a,r)
-evalR (App s) = let (f, s') = evalR s
-                    (x, s'') = evalR s'
-                in (f x, s'')
+evalR (App s) =  let  (f, s') = evalR s
+                      (x, s'') = evalR s'
+                 in (f x, s'')
 \end{code}
-\begin{quote}
+\begin{meta}
 Note that |fst . evalR . toSteps . traverse = id|.
 
-\end{quote}
-\begin{quote}
-An alternative, which builds the whole stack (and thus requires a
-constructor for :\textless{}) is:
-
-\end{quote}
-\begin{code}
-evalR :: Steps r -> r
-evalR (Push a r) = a :< evalR ss r
-evalR (App s) = (\ ~(f:< (a:<r)) -> f a :< r) (evalR ss s)
-\end{code}
+\end{meta}
 This evaluation procedure possesses the ``online'' property: parts
 of the polish expression are demanded only if the corresponding
 parts of the input is demanded. This preserves the incremental
@@ -223,8 +258,8 @@ parseList = Case
    (\c -> case c of
        ')' -> Pure []
        ' ' -> parseList -- ignore spaces
-       '(' -> Pure (\arg rest -> S arg : rest ) :@: parseList :@: parseList
-       c -> Pure (Atom c :) :@: parseList)
+       '(' -> Pure (\arg rest -> S arg : rest ) :*: parseList :*: parseList
+       c -> Pure (Atom c :) :*: parseList)
 \end{code}
 Suspensions in a polish expression can be resolved by feeding input
 into it. When facing a suspension, we pattern match on the input,
@@ -239,10 +274,10 @@ feed ss p = case p of
                   (Push x p') -> Push x (feed ss p')
                   (App p') -> App (feed ss p')
 \end{code}
-\begin{quote}
+\begin{meta}
 Hence, |feed "(+ 1 2)" (toSteps parseList)| yields back \ldots{}
 
-\end{quote}
+\end{meta}
 We can also obtain intermediate parsing results by feeding symbols
 one at a time. The list of all intermediate results is constructed
 lazily using |scanl|.
@@ -286,10 +321,10 @@ a (potentially long) prefix of the form:
 \end{code}
 which cannot be simplified.
 
-\begin{quote}
+\begin{meta}
 after parsing |(abcdefg| we get exactly this.
 
-\end{quote}
+\end{meta}
 This prefix can persist until the end of the input is reached. A
 possible remedy is to avoid writing expressions that lead to this
 sort of intermediate results, and we will see in section [ref] how
@@ -342,10 +377,10 @@ We capture all these properties in the types by using GADTs. This
 allows properly type the traversal of polish expressions as well as
 reduction to a value.
 
-\begin{quote}
+\begin{meta}
 show the code
 
-\end{quote}
+\end{meta}
 \section{Parsing}
 
 \subsection{Disjunction}
@@ -363,11 +398,11 @@ we can introduce a disjunction operator, exactly as Swierstra and
 Hughes do: the addition of the |Suspend| operator does not
 undermine their treatment of disjunction in any way.
 
-\begin{quote}
+\begin{meta}
 The zipper cannot go beyond an unresolved disjunction. That is OK
 if we assume that the parser has indeed online behavior.
 
-\end{quote}
+\end{meta}
 \subsection{Error correction}
 
 The online property requires that there is no error in the input.
@@ -412,16 +447,16 @@ tie to it; finally, finding the best path is a matter of looking
 only at a subset of the information we constructed, using any
 suitable heuristic.
 
-\begin{quote}
+\begin{meta}
 Here it's probably best to paste in the whole library.
 
-\end{quote}
+\end{meta}
 \section{Getting rid of linear behavior}
 
-\begin{quote}
+\begin{meta}
 This is related to ``Binary random access lists'' in Okasaki.
 
-\end{quote}
+\end{meta}
 As we noted in a previous section, partial computations sometimes
 cannot be performed. This is indeed a very common case: if the
 output we construct is a list, then the spine of the list can only
@@ -476,10 +511,10 @@ is have a list of complete trees with increasing depth $k$,
 yielding a tree of size sizes $2^{k} - 1$. To make things more
 uniform we can encode the list using the same datatype.
 
-\begin{quote}
+\begin{meta}
 picture
 
-\end{quote}
+\end{meta}
 A complete tree of total depth $2 d$ can therefore store at least
 $\sum_{k=1}^d 2^{k}-1$ elements, fulfilling the second
 requirement.
@@ -542,10 +577,10 @@ We can summarize the unique points of our approach as follows:
   algorithm with error correction)
 
 \end{itemize}
-\begin{quote}
+\begin{meta}
 What does Visual Haskell do?
 
-\end{quote}
+\end{meta}
 \section{Results}
 
 We carried out development of a parser combinator library for
@@ -553,8 +588,27 @@ incremental parsing with support for error correction. We
 argumented that the complexity of the parsing is linear, and that
 is can cost
 
-\begin{quote}
+\section{Scratch}
+
+\begin{meta}
+An alternative, which builds the whole stack (and thus requires a
+constructor for :\textless{}) is:
+
+\end{meta}
+\begin{code}
+evalR :: Steps r -> r
+evalR (Push a r) = a :< evalR ss r
+evalR (App s) = (\ ~(f:< (a:<r)) -> f a :< r) (evalR ss s)
+\end{code}
+
+
+\begin{meta}
 The full code is in Code.hs
 
-\end{quote}
+\end{meta}
+
+\bibliographystyle{abbrvnat}
+\bibliography{../Zotero.bib}
+
+
 \end{document}

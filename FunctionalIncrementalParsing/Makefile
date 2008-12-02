@@ -23,6 +23,9 @@ Paper.pdf: begin.pdf mid.pdf
 
 %.pdf: %.tex
 	pdflatex $<
+	bibtex $*
+	pdflatex $<
+	pdflatex $<
 
 
 

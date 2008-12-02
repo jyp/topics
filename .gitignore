@@ -2,6 +2,8 @@
 
 *#
 *.aux
+*.bbl
+*.blg
 *.beam
 *.dvi
 *.gfc
