@@ -8,13 +8,14 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="744.09448819"
-   height="1052.3622047"
+   width="620.64783"
+   height="423.44003"
    id="svg2"
    sodipodi:version="0.32"
    inkscape:version="0.46"
    sodipodi:docname="mid.svg"
-   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
   <defs
      id="defs4">
     <inkscape:perspective
@@ -36,18 +37,20 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="631.04222"
-     inkscape:cy="726.10916"
+     inkscape:cx="356.08814"
+     inkscape:cy="396.29684"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="1436"
-     inkscape:window-height="856"
-     inkscape:window-x="4"
-     inkscape:window-y="22">
+     inkscape:window-width="786"
+     inkscape:window-height="1198"
+     inkscape:window-x="24"
+     inkscape:window-y="0">
     <inkscape:grid
        type="xygrid"
-       id="grid2403" />
+       id="grid2403"
+       visible="true"
+       enabled="true" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -63,7 +66,8 @@
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(-59.5,-29.422145)">
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 79.64781,32.202363 L 79.64781,452.20236 L 79.64781,452.20236 L 79.64781,452.20236"
@@ -80,7 +84,7 @@
        d="M 159.64781,452.20236 C 419.64781,32.202363 419.64781,32.202363 419.64781,32.202363 L 679.64781,452.20236 L 159.64781,452.20236 z"
        id="path3187" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.63819095000000003"
+       style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.63819095"
        d="M 420.42803,31.422145 C 320.76631,191.568 320.76631,191.568 320.76631,191.568"
        id="path3193" />
     <path
@@ -88,11 +92,11 @@
        d="M 279.48799,452.36218 C 379.74399,292.10644 379.74399,292.10644 379.74399,292.10644 L 480,452.36218 L 279.48799,452.36218 z"
        id="path3189" />
     <path
-       style="fill:#ff0000;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:0.47738692"
+       style="fill:#ff0000;fill-opacity:0.47738689;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 320,192.36218 L 380,292.36218 L 280,452.36218 L 160,452.36218 L 320,192.36218 z"
        id="path2435" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 80,32.362183 L 80,132.36218 L 80,132.36218 L 80,132.36218"
        id="path3207" />
   </g>

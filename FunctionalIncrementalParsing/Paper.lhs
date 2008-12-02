@@ -1,3 +1,4 @@
+% -*- latex -*-
 \documentclass[preprint]{sigplanconf}
 %include lhs2TeX.fmt
 \usepackage{amsmath}
@@ -14,7 +15,7 @@
 \titlebanner{Draft}        % These are ignored unless
 \preprintfooter{ICFP09}   % 'preprint' option specified.
 
-\title{Functional Incremental Parsing }
+\title{Functional Incremental Parsing}
 
 \authorinfo{Jean-Philippe Bernardy}
 
@@ -40,7 +41,15 @@ improved to support error-correction.
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
 \label{fig:begin}
+\caption{Viewing the beginning of a file. Only the beginning of the file is parsed.}
 \end{figure}
+
+\begin{figure}
+\includegraphics[width=\columnwidth]{mid}
+\label{fig:mid}
+\caption{Viewing the beginning of a file.}
+\end{figure}
+
 
 In an interactive system, a lazy evaluation strategy provides a
 special form of incremental computation: the amount of output that
@@ -68,8 +77,8 @@ functions in a consistent way.
 For the purpose of illustration, we will demonstrate how the
 technique works on a simple problem: interactive feedback of
 parenthesis matching for a lisp-like language. Given an input such
-as |(+ 1 (* 5 (+ 3 4)) 2)|, the program will display
-|(+ 1 {* 5 [+ 3 4]} 2)|. The idea is that matching pairs are
+as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display
+\verb!(+ 1 {* 5 [+ 3 4]} 2)!. The idea is that matching pairs are
 displayed using different parenthetical symbols for each level,
 making the extent of each sub-expression more apparent.
 
@@ -515,7 +524,7 @@ try to update the tree as the user changes the text. This is a lot
 more complicated than what we do. One might argue that update of
 the tree
 
-We can summarize the unique point of our approach as follows:
+We can summarize the unique points of our approach as follows:
 
 \begin{itemize}
 \item
