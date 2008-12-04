@@ -1,7 +1,12 @@
 {-# OPTIONS -fglasgow-exts #-}
 module FullIncrParser where
 
-data a :< b
+import Data.Function (fix)
+
+-- data a :< b = a :< b
+data top :< rest = (:<) {top :: top, rest :: rest}
+infixr :<
+data Nil = Nil
 
 -- Parser specification
 data Parser s a where
@@ -97,7 +102,7 @@ iBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choic
 symbol f = Case empty $ \s -> if f s then Pure s else empty
 eof f = Case (Pure ()) (const empty)
 
-empty = fix Dislike
+empty = fix Yuck
 
 --------------------------------
 -- The zipper for efficient evaluation:
@@ -125,31 +130,36 @@ simplify x = x
 
 -- Gluing a Polish expression and an RP automaton.
 -- This can also be seen as a zipper of Polish expressions.
-data Zip output where
-   Zip :: RPolish stack output -> Steps stack -> Zip output
+data Zip s output where
+   Zip :: RPolish stack output -> Steps s stack -> Zip s output
    -- note that the Stack produced by the Polish expression matches
    -- the stack consumed by the RP automaton.
 
 -- Move the zipper to the right, if possible.  The type gives evidence
 -- that this function does not change the (type of) output produced.
-right :: Zip output -> Zip output
-right (Zip l (Val a r)) = Zip (RPush a l) r
+right :: Zip s output -> Zip s output
+right (Zip l (Push a r)) = Zip (RPush a l) r
 right (Zip l (App r)) = Zip (RApp l) r
 right (Zip l s) = (Zip l s)
 
 -- | Pre-compute a left-prefix of some steps (as far as possible)
-evalZL :: Zip output -> Zip output
+evalZL :: Zip s output -> Zip s output
 evalZL z = case right z of
     Zip l r -> Zip (simplify l) r
 
-
+apply ~(f:< ~(a:<r)) = f a :< r
+push a = (a :<)
+-- | Right-eval with input
+evalR' :: Steps r -> r
+evalR' (Val a r) = push a $ evalR' r
+evalR' (App s) = apply (evalR' s)
 
 -- | Eval in both directions
-evalX :: Zip output -> Steps s -> (s, [Zip output])
+evalX :: Zip s output -> Steps s r -> (r, [Zip s output])
 evalX z s0 = case s0 of
-    Val a r -> m (push a)  (evalX z' r)
+    Push a r -> m (push a)  (evalX z' r)
     App s -> m apply (evalX z' s)
-   where z' = right z
+   where z' = simplify (right z)
          m f ~(s, zz) = z' `seq` (f s, z':zz) -- tie the evaluation of the intermediate stuffs
 
 
@@ -178,8 +188,9 @@ parseList = Case
 
 -- The expression `(+ 2 3)` in direct, applicative and polish style.
 expr = S [Atom 'a']
-expr = S ((:) (Atom 'a') [])
+expr0 = S ((:) (Atom 'a') [])
 expr' = Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
-expr'' = App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push []
+expr'' = App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
 
+suff = Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
 

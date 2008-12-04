@@ -37,7 +37,7 @@ all syntax-dependent functions in a consistent way.
 For the purpose of illustration, we will demonstrate how the technique works on
 a simple problem: interactive feedback of parenthesis matching for a lisp-like
 language. Given an input such as `(+ 1 (* 5 (+ 3 4)) 2)`, the program will
-display `(+ 1 {* 5 [+ 3 4]} 2)`. The idea is that matching pairs are displayed
+isplay `(+ 1 {* 5 [+ 3 4]} 2)`. The idea is that matching pairs are displayed
 using different parenthetical symbols for each level, making the extent of each
 sub-expression more apparent.
 
@@ -82,15 +82,13 @@ necessary to match the linear processing of the input in parsing algorithms.
 In contrast to Swierstra however, we capture the matching
 of types between functions and arguments in a GADT, instead of nested types.
 
-~~~~
-data a :< b
-infixr :<
-
-data Steps r where
-    Push  :: a -> Steps r                  -> Steps (a :< r)
-    App   :: (Steps ((b -> a) :< b :< r))  -> Steps (a :< r)
-    Done  ::                                  Steps ()
-~~~~
+> data a :< b
+> infixr :<
+> 
+> data Steps r where
+>     Push  :: a -> Steps r                  -> Steps (a :< r)
+>     App   :: (Steps ((b -> a) :< b :< r))  -> Steps (a :< r)
+>     Done  ::                                  Steps ()
 
 A value of type `Steps r` can be interpreted as a polish expression that
 produces a stack of type `r`.
@@ -103,7 +101,7 @@ It is easy to translate from an applicative language to these polish expressions
 and therefore syntax trees can be outputed in that form just as easily.
 
 
-~~~~
+~~~~ {.haskell}
 data Applic a where
     (:*:) :: Applic (b -> a) -> Applic b -> Applic a
     Pure :: a -> Applic a

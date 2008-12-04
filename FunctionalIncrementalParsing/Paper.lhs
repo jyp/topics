@@ -1,6 +1,7 @@
 % -*- latex -*-
 \documentclass[preprint]{sigplanconf}
 %include lhs2TeX.fmt
+%format :*: = " \applbind"
 \usepackage{amsmath}
 \usepackage[mathletters]{ucs}
 \usepackage[utf8x]{inputenc}
@@ -11,6 +12,7 @@
 \usepackage[sort&compress,numbers]{natbib}
 
 \providecommand{\TODO}[1]{\marginpar{\footnotesize \raggedright #1}}
+\newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
 
 \newenvironment{meta}{%
 \begin{quote}
@@ -80,8 +82,14 @@ displayed using different parenthetical symbols for each level,
 making the extent of each sub-expression more apparent.
 
 The production of the output is a two-phase process. First, the AST
-is produced by parsing the input. Second, it is linearized back and
+is produced, by parsing the input. A value of the |SExpr| type
+is constructed. Second, it is linearized back and
 printed to the user.
+
+\begin{code}
+data SExpr = S [SExpr] | Atom Char
+\end{code}
+
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
@@ -153,13 +161,25 @@ screenful at a time.
   syntax-dependent feedback in a production-quality editor.
 
 \end{itemize}
-\section{Polish Expressions}
 
 \begin{meta}
     Roadmap for the paper
 \end{meta}
 
-Representing results in a way that can support online construction:
+\section{Polish Expressions} 
+
+We know from \citep{hughes_polish_2003} that online parsers must have an
+applicatiave interface. 
+
+In this section we concentrate on constructing parsing results, ignoring the
+dependence on input, leaving us with a pure applicative language. 
+
+\begin{meta}Analysing this pure language is useful for the purpose of presentation but
+it is interesting in its own right
+\end{meta}
+
+The following data type captures the pure applicative language with embedding
+of Haskell values. The type is indexed by the type of values it represents.
 
 \begin{code}
 data Applic a where
@@ -168,89 +188,112 @@ data Applic a where
 infixl :*:
 \end{code}
 
-In order to represent partially evaluated results, we need a
-representation for expressions. Following \citep{hughes_polish_2003}, we
-use a type with at most one recursive position, giving it a linear
-structure. This is necessary to match the linear processing of the
-input in parsing algorithms. In contrast to Swierstra however, we
-capture the matching of types between functions and arguments in a
-GADT, instead of nested types.
-
-Representing heterogeneous stacks:
+with semantics
 
 \begin{code}
-data top :< r = top :< r
+evalA (f :*: x) = (evalA f) (evalA x)
+evalA (Pure a) = a
+\end{code}
+
+
+For example, the applicative expression
+\begin{code}
+Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
+\end{code}
+
+represents |S ((:) (Atom 'a') [])| (or |S [Atom'a']|, using syntactic sugar).
+
+
+Our parsers require a linear structure (this will become apparent in section
+[ref]), because they process the input in a linear fashion. As
+\citep{hughes_polish_2003}, we choose to work on the polish representation of
+applicative expressions.
+
+The polish representation for the above example, |S [Atom 'a']|, is:
+\begin{code}
+App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
+\end{code}
+
+First, we note that polish expression are in fact more general than applicative
+expressions: they can produce a whole stack of values instead of just one.
+|Push| produces a stack with one more value than its argument. |App| transforms
+the stack produced by its argument by applying the function on the top to the
+argument on the second position. |Done| produces the empty stack.
+
+For example, the expression |Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $
+Done| produces the stack |(:) :< Atom 'a' :< [] :< Nil|, using the following
+representation for heterogeneous stacks.
+
+\begin{code}
+data top :< rest = (:<) {top :: top, rest :: rest}
 data Nil = Nil
 infixr :<
 \end{code}
 
+These expressions can be typed by indexing the datatype with the type of the stack
+produced.
+
 \begin{code}
-data Steps r where
-    Push  :: a -> Steps r                  -> Steps (a :< r)
-    App   :: (Steps ((b -> a) :< b :< r))  -> Steps (a :< r)
-    Done  ::                                  Steps ()
+data Polish r where
+    Push  :: a -> Polish r                  ->  Polish (a :< r)
+    App   :: (Polish ((b -> a) :< b :< r))  ->  Polish (a :< r)
+    Done  ::                                    Polish Nil
 \end{code}
-A value of type |Steps r| can be interpreted as a polish expression
-that produces a stack of type |r|.
 
-|Push| produces a stack with one more value than its argument.
-|App| transforms the stack produced by its argument: it applies the
-function on the top to the argument on the second position. |Done|
-produces the empty stack.
-
-It is easy to translate from an applicative language to these
-polish expressions, and therefore syntax trees can be outputed in
-that form just as easily.
+We can now write a translation from the pure applicative language to
+polish expressions.
 
 \begin{code}
-toSteps expr = toP expr Done
-  where toP :: Applic a -> (Steps r -> Steps (a,r))
+toPolish :: Applic a -> Polish (a :< Nil)
+toPolish expr = toP expr Done
+  where toP :: Applic a -> (Polish r -> Polish (a,r))
         toP (f :*: x)  = App . toP f . toP x
         toP (Pure x)   = Push x
 \end{code}
-The value of an expression can be evaluated as follows:
+
+And the value of an expression can be evaluated as follows:
 
 \begin{code}
-evalR :: Steps (a :< r) -> (a, Steps r)
-evalR (Push a r) = (a,r)
-evalR (App s) =  let  (f, s') = evalR s
-                      (x, s'') = evalR s'
-                 in (f x, s'')
+evalR :: Steps r -> r
+evalR (Val a r) = push a (evalR r)
+evalR (App s) = apply (evalR s)
 \end{code}
-\begin{meta}
-Note that |fst . evalR . toSteps . traverse = id|.
 
-\end{meta}
+% evalR :: Polish (a :< r) -> (a, Polish r)
+% evalR (Push a r) = (a,r)
+% evalR (App s) =  let  (f, s') = evalR s
+%                       (x, s'') = evalR s'
+%                  in (f x, s'')
+
+We have the equality |top (evalR (toPolish x)) == evalA x|.
+
 This evaluation procedure possesses the ``online'' property: parts
 of the polish expression are demanded only if the corresponding
 parts of the input is demanded. This preserves the incremental
-properties of lazy evaluation.
+properties of lazy evaluation. In fact, the equality above holds
+even when |undefined| appears as argument to the |Pure| constructor.0
+
 
 \section{Adding input}
 
-The polish expressions presented so far do not depend on input. We
-introduce the |Suspend| constructor to fulfill this role: it
-expresses that the rest of the expression can depend on the (first
-symbol of) the output. Using this we can extend our applicative
-language with a construct to pattern match on the front of the
-input, and write a simple parser for valid S-expressions.
+While studying the pure applicative language is interesting in its
+own right (we come back to it later for the Zipper), it is not enough
+to represent parsers: it lacks dependency on the input.
+
+We introduce an extra type argument (the type of symbols), as well as a new
+constructor: |Case|. It expresses that the rest of the expression depends on the
+(first symbol of) the output.
 
 \begin{code}
-data Steps s r where
-    Push   :: a -> Steps s r ->                   Steps s (a :< r)
-    App   :: (Steps s ((b -> a) :< b :< r)) ->   Steps s (a :< r)
-    Done  ::                                     Steps s ()
-    Suspend :: Steps s r -> (s -> Steps s r) ->  Steps s r
-
-
 data Parser s a where
     (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
     Pure :: a -> Parser s a
     Case :: Parser s a -> (s -> Parser s a) -> Parser s a
-
-toP (Case nil cons) = \fut -> Suspend (toP nil fut) (\s -> fromP (toP (cons s) fut))
--- other cases unchanged
 \end{code}
+
+Using just this we can write a simple parser for valid
+S-expressions.
+
 \begin{code}
 parseList :: Parser Char [SExpr]
 parseList = Case 
@@ -261,12 +304,33 @@ parseList = Case
        '(' -> Pure (\arg rest -> S arg : rest ) :*: parseList :*: parseList
        c -> Pure (Atom c :) :*: parseList)
 \end{code}
+
+
+We introduce the corresponding construct in the |Polish| expressions and amend
+the translation.
+
+\begin{code}
+data Polish s r where
+    Push     :: a -> Polish s r ->                   Polish s (a :< r)
+    App      :: (Polish s ((b -> a) :< b :< r)) ->   Polish s (a :< r)
+    Done     ::                                      Polish s Nil
+    Susp  :: Polish s r -> (s -> Polish s r) ->   Polish s r
+
+  toP (Case nil cons) = 
+       \k -> Susp (toP nil k) (\s -> fromP (toP (cons s) k))
+  ... ( other cases unchanged)
+\end{code}
+
+We broke the linearity of the type, but it does not matter since the
+parsing algorithm will not proceed further than the available input anyway. When
+the input is available, it is first used to remove the |Susp| constructors.
+
 Suspensions in a polish expression can be resolved by feeding input
 into it. When facing a suspension, we pattern match on the input,
 and choose the corresponding branch in the result.
 
 \begin{code}
-feed :: [s] -> Steps s r -> Steps s r
+feed :: [s] -> Polish s r -> Polish s r
 feed ss p = case p of
                   (Sus nil cons) -> case ss of
                       [] -> feed [] nil
@@ -275,7 +339,7 @@ feed ss p = case p of
                   (App p') -> App (feed ss p')
 \end{code}
 \begin{meta}
-Hence, |feed "(+ 1 2)" (toSteps parseList)| yields back \ldots{}
+Hence, |feed "(+ 1 2)" (toPolish parseList)| yields back \ldots{}
 
 \end{meta}
 We can also obtain intermediate parsing results by feeding symbols
@@ -283,14 +347,14 @@ one at a time. The list of all intermediate results is constructed
 lazily using |scanl|.
 
 \begin{code}
-feedOne :: Steps s a -> s -> Steps s a
+feedOne :: Polish s a -> s -> Polish s a
 feedOne (Push x s)         ss = Push x (feedOne s ss)
 feedOne (App f)            ss = App (feedOne f ss)
-feedOne (Suspend nil cons) s  = cons s
+feedOne (Susp nil cons) s  = cons s
 
 partialParses = scanl feedOne
 \end{code}
-Now, if the $n^{th}$ element of the input is changed, one can reuse
+Now, if the $(n+1)^{th}$ element of the input is changed, one can reuse
 the $n^{th}$ element of the partial results list and feed it the
 new input's tail (from that position).
 
@@ -305,7 +369,7 @@ applications by traversing the result and applying functions along
 the way.
 
 \begin{code}
-evalL :: Steps s a -> Steps s a
+evalL :: Polish s a -> Polish s a
 evalL (Push x r) = Push x (evalL r)
 evalL (App f) = case evalL f of
                   (Push a (Push b r)) -> Push (a b) r
@@ -314,21 +378,19 @@ partialParses = scanl (\c -> evalL . feedOne c)
 \end{code}
 This still suffers from a major drawback: as long as a function
 application is not saturated, the polish expression will start with
-a (potentially long) prefix of the form:
+
+For example, after applying the s-expr parser to the string `(abcdefg`,
+evalL is unable to perform any simplification of the list prefix.
 
 \begin{code}
-  partialsP = App $ Push v_1 $ App $ Push v_2 $  ... $ App $ Suspend nil cons
+evalL $ feed "(abc" (toPolish parseList) 
+  == App $ Push (Atom 'a' :) $ App $ Push (Atom 'b' :) $ App $ Push (Atom 'b' :) $ App $ ...
 \end{code}
-which cannot be simplified.
 
-\begin{meta}
-after parsing |(abcdefg| we get exactly this.
-
-\end{meta}
 This prefix can persist until the end of the input is reached. A
 possible remedy is to avoid writing expressions that lead to this
 sort of intermediate results, and we will see in section [ref] how
-to do this in a particularly important case. This however works
+to do this in the particularly important case of lists. This however works
 only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the
 input). In general, after parsing a prefix of size $n$, it is
@@ -343,7 +405,7 @@ zipper structure with the focus at this suspension point.
 
 \begin{code}
 data Zip output where
-   Zip :: RPolish stack output -> Steps stack -> Zip output
+   Zip :: RPolish stack output -> Polish stack -> Zip output
 
 data RPolish input output where
   RPush :: a -> RPolish (a :< rest) output -> RPolish rest output
@@ -364,9 +426,18 @@ assigned a meaning independently: it corresponds to \emph{reverse}
 polish expressions.
 
 In contrast to forward polish expressions, which directly produce
-an output stack, reverse expressions can be understood as automaton
-which transform a stack to another. This is captured in the type
+an output stack, reverse expressions can be understood as an automaton
+which transforms a stack to another. This is captured in the type
 indices |input| and |output|.
+
+Running this automaton on an input stack offers no surprise.
+\begin{code}
+evalRP :: RPolish input output -> input -> output
+evalRP RStop acc = acc 
+evalRP (RPush v r) acc = evalRP r (v :< acc)
+evalRP (RApp r) (f :< a :< acc) = evalRP r (f a :< acc)
+\end{code}
+
 
 In our zipper type, the direct polish expression yet-to-visit
 (``on the right'') has to correspond to the reverse polish
@@ -374,13 +445,30 @@ automation (``on the left''): the output of the latter has to match
 the input of the former.
 
 We capture all these properties in the types by using GADTs. This
-allows properly type the traversal of polish expressions as well as
-reduction to a value.
+allows properly type the traversal of polish expressions.
 
+\begin{code}
+right :: Zip s output -> Zip s output
+right (Zip l (Push a r)) = Zip (RPush a l) r
+right (Zip l (App r)) = Zip (RApp l) r
+right (Zip l s) = (Zip l s)
+\end{code}
+
+As the input is traversed, we also simplify the prefix that
+we went past.
 \begin{meta}
-show the code
+Note that this works only because we keep the automaton in "normal form"
 
 \end{meta}
+
+\begin{code}
+simplify :: RPolish s output -> RPolish s output
+simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
+simplify x = x
+\end{code}
+
+
+
 \section{Parsing}
 
 \subsection{Disjunction}
@@ -395,7 +483,7 @@ transform it into an incremental algorithm.
 However, the most common way to produce such structured values is
 by \emph{parsing} the input string. To support convenient parsing,
 we can introduce a disjunction operator, exactly as Swierstra and
-Hughes do: the addition of the |Suspend| operator does not
+Hughes do: the addition of the |Susp| operator does not
 undermine their treatment of disjunction in any way.
 
 \begin{meta}
@@ -416,7 +504,7 @@ interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting
 the parser with error correction is therefore desirable.
 
-We can do so by introducing an other constructor in the |Steps|
+We can do so by introducing an other constructor in the |Polish|
 type to represent less desirable parses. The idea is that the
 grammar contains permissive rules, but those are tagged as less
 desirable. The parsing algorithm can then maximize the desirability
@@ -441,7 +529,7 @@ information in each disjunction node.
 
 This technique can be re-formulated as dynamic programming, where
 we use lazy evaluation to automatically cut-off expansion of the
-search space. We first define a full tree of possibilities: (Steps
+search space. We first define a full tree of possibilities: (Polish
 with disjunction), then we compute a profile information that we
 tie to it; finally, finding the best path is a matter of looking
 only at a subset of the information we constructed, using any
@@ -596,7 +684,7 @@ constructor for :\textless{}) is:
 
 \end{meta}
 \begin{code}
-evalR :: Steps r -> r
+evalR :: Polish r -> r
 evalR (Push a r) = a :< evalR ss r
 evalR (App s) = (\ ~(f:< (a:<r)) -> f a :< r) (evalR ss s)
 \end{code}
