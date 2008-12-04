@@ -21,11 +21,12 @@
 \end{quote}
 }
 
+\providecommand{\textmeta}[1]{\textsf{#1}}
 
 \begin{document}
 
-\titlebanner{Draft}        % These are ignored unless
-\preprintfooter{ICFP09}   % 'preprint' option specified.
+\titlebanner{Work in progress}        % These are ignored unless
+\preprintfooter{In preparation for ICFP09}   % 'preprint' option specified.
 
 \title{Functional Incremental Parsing}
 
@@ -46,6 +47,16 @@ Finally, we complete our treatment of incremental parsing in an
 interactive system by showing how our parsing machinery can be
 improved to support error-correction.
 \end{abstract}
+
+\category{D.2.3}{Coding Tools and Techniques}{Program editors}
+
+\terms
+Design, Languages
+
+\keywords
+Functional Programming, Lazy evaluation, Incremental Computing, Parsing,
+Dynamic Programming, Polish representation, Editor, Haskell
+
 
 \section{Introduction}
 
@@ -166,7 +177,8 @@ screenful at a time.
     Roadmap for the paper
 \end{meta}
 
-\section{Polish Expressions} 
+\section{Applicative Parsers} 
+\label{sec:applicative}
 
 We know from \citep{hughes_polish_2003} that online parsers must have an
 applicatiave interface. 
@@ -204,9 +216,9 @@ Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
 represents |S ((:) (Atom 'a') [])| (or |S [Atom'a']|, using syntactic sugar).
 
 
-Our parsers require a linear structure (this will become apparent in section
-[ref]), because they process the input in a linear fashion. As
-\citep{hughes_polish_2003}, we choose to work on the polish representation of
+Our parsers require a linear structure (this will become apparent in
+section~\ref{sec:parsing}), because they process the input in a linear fashion.
+As \citep{hughes_polish_2003}, we choose to work on the polish representation of
 applicative expressions.
 
 The polish representation for the above example, |S [Atom 'a']|, is:
@@ -257,6 +269,8 @@ And the value of an expression can be evaluated as follows:
 evalR :: Steps r -> r
 evalR (Val a r) = push a (evalR r)
 evalR (App s) = apply (evalR s)
+    where apply ~(f:< ~(a:<r)) = f a :< r
+          push a = (a :<)
 \end{code}
 
 % evalR :: Polish (a :< r) -> (a, Polish r)
@@ -389,7 +403,7 @@ evalL $ feed "(abc" (toPolish parseList)
 
 This prefix can persist until the end of the input is reached. A
 possible remedy is to avoid writing expressions that lead to this
-sort of intermediate results, and we will see in section [ref] how
+sort of intermediate results, and we will see in section~\ref{tree_struc} how
 to do this in the particularly important case of lists. This however works
 only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the
@@ -470,7 +484,7 @@ simplify x = x
 
 
 \section{Parsing}
-
+\label{sec:parsing}
 \subsection{Disjunction}
 
 We kept the details of actual parsing out of the discussion so far.
@@ -536,15 +550,18 @@ only at a subset of the information we constructed, using any
 suitable heuristic.
 
 \begin{meta}
-Here it's probably best to paste in the whole library.
-
+Here we almost need the whole code ...
 \end{meta}
+
+\subsection{Ambiguous grammars}
+
+
 \section{Getting rid of linear behavior}
 
 \begin{meta}
 This is related to ``Binary random access lists'' in Okasaki.
-
 \end{meta}
+
 As we noted in a previous section, partial computations sometimes
 cannot be performed. This is indeed a very common case: if the
 output we construct is a list, then the spine of the list can only
@@ -555,13 +572,13 @@ returns its input unmodified:
 \begin{code}
 identity = case_ 
 \end{code}
-Wagner et al.~recognize this issue and propose to handle the case
-of repetition specially in the parsing. We choose a different
-approach, which relies on using a different data structure for the
-output. The advantage is that we do not need to complicate, not
-change at all, the parsing algorithms. The key insight is that the
-performance problems come from the linearity of the list, but we
-can always use a tree whose structure can be ignored when
+
+\citep{wagner_efficient_1998} recognize this issue and propose to handle the
+case of repetition specially in the parsing. We choose a different approach,
+which relies on using a different data structure for the output. The advantage
+is that we do not need to complicate, not change at all, the parsing algorithms.
+The key insight is that the performance problems come from the linearity of the
+list, but we can always use a tree whose structure can be ignored when
 traversing the result.
 
 Let us summarize the requirements we put on the data structure:
@@ -588,6 +605,7 @@ be determined by entering only the root constructor. This suggests
 the following data type, with the idea that it will be traversed in
 preorder.
 
+\label{tree_structure}
 \begin{code}
 data Tree a  = Node a (Tree a) (Tree a)
              | Leaf
@@ -634,18 +652,76 @@ source of inefficiencies of our implementation.
 \end{enumerate}
 \section{Related work}
 
-There have been a lot of work on incremental interactive algorithm
-and applications a long time ago: (Swierstra, Snelting, Wagner et
-al), however, these solutions havent caught up in the mainstream.
+The litterature on incremental parsing is so abundant that a complete
+survey would be necessary to cover all the possible approaches.
+Here we will compare our approach to some alternatives only.
+
+
+\subsection{Incremental parsing in development environments} 
+
+State matching approaches
+
+\citep{celentano_incremental_1978}
+\citep{ghezzi_incremental_1979}
+\citep{ghezzi_augmenting_1980}
+
+
+\citep{hudson_incremental_1991} % comput
+
+This does not apply for combinator parser library, because the parser
+state is not really observable.
+
+\citep{wagner_efficient_1998} 
+\citep{bahlke_psg_1986} 
+
+We have a much more modest approach, in the sense that we do not attempt to
+reuse the nodes that were created in previous parsing runs. Another drawback is
+that we assume that the window moves by incremental steps. If the user jumps
+back and forth the beginning and the end of the file, while making changes at
+the beginning, our approach will force reparsing the whole file every time a
+change is made at the beginning followed by a jump to the end of the file.
+
+
+Somehow none of these solutions have caught up in the mainstream.
+
 Editors typically work using regular expressions for syntax
 highlighting at the lexical level (Emacs, Vim, Textmate, \ldots{})
 or run a full compiler in the background for syntax level
-(Eclipse). We might argue that these solutions offered little
+(Eclipse). We might argue that early solutions offered little
 benefit in comparison to their implementation cost. Our approach is
-much simpler. In particular, most imperative-oriented approaches
-try to update the tree as the user changes the text. This is a lot
-more complicated than what we do. One might argue that update of
-the tree
+much simpler. 
+
+One might argue that node reuse is an essential component of incremental
+parsing. However, it is notable that programming languages syntaxes are often
+specified with a forward reading approach. A consequence is that a small change
+in the beginning of the file can completely invalidate the parse tree obtained
+in the previous run. A simple example is the opening of a comment. (For example,
+while editing an Haskell source file, typing \verb!{-! implies that the rest of
+the file becomes a comment up to the next \verb!-}!.) Hence, trying to reuse
+right-bound parts of the parse tree seems to be optimizing for a special case.
+This is not very suitable in an interactive system where users expect consistent
+response times.
+
+\textmeta{A possible solution to that would be to have a parse result for every
+possible prefix.}
+
+\subsection{Incremental parsing in natural language processing} 
+
+
+\subsection{Incremental computation}
+
+\citep{saraiva_functional_2000}
+
+\subsection{Parser combinators}
+
+\citep{hughes_polish_2003}
+\citep{swierstra_fast_1999}
+
+
+
+
+\subsection{Summary}
+
 
 We can summarize the unique points of our approach as follows:
 
@@ -664,6 +740,9 @@ We can summarize the unique points of our approach as follows:
   idea is independent of parsing algorithm details (we want an online
   algorithm with error correction)
 
+\item 
+  in a parsing combinator library
+
 \end{itemize}
 \begin{meta}
 What does Visual Haskell do?
@@ -679,23 +758,10 @@ is can cost
 \section{Scratch}
 
 \begin{meta}
-An alternative, which builds the whole stack (and thus requires a
-constructor for :\textless{}) is:
-
-\end{meta}
-\begin{code}
-evalR :: Polish r -> r
-evalR (Push a r) = a :< evalR ss r
-evalR (App s) = (\ ~(f:< (a:<r)) -> f a :< r) (evalR ss s)
-\end{code}
-
-
-\begin{meta}
 The full code is in Code.hs
-
 \end{meta}
 
-\bibliographystyle{abbrvnat}
+\bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
 
 

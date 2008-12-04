@@ -1,3 +1,5 @@
+%% Customized by JP
+
 %% File: `abbrvnat.bst'
 %% A modification of `abbrv.bst' for use with natbib package 
 %%
