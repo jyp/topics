@@ -42,18 +42,20 @@ observes only a small window of the output (that is, one that
 corresponds to a small part of the input), we show that combining
 lazy evaluation and caching of intermediate (partial) results
 provides incremental parsing. We also introduce a general purpose,
-simple data structure, to get rid of the linear complexity caused
+simple data structure, to eliminate the linear complexity caused
 by lazy lists traversals while retaining its lazy properties.
 Finally, we complete our treatment of incremental parsing in an
 interactive system by showing how our parsing machinery can be
 improved to support error-correction.
 \end{abstract}
 
+\category{D.3.4}{Programming Languages}: Processors
 \category{D.2.3}{Coding Tools and Techniques}{Program editors}
 \category{D.1.1}{Programming Techniques}{Applicative (Functional) Programming}
+\category{F.3.2}{Logics and Meanings of Programs}{Semantics of Programming Languages}
 
 \terms
-Algorithms, Design, Languages
+Algorithms, Languages, Design, Performance, Theory
 
 \keywords
 Functional Programming, Lazy evaluation, Incremental Computing, Parsing,
@@ -62,12 +64,12 @@ Dynamic Programming, Polish representation, Editor, Haskell
 
 \section{Introduction}
 
-Yi is an editor is written in Haskell. It provides features such as syntax
-highlighting and indentation hints for the Haskell language. In order to
-implement all syntax-dependent functions in a consistent way, the abstract
-syntax tree (AST) is available at all times, kept up to date as the 
-user types. For the performance of the system to be acceptable, the editor
-must not parse the whole file at each keystroke.
+Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is an editor is written in
+Haskell. It provides features such as syntax highlighting and indentation hints
+for the Haskell language. In order to implement all syntax-dependent functions
+in a consistent way, the abstract syntax tree (AST) is available at all times,
+kept up to date as the user types. For the performance of the system to be
+acceptable, the editor must not parse the whole file at each keystroke.
 
 In an interactive system, a lazy evaluation strategy provides a
 special form of incremental computation: the amount of output that
@@ -654,19 +656,16 @@ information we constructed, using any suitable heuristic. Our cut-off heuristic
 makes sure that only a part of the exponentially big data structure is demanded.
 Thanks to lazy evaluation, only that small will be actually constructed.
 
-\begin{meta}
-Here we almost need the whole code ...
-\end{meta}
-
 \subsection{Ambiguous grammars}
 
 \textmeta{Conflict with online; solved as by error correction}
 
-\section{Getting rid of linear behavior}
+\section{Eliminating linear behavior}
 
 \begin{meta}
-This is related to ``Binary random access lists'' in \citet[section~6.2.1]{okasaki_purely_1999}.
-\end{meta}
+
+This is related to ``Binary random access lists'' in
+\citet[section~6.2.1]{okasaki_purely_1999}. \end{meta}
 
 As we noted in a previous section, partial computations sometimes
 cannot be performed. This is indeed a very common case: if the
@@ -690,8 +689,10 @@ advantage is that we do not need to complicate, not change at all, the parsing
 algorithms.
 
 As \citet{wagner_efficient_1998}, we produce a different data structure for the
-output, but the difference are that our basic combinators are powerful enough
-to produce this data structure with no modification: this is because we can parameterize our parsing rules by haskell values (for free), and because we have no tree update.
+output, but the difference are that our basic combinators are powerful enough to
+produce this data structure with no modification: this is because we can
+parameterize our parsing rules by haskell values (for free), and because we have
+no tree update.
 
 Let us summarize the requirements we put on the data structure:
 
@@ -867,15 +868,13 @@ incremental parsing with support for error correction. We
 argumented that the complexity of the parsing is linear, and that
 is can cost
 
-\section{Scratch}
-
-\begin{meta}
-The full code is in Code.hs
-\end{meta}
-
 \section{Conclusion}
 
+\textmeta{Discuss how the tree must be used only locally}
+
 Combination of many techniques to build a working application.
+
+Interesting application for/experiment in lazy evaluation.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
