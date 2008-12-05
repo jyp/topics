@@ -11,7 +11,8 @@
 \usepackage{enumerate}
 \usepackage[sort&compress,numbers]{natbib}
 
-\providecommand{\TODO}[1]{\marginpar{\footnotesize \raggedright #1}}
+\providecommand{\TODO}[1]{\footnote{#1}}
+\providecommand{\annot}[1]{\marginpar{\footnotesize \raggedright #1}}
 \newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
 
 \newenvironment{meta}{%
@@ -49,9 +50,10 @@ improved to support error-correction.
 \end{abstract}
 
 \category{D.2.3}{Coding Tools and Techniques}{Program editors}
+\category{D.1.1}{Programming Techniques}{Applicative (Functional) Programming}
 
 \terms
-Design, Languages
+Algorithms, Design, Languages
 
 \keywords
 Functional Programming, Lazy evaluation, Incremental Computing, Parsing,
@@ -104,12 +106,12 @@ data SExpr = S [SExpr] | Atom Char
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
-\label{fig:begin}
 \caption{Viewing the beginning of a file. 
 The triangle represents the syntax tree. The line at the bottom represents the
 file. The zagged part indicates the part that is parsed. The viewing window is
 depicted as a rectangle.
 }
+\label{fig:begin}
 \end{figure}
 
 The initial situation is depicted in figure~\ref{fig:begin}. The user views the
@@ -129,7 +131,7 @@ re-done.
 \caption{
 Viewing the middle of a file. 
 Although only a small amount of the
-parse tree may be demanded, parsing will proceed from the beginning of the
+parse tree may be demanded, parsing must start from the beginning of the
 file.}
 
 \end{figure}
@@ -177,21 +179,18 @@ screenful at a time.
     Roadmap for the paper
 \end{meta}
 
-\section{Applicative Parsers} 
+\section{Producing results} 
 \label{sec:applicative}
 
-We know from \citep{hughes_polish_2003} that online parsers must have an
-applicatiave interface. 
-
 In this section we concentrate on constructing parsing results, ignoring the
-dependence on input, leaving us with a pure applicative language. 
+dependence on input. The cornerstone of our approach to incremental parsing
+approach is that the parse tree is produced \emph{online}.We can ensure that
+this is the case by forcing the structure of the result to be expressed in
+applicative \citet{mcbride_applicative_2007} form.
 
-\begin{meta}Analysing this pure language is useful for the purpose of presentation but
-it is interesting in its own right
-\end{meta}
 
 The following data type captures the pure applicative language with embedding
-of Haskell values. The type is indexed by the type of values it represents.
+of Haskell values. It is indexed by the type of values it represents.
 
 \begin{code}
 data Applic a where
@@ -200,41 +199,71 @@ data Applic a where
 infixl :*:
 \end{code}
 
-with semantics
+The idea is to reify function applications.
+
+For example, the Haskell expression |S [Atom'a']|, which stands for |S ((:)
+(Atom 'a') [])| if we remove syntactic sugar, can be represented in applicative
+form by
+
+\begin{code}
+S @ ((:) @ (Atom @ 'a') @ [])
+\end{code}
+
+Or, using our datatype:
+
+\begin{code}
+Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
+\end{code}
+
+We can evaluate such expressions as follows:
 
 \begin{code}
 evalA (f :*: x) = (evalA f) (evalA x)
 evalA (Pure a) = a
 \end{code}
 
+If the arguments to the |Pure| constructor are constants \annot{or
+constructors}, then we know that demanding a given part of the result will force
+only the corresponding part of the applicative expression.
 
-For example, the applicative expression
+Because they process the input in a linear fashion, our parsers require a
+linear structure (this will become apparent in section~\ref{sec:parsing}). As
+\citet{hughes_polish_2003}, we convert the applicative expressions to polish
+representation to obtain such a linear structure.
+
+The key idea of the polish representation is to put the application in an
+prefix position rather than an infix one.
+
+Hence our example expression in applicative form
+|S @ ((:) @ (Atom @ 'a') @ [])|
+becomes
+|@ S @ (@ (:) (@ Atom 'a') [])|
+
+The parenthesis are no longer needed, since we know that |@| is always followed
+by exactly two arguments. The final polish expression is therefore
+
 \begin{code}
-Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
+|@ S @ @ (:) @ Atom 'a' []|
 \end{code}
 
-represents |S ((:) (Atom 'a') [])| (or |S [Atom'a']|, using syntactic sugar).
-
-
-Our parsers require a linear structure (this will become apparent in
-section~\ref{sec:parsing}), because they process the input in a linear fashion.
-As \citep{hughes_polish_2003}, we choose to work on the polish representation of
-applicative expressions.
-
-The polish representation for the above example, |S [Atom 'a']|, is:
+or, sticking to pure haskell syntax:
 \begin{code}
 App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
 \end{code}
 
-First, we note that polish expression are in fact more general than applicative
-expressions: they can produce a whole stack of values instead of just one.
-|Push| produces a stack with one more value than its argument. |App| transforms
-the stack produced by its argument by applying the function on the top to the
-argument on the second position. |Done| produces the empty stack.
+Typing these expressions in Haskell is somewhat tricky. The key insight is that
+polish expressions are in fact more general than applicative expressions: they
+produce a stack of values instead of just one.
 
-For example, the expression |Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $
-Done| produces the stack |(:) :< Atom 'a' :< [] :< Nil|, using the following
-representation for heterogeneous stacks.
+In extenso, |Push| produces a stack with one more value than its argument,
+|App| transforms the stack produced by its argument by applying the function on
+the top to the argument on the second position, and |Done| produces the empty
+stack.
+
+The expression |Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done| is an
+example producing a non-trivial stack. It produces the stack |(:) (Atom 'a')
+[]|. This can be expressed purely in Haskell as |(:) :< Atom 'a' :< [] :< Nil|,
+using the following representation for heterogeneous stacks.
 
 \begin{code}
 data top :< rest = (:<) {top :: top, rest :: rest}
@@ -242,8 +271,8 @@ data Nil = Nil
 infixr :<
 \end{code}
 
-These expressions can be typed by indexing the datatype with the type of the stack
-produced.
+We are now able to properly type polish expressions, by indexing the datatype
+with the type of the stack produced.
 
 \begin{code}
 data Polish r where
@@ -269,8 +298,8 @@ And the value of an expression can be evaluated as follows:
 evalR :: Steps r -> r
 evalR (Val a r) = push a (evalR r)
 evalR (App s) = apply (evalR s)
-    where apply ~(f:< ~(a:<r)) = f a :< r
-          push a = (a :<)
+    where  apply  ~(f:< ~(a:<r))  = f a :< r
+           push  a                = (a :<)
 \end{code}
 
 % evalR :: Polish (a :< r) -> (a, Polish r)
@@ -281,11 +310,15 @@ evalR (App s) = apply (evalR s)
 
 We have the equality |top (evalR (toPolish x)) == evalA x|.
 
-This evaluation procedure possesses the ``online'' property: parts
-of the polish expression are demanded only if the corresponding
-parts of the input is demanded. This preserves the incremental
-properties of lazy evaluation. In fact, the equality above holds
-even when |undefined| appears as argument to the |Pure| constructor.0
+Finally, we note that this evaluation procedure still possesses the ``online''
+property: parts of the polish expression are demanded only if the corresponding
+parts of the input is demanded. This preserves the incremental properties of
+lazy evaluation. In fact, the equality above holds even when |undefined| appears
+as argument to the |Pure| constructor.
+
+In fact, the conversion from applicative to polish expressions can be seen as 
+a reification of the working stack of the |evalA| function with call-by-name
+semantics.
 
 
 \section{Adding input}
@@ -409,8 +442,10 @@ only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the
 input). In general, after parsing a prefix of size $n$, it is
 reasonable to expect a partial application of at least depth
-\$O(log\ensuremath{\sim}n), (otherwise the parser discards
+$O(log~n)$, (otherwise the parser discards
 information).
+
+\subsection{Zipping into Polish}
 
 Thus we have to use a better strategy to simplify intermediate
 results. We want to avoid the cost of traversing the structure
@@ -485,6 +520,7 @@ simplify x = x
 
 \section{Parsing}
 \label{sec:parsing}
+\textmeta{Termination if there is no recursive call before parsing one token}
 \subsection{Disjunction}
 
 We kept the details of actual parsing out of the discussion so far.
@@ -502,7 +538,7 @@ undermine their treatment of disjunction in any way.
 
 \begin{meta}
 The zipper cannot go beyond an unresolved disjunction. That is OK
-if we assume that the parser has indeed online behavior.
+if we assume that the parser has not much lookahead.
 
 \end{meta}
 \subsection{Error correction}
@@ -559,7 +595,7 @@ Here we almost need the whole code ...
 \section{Getting rid of linear behavior}
 
 \begin{meta}
-This is related to ``Binary random access lists'' in Okasaki.
+This is related to ``Binary random access lists'' in \citet[section~6.2.1]{okasaki_purely_1999}.
 \end{meta}
 
 As we noted in a previous section, partial computations sometimes
@@ -573,13 +609,19 @@ returns its input unmodified:
 identity = case_ 
 \end{code}
 
-\citep{wagner_efficient_1998} recognize this issue and propose to handle the
-case of repetition specially in the parsing. We choose a different approach,
-which relies on using a different data structure for the output. The advantage
-is that we do not need to complicate, not change at all, the parsing algorithms.
 The key insight is that the performance problems come from the linearity of the
 list, but we can always use a tree whose structure can be ignored when
-traversing the result.
+traversing the result. \citet[section 7]{wagner_efficient_1998} recognize this
+issue and propose to replace left or right recursive rules in the parsing with a
+special repetition construct. The parsing algorithm treats this construct
+specially and does re-balancing of the tree as needed. We choose a different
+approach, which builds upon the combinators we have introduced so far. The
+advantage is that we do not need to complicate, not change at all, the parsing
+algorithms.
+
+As \citet{wagner_efficient_1998}, we produce a different data structure for the
+output, but the difference are that our basic combinators are powerful enough
+to produce this data structure with no modification: this is because we can parameterize our parsing rules by haskell values (for free), and because we have no tree update.
 
 Let us summarize the requirements we put on the data structure:
 
@@ -661,18 +703,18 @@ Here we will compare our approach to some alternatives only.
 
 State matching approaches
 
-\citep{celentano_incremental_1978}
-\citep{ghezzi_incremental_1979}
-\citep{ghezzi_augmenting_1980}
+\citet{celentano_incremental_1978}
+\citet{ghezzi_incremental_1979}
+\citet{ghezzi_augmenting_1980}
 
 
-\citep{hudson_incremental_1991} % comput
+\citet{hudson_incremental_1991} % comput
 
 This does not apply for combinator parser library, because the parser
 state is not really observable.
 
-\citep{wagner_efficient_1998} 
-\citep{bahlke_psg_1986} 
+\citet{wagner_efficient_1998} 
+\citet{bahlke_psg_1986} 
 
 We have a much more modest approach, in the sense that we do not attempt to
 reuse the nodes that were created in previous parsing runs. Another drawback is
@@ -710,12 +752,12 @@ possible prefix.}
 
 \subsection{Incremental computation}
 
-\citep{saraiva_functional_2000}
+\citet{saraiva_functional_2000}
 
 \subsection{Parser combinators}
 
-\citep{hughes_polish_2003}
-\citep{swierstra_fast_1999}
+\citet{hughes_polish_2003}
+\citet{swierstra_fast_1999}
 
 
 

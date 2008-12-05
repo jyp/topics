@@ -119,14 +119,14 @@
 	title = {{The expression lemma}},
 	booktitle = {{Proceedings of Mathematics of Program Construction (MPC) 2008}},
 	publisher = {Springer},
-	author = {Ralf L\"{a}mmel and Ondrej Rypacek},
+	author = {Ralf Lämmel and Ondrej Rypacek},
 	year = {2008},
 	keywords = {open},
 	comment = {To appear}
 },
 
 @article{swierstra_data_2008,
-	title = {Data types \`{a} la carte},
+	title = {Data types à la carte},
 	volume = {Forthcoming},
 	url = {http://journals.cambridge.org/action/displayAbstract?fromPage=online\&aid=1813324},
 	abstract = {This paper describes a technique for assembling both data types and functions from isolated individual components. We also explore how the same technology can be used to combine free monads and, as a result, structure Haskell's monolithic IO monad.},
@@ -180,7 +180,7 @@
 	abstract = {The problem of supporting the modular extensibility of both data and functions in one programming language at the same time is known as the expression problem. Functional languages traditionally make it easy to add new functions, but extending data (adding new data constructors) requires modifying existing code. We present a semantically and syntactically lightweight variant of open data types and open functions as a solution to the expression problem in the Haskell language. Constructors of open data types and equations of open functions may appear scattered throughout a program with several modules. The intended semantics is as follows: the program should behave as if the data types and functions were closed, defined in one place. The order of function equations is determined by best-fit pattern matching, where a specific pattern takes precedence over an unspecific one. We show that our solution is applicable to the expression problem, generic programming, and exceptions. We sketch two implementations: a direct implementation of the semantics, and a scheme based on mutually recursive modules that permits separate compilation},
 	booktitle = {Proceedings of the 8th ACM SIGPLAN international conference on Principles and practice of declarative programming},
 	publisher = {ACM},
-	author = {Andres L\"{o}h and Ralf Hinze},
+	author = {Andres Löh and Ralf Hinze},
 	year = {2006},
 	keywords = {expression problem,extensible data types,extensible exceptions,extensible functions,functional programming,generic programming,mutually recursive modules,open},
 	pages = {133--144}
@@ -190,7 +190,7 @@
 	title = {UpgradeJ: Incremental Typechecking for Class Upgrades},
 	url = {http://dx.doi.org/10.1007/978-3-540-70592-5\_11},
 	abstract = {One of the problems facing developers is the constant evolution of components that are used to build applications. This evolution is typical of any multi-person or multi-site software project. How can we program in this environment? More precisely, how can language design address such evolution? In this paper we attack two significant issues that arise from constant component evolution: we propose language-level extensions that permit multiple, co-existing versions of classes and the ability to dynamically upgrade from one version of a class to another, whilst still maintaining type safety guarantees and requiring only lightweight extensions to the runtime infrastructure. We show how our extensions, whilst intuitive, provide a great deal of power by giving a number of examples. Given the subtlety of the problem, we formalize a core fragment of our language and prove a number of important safety properties.},
-	journal = {ECOOP 2008 \^{a}?? Object-Oriented Programming},
+	journal = {ECOOP 2008 â Object-Oriented Programming},
 	author = {Gavin Bierman and Matthew Parkinson and James Noble},
 	year = {2008},
 	keywords = {evolution},
@@ -224,7 +224,7 @@
 
 @misc{lh_principled_????,
 	title = {A Principled Approach to Version Control},
-	author = {Andres L\"{o}h and Wouter Swierstra and Daan Leijen},
+	author = {Andres Löh and Wouter Swierstra and Daan Leijen},
 	keywords = {vc,vc-project}
 },
 
@@ -250,24 +250,37 @@
 	comment = {* works on a snapshot of dynamic data * graph-like representation of heap * popular contender: Daikon (can be better for some inputs)}
 },
 
+@article{ghezzi_incremental_1979,
+	title = {Incremental Parsing},
+	volume = {1},
+	url = {http://portal.acm.org/citation.cfm?id=357062.357066},
+	doi = {10.1145/357062.357066},
+	abstract = {An incremental parser is a device which is able to perform syntax analysis in an incremental way, avoiding complete reparsing of a program after each modification. The incremental parser presented extends the conventional LR parsing algorithm and its performance is compared with that of a conventional parser. Suggestions for an implementation and possible extensions to other parsing methods are also discussed.},
+	number = {1},
+	journal = {ACM Trans. Program. Lang. Syst.},
+	author = {Carlo Ghezzi and Dino Mandrioli},
+	year = {1979},
+	pages = {58--70}
+},
+
 @article{boudol_semantics_2000,
 	title = {On the semantics of the call-by-name CPS transform},
 	volume = {234},
 	url = {http://portal.acm.org/citation.cfm?id=331681},
 	number = {1-2},
 	journal = {Theor. Comput. Sci.},
-	author = {G\'{e}rard Boudol},
+	author = {Gérard Boudol},
 	year = {2000},
-	keywords = {b\"{o}hm-out technique,continuation-passing-style transforms,l\'{e}vy-longo trees,\&lgr;-calculus},
+	keywords = {böhm-out technique,continuation-passing-style transforms,lévy-longo trees,\&lgr;-calculus},
 	pages = {309--321}
 },
 
 @inbook{glck_derivation_2004,
 	title = {Derivation of Deterministic Inverse Programs Based on LR Parsing},
 	url = {http://www.springerlink.com/content/tfaxx9x8mxukcreb },
-	abstract = {We present a method for automatic program inversion of functional programs based on methods of LR parsing. We formalize the transformation and illustrate it with the inversion of a program for run-length encoding. We solve one of the main problems of automatic program inversion\^{a}??the elimination of nondeterminism\^{a}??by viewing an inverse program as a context-free grammar and applying to it methods of LR parsing to turn it into a recursive, deterministic inverse program. This improves the efficiency of the inverse programs and greatly expands the application range of our earlier method for program inversion.},
+	abstract = {We present a method for automatic program inversion of functional programs based on methods of LR parsing. We formalize the transformation and illustrate it with the inversion of a program for run-length encoding. We solve one of the main problems of automatic program inversionâthe elimination of nondeterminismâby viewing an inverse program as a context-free grammar and applying to it methods of LR parsing to turn it into a recursive, deterministic inverse program. This improves the efficiency of the inverse programs and greatly expands the application range of our earlier method for program inversion.},
 	journal = {Functional and Logic Programming},
-	author = {Robert Gl\"{u}ck and Masahiko Kawabe},
+	author = {Robert Glück and Masahiko Kawabe},
 	year = {2004},
 	keywords = {aop},
 	pages = {291--306}
@@ -287,7 +300,7 @@
 @inbook{jones_type_2000,
 	title = {Type Classes with Functional Dependencies},
 	url = {http://dx.doi.org/10.1007/3-540-46425-5\_15},
-	abstract = {Type classes in Haskell allow programmers to define functions that can be used on a set of different types, with a potentially different implementation in each case. For example, type classes are used to support equality and numeric types, and for monadic programming. A commonly requested extension to support \^{a}??multiple parameters\^{a}?? allows a more general interpretation of classes as relations on types, and has many potentially useful applications. Unfortunately, many of these examples do not work well in practice, leading to ambiguities and inaccuracies in inferred types and delaying the detection of type errors. This paper illustrates the kind of problems that can occur with multiple parameter type classes, and explains how they can be resolved by allowing programmers to specify explicit dependencies between the parameters. A particular novelty of this paper is the application of ideas from the theory of relational databases to the design of type systems.},
+	abstract = {Type classes in Haskell allow programmers to define functions that can be used on a set of different types, with a potentially different implementation in each case. For example, type classes are used to support equality and numeric types, and for monadic programming. A commonly requested extension to support âmultiple parametersâ allows a more general interpretation of classes as relations on types, and has many potentially useful applications. Unfortunately, many of these examples do not work well in practice, leading to ambiguities and inaccuracies in inferred types and delaying the detection of type errors. This paper illustrates the kind of problems that can occur with multiple parameter type classes, and explains how they can be resolved by allowing programmers to specify explicit dependencies between the parameters. A particular novelty of this paper is the application of ideas from the theory of relational databases to the design of type systems.},
 	journal = {Programming Languages and Systems},
 	author = {Mark Jones},
 	year = {2000},
@@ -309,10 +322,10 @@
 	title = {Towards a taxonomy of software change},
 	volume = {17},
 	url = {http://dx.doi.org/10.1002/smr.319},
-	abstract = {Previous taxonomies of software change have focused on the purpose of the change (i.e., the why) rather than the underlying mechanisms. This paper proposes a taxonomy of software change based on characterizing the mechanisms of change and the factors that influence these mechanisms. The ultimate goal of this taxonomy is to provide a framework that positions concrete tools, formalisms and methods within the domain of software evolution. Such a framework would considerably ease comparison between the various mechanisms of change. It would also allow practitioners to identify and evaluate the relevant tools, methods and formalisms for a particular change scenario. As an initial step towards this taxonomy, the paper presents a framework that can be used to characterize software change support tools and to identify the factors that impact on the use of these tools. The framework is evaluated by applying it to three different change support tools and by comparing these tools based on this analysis. Copyright \^{A}{\textcopyright} 2005 John Wiley \& Sons, Ltd.},
+	abstract = {Previous taxonomies of software change have focused on the purpose of the change (i.e., the why) rather than the underlying mechanisms. This paper proposes a taxonomy of software change based on characterizing the mechanisms of change and the factors that influence these mechanisms. The ultimate goal of this taxonomy is to provide a framework that positions concrete tools, formalisms and methods within the domain of software evolution. Such a framework would considerably ease comparison between the various mechanisms of change. It would also allow practitioners to identify and evaluate the relevant tools, methods and formalisms for a particular change scenario. As an initial step towards this taxonomy, the paper presents a framework that can be used to characterize software change support tools and to identify the factors that impact on the use of these tools. The framework is evaluated by applying it to three different change support tools and by comparing these tools based on this analysis. Copyright Â© 2005 John Wiley \& Sons, Ltd.},
 	number = {5},
 	journal = {Journal of Software Maintenance and Evolution: Research and Practice},
-	author = {Jim Buckley and Tom Mens and Matthias Zenger and Awais Rashid and G\~{A}{\textonequarter}nter Kniesel},
+	author = {Jim Buckley and Tom Mens and Matthias Zenger and Awais Rashid and GÃ¼nter Kniesel},
 	year = {2005},
 	keywords = {evolution},
 	pages = {309--332}
@@ -336,7 +349,7 @@
 	title = {Applicative programming with effects},
 	volume = {18},
 	url = {http://dx.doi.org/10.1017/S0956796807006326},
-	abstract = {In this article, we introduce Applicative functors \^{a}?? an abstract characterisation of an applicative style of effectful programming, weaker than Monads and hence more widespread. Indeed, it is the ubiquity of this programming pattern that drew us to the abstraction. We retrace our steps in this article, introducing the applicative pattern by diverse examples, then abstracting it to define the Applicative type class and introducing a bracket notation that interprets the normal application syntax in the idiom of an Applicative functor. Furthermore, we develop the properties of applicative functors and the generic operations they support. We close by identifying the categorical structure of applicative functors and examining their relationship both with Monads and with Arrow.},
+	abstract = {In this article, we introduce Applicative functors â an abstract characterisation of an applicative style of effectful programming, weaker than Monads and hence more widespread. Indeed, it is the ubiquity of this programming pattern that drew us to the abstraction. We retrace our steps in this article, introducing the applicative pattern by diverse examples, then abstracting it to define the Applicative type class and introducing a bracket notation that interprets the normal application syntax in the idiom of an Applicative functor. Furthermore, we develop the properties of applicative functors and the generic operations they support. We close by identifying the categorical structure of applicative functors and examining their relationship both with Monads and with Arrow.},
 	number = {01},
 	journal = {Journal of Functional Programming},
 	author = {Conor Mcbride and ROSS Paterson},
@@ -384,7 +397,7 @@
 	title = {Deriving Generic Functions by Example},
 	url = {{\textbackslash}erb'http://www-users.cs.york.ac.uk/{\textasciitilde}ndm/downloads/paper-deriving\_generic\_functions\_by\_example-26\_oct\_2007.pdf'},
 	publisher = {Tech. Report YCS-2007-421, Dept. of Computer Science, University of York, UK},
-	author = {Neil Mitchell and Jan M\~{A}{\textonequarter}hlberg and Juan Perna},
+	author = {Neil Mitchell and Jan MÃ¼hlberg and Juan Perna},
 	year = {2007},
 	keywords = {polytypic},
 	pages = {55--62}
@@ -514,7 +527,7 @@
 @inbook{frank_one_1999,
 	title = {One Step up the Abstraction Ladder: Combining Algebras - From Functional Pieces to a Whole},
 	url = {http://dx.doi.org/10.1007/3-540-48384-5\_7},
-	abstract = {A fundamental scientific question today is how to construct complex systems from simple parts. Science today seems mostly to analyze limited pieces of the puzzle; the combination of these pieces to form a whole is left for later or others. The lack of efficient methods to deal with the combination problem is likely the main reason. How to combine individual results is a dominant question in cognitive science or geography, where phenomena are studied from individuals and at different scales, but the results cannot be brought together. This paper proposes to use parameterized algebras much the same way that we use functional abstraction (procedures in programming languages) to create abstract building blocks which can be combined later. Algebras group operations (which are functional abstractions) and can be combined to construct more complex algebras. Algebras operate therefore at a higher level of abstraction. A table shows the parallels between procedural abstraction and the abstraction by parameterized algebras. This paper shows how algebras can be combined to form more complex pieces and compares the steps to the combination of procedures in programming. The novel contribution is to parameterize algebras and make them thus ready for reuse. The method is first explained with the familiar construction of vector space and then applied to a larger example, namely the description of geometric operations for GIS, as proposed in the current draft standard document ISO 15046 Part 7: Spatial Schema. It is shown how operations can be grouped, reused, and combined, and useful larger systems built from the pieces. The paper compares the method to combine algebras \^{a}?? which are independent of an implementation \^{a}?? with the current use of object-orientation in programming languages (and in the UML notation often used for specification). The widely used\^{a}?? structural\^{a}?? (or subset) polymorphism is justified by implementation considerations, but not appropriate for theory development and abstract specifications for standardization. Parametric polymorphism used for algebras avoids the contravariance of function types (which its semantically confusing consequences). Algebraic methods relate cleanly to the mathematical category theory and the method translates directly to modern functional programming or Java.},
+	abstract = {A fundamental scientific question today is how to construct complex systems from simple parts. Science today seems mostly to analyze limited pieces of the puzzle; the combination of these pieces to form a whole is left for later or others. The lack of efficient methods to deal with the combination problem is likely the main reason. How to combine individual results is a dominant question in cognitive science or geography, where phenomena are studied from individuals and at different scales, but the results cannot be brought together. This paper proposes to use parameterized algebras much the same way that we use functional abstraction (procedures in programming languages) to create abstract building blocks which can be combined later. Algebras group operations (which are functional abstractions) and can be combined to construct more complex algebras. Algebras operate therefore at a higher level of abstraction. A table shows the parallels between procedural abstraction and the abstraction by parameterized algebras. This paper shows how algebras can be combined to form more complex pieces and compares the steps to the combination of procedures in programming. The novel contribution is to parameterize algebras and make them thus ready for reuse. The method is first explained with the familiar construction of vector space and then applied to a larger example, namely the description of geometric operations for GIS, as proposed in the current draft standard document ISO 15046 Part 7: Spatial Schema. It is shown how operations can be grouped, reused, and combined, and useful larger systems built from the pieces. The paper compares the method to combine algebras â which are independent of an implementation â with the current use of object-orientation in programming languages (and in the UML notation often used for specification). The widely usedâ structuralâ (or subset) polymorphism is justified by implementation considerations, but not appropriate for theory development and abstract specifications for standardization. Parametric polymorphism used for algebras avoids the contravariance of function types (which its semantically confusing consequences). Algebraic methods relate cleanly to the mathematical category theory and the method translates directly to modern functional programming or Java.},
 	journal = {Spatial Information Theory. Cognitive and Computational Foundations of Geographic Information Science},
 	author = {Andrew Frank},
 	year = {1999},
@@ -562,7 +575,7 @@
 	url = {http://www.springerlink.com/content/pkjprnpx6ffk30ud },
 	abstract = {Software systems are increasingly being built by integrating pre-existing components developed by different, geographically distributed organizations. Each component typically evolves independently over time, not only in terms of its functionality, but also in terms of its exposed interfaces and dependencies on other components. Given that those other components may also evolve, creating an application by assembling sets of components typically involves managing a complex web of evolving dependencies. Traditional configuration management systems assume a form of centralized control that simply does not suffice in these situations. Needed are new configuration management systems that span multiple organizations, operate in a distributed and decentralized fashion, and help in managing the consistent evolution of independently developed, inter-related sets of components. A critical aspect of these new configuration management systems is that they must respect the different levels of autonomy, privacy, and trust that exist among different organizations. In this paper, we introduce TWICS, an early example of such a new configuration management system. Key aspects of TWICS are that it maintains traditional configuration management functionality to support the development of individual components, but integrates policy-driven deployment functionality to support different organizations in evolving their inter-related components.},
 	journal = {Software Con?guration Management},
-	author = {Sundararajan Sowrirajan and Andr\~{A}{\textcopyright} Hoek},
+	author = {Sundararajan Sowrirajan and AndrÃ© Hoek},
 	year = {2003},
 	keywords = {evolution},
 	pages = {217--230}
@@ -694,6 +707,16 @@
 	pages = {297--308}
 },
 
+@article{celentano_incremental_1978,
+	title = {Incremental LR parsers},
+	volume = {10},
+	number = {4},
+	journal = {Acta Informatica},
+	author = {A. Celentano},
+	year = {1978},
+	pages = {307--321}
+},
+
 @article{sheard_template_2002,
 	title = {Template meta-programming for Haskell},
 	volume = {37},
@@ -713,7 +736,7 @@
 	url = {http://dx.doi.org/http://doi.acm.org/10.1145/1017472.1017488},
 	booktitle = {{Haskell '04: Proceedings of the ACM SIGPLAN workshop on Haskell}},
 	publisher = {ACM Press},
-	author = {Oleg Kiselyov and Ralf L{\~{A}?}mmel and Keean Schupke},
+	author = {Oleg Kiselyov and Ralf L{Ã¤}mmel and Keean Schupke},
 	year = {2004},
 	keywords = {hlist},
 	pages = {96--107}
@@ -752,14 +775,14 @@
 	abstract = {We define a challenging and meaningful benchmark for genericity in language processing, namely the notion of generic program refactoring. We provide the first implementation of the benchmark based on functional strategic programming in Haskell. We use the basic refactoring of abstraction extraction as the running example. Our implementation comes as a functional programming framework with hot spots for the language-specific ingredients for refactoring, e.g., means for abstraction construction and destruction, and recognisers for name analysis. The language-parametric framework can be instantiated for various, rather different languages, e.g., Java, Prolog, Haskell, or XML schema.},
 	booktitle = {Proceedings of the 2002 ACM SIGPLAN workshop on Rule-based programming},
 	publisher = {ACM},
-	author = {Ralf L\"{a}mmel},
+	author = {Ralf Lämmel},
 	year = {2002},
 	keywords = {frameworks,functional programming,generic programming,language,program transformation,refactoring,reuse,strafunski},
 	pages = {15--28}
 },
 
 @article{plotkin_call-by-name_1975,
-	title = {Call-by-name, call-by-value and the ?-calculus},
+	title = {Call-by-name, call-by-value and the λ-calculus},
 	volume = {1},
 	number = {2},
 	journal = {Theoretical Computer Science},
@@ -838,7 +861,7 @@
 	volume = {3945},
 	url = {http://dx.doi.org/10.1007/11737414\_15},
 	abstract = {A robust software component fulfills a contract: it expects data satisfying a certain property and promises to return data satisfying another property. The object-oriented community uses the design-by-contract approach extensively. Proposals for language extensions that add contracts to higher-order functional programming have appeared recently. In this paper we propose an embedded domain-specific language for typed, higher-order and first-class contracts, which is both more expressive than previous proposals, and allows for a more informative blame assignment. We take some first steps towards an algebra of contracts, and we show how to define a generic contract combinator for arbitrary algebraic data types. The contract language is implemented as a library in Haskell using the concept of generalised algebraic data types.},
-	author = {Ralf Hinze and Johan Jeuring and Andres L\~{A}{\textparagraph}h},
+	author = {Ralf Hinze and Johan Jeuring and Andres LÃ¶h},
 	year = {2006},
 	keywords = {blame,contract,invariant},
 	pages = {208--225}
@@ -903,7 +926,7 @@
 	url = {http://portal.acm.org/citation.cfm?id=647476.727632\&coll=ACM\&dl=ACM\&CFID=13026192\&CFTOKEN=34892732},
 	booktitle = {Proceedings of the 9th International Conference on Compiler Construction},
 	publisher = {Springer-Verlag},
-	author = {Jo\~{a}o Saraiva and S. Doaitse Swierstra and Matthijs F. Kuiper},
+	author = {João Saraiva and S. Doaitse Swierstra and Matthijs F. Kuiper},
 	year = {2000},
 	pages = {279--294}
 },
@@ -923,7 +946,7 @@
 	url = {http://dx.doi.org/10.1145/1133981.1134014},
 	booktitle = {PLDI '06: Proceedings of the 2006 ACM SIGPLAN conference on Programming language design and implementation},
 	publisher = {ACM},
-	author = {Jaakko J\"{a}rvi and Douglas Gregor and Jeremiah Willcock and Andrew Lumsdaine and Jeremy Siek},
+	author = {Jaakko Järvi and Douglas Gregor and Jeremiah Willcock and Andrew Lumsdaine and Jeremy Siek},
 	year = {2006},
 	keywords = {c,concept,typeclass},
 	pages = {272--282}
@@ -1030,7 +1053,7 @@
 @inbook{gibbons_datatype-generic_2007,
 	title = {Datatype-Generic Programming},
 	url = {http://dx.doi.org/10.1007/978-3-540-76786-2\_1},
-	abstract = {Generic programming aims to increase the flexibility of programming languages, by expanding the possibilities for parametrization \^{a}?? ideally, without also expanding the possibilities for uncaught errors. The term means different things to different people: parametric polymorphism, data abstraction, meta-programming, and so on. We use it to mean polytypism, that is, parametrization by the shape of data structures rather than their contents. To avoid confusion with other uses, we have coined the qualified term datatype-generic programming for this purpose. In these lecture notes, we expand on the definition of datatype-generic programming, and present some examples of datatype-generic programs. We also explore the connection with design patterns in object-oriented programming; in particular, we argue that certain design patterns are just higher-order datatype-generic programs.},
+	abstract = {Generic programming aims to increase the flexibility of programming languages, by expanding the possibilities for parametrization â ideally, without also expanding the possibilities for uncaught errors. The term means different things to different people: parametric polymorphism, data abstraction, meta-programming, and so on. We use it to mean polytypism, that is, parametrization by the shape of data structures rather than their contents. To avoid confusion with other uses, we have coined the qualified term datatype-generic programming for this purpose. In these lecture notes, we expand on the definition of datatype-generic programming, and present some examples of datatype-generic programs. We also explore the connection with design patterns in object-oriented programming; in particular, we argue that certain design patterns are just higher-order datatype-generic programs.},
 	journal = {Datatype-Generic Programming},
 	author = {Jeremy Gibbons},
 	year = {2007},
@@ -1039,7 +1062,7 @@
 },
 
 @inbook{sheard_generic_2007,
-	title = {Generic Programming in \^{I}{\textcopyright}mega},
+	title = {Generic Programming in Î©mega},
 	volume = {Volume 4719/2007},
 	url = {http://dx.doi.org/10.1007/978-3-540-76786-2\_5},
 	abstract = {Generic programming is about making programs more adaptable by making them more general. Generic programs often embody non-traditional kinds of abstraction; ordinary programs are obtained from them by suitably instantiating their parameters. In contrast with normal programs, the parameters of a generic program are often quite rich in structure; for example they may be other programs, types or type constructors, class hierarchies, or even programming paradigms.},
@@ -1090,7 +1113,7 @@
 	title = {Generic programming with fixed points for mutually recursive datatypes},
 	number = {UU-CS-2008-019},
 	institution = {Utrecht University},
-	author = {Alexey Rodriguez and Stefan Holdermans and Andres L\"{o}h and Johan Jeuring},
+	author = {Alexey Rodriguez and Stefan Holdermans and Andres Löh and Johan Jeuring},
 	keywords = {multirec}
 },
 
@@ -1145,7 +1168,7 @@
 @inproceedings{jrvi_library_2007,
 	title = {Library composition and adaptation using {{\textbackslash}{\textbackslash}Cpp} concepts},
 	booktitle = {Generative Programming and Component Engineering, 6th International Conference, GPCE 2007, Salzburg, Austria, October 1-3, 2007, Proceedings},
-	author = {J J\"{a}rvi and M Marcus and J Smith and C Consel and J Lawall},
+	author = {J Järvi and M Marcus and J Smith and C Consel and J Lawall},
 	year = {2007},
 	keywords = {sibylle,wgp08},
 	pages = {73--82}
@@ -1155,7 +1178,7 @@
 	title = {Efficient graph algorithms using lazy monolithic arrays},
 	volume = {8},
 	url = {http://portal.acm.org/citation.cfm?id=969592.969594},
-	abstract = {Many, perhaps even most, algorithms that involve data structures are traditionally expressed by incremental updates of the data structures. In functional languages, however, incremental updates are usually both clumsy and inefficient, especially when the data structure is an array.In functional languages, we instead prefer to express such array algorithms using monolithic arrays {\textendash} wholesale creation of the final answer {\textendash} both for succinctness of expression, efficiency (only one array created) and (sometimes) implicit parallelism. The ease with which the solution can be reformulated of course depends on the problem, and varies from trivial (e.g. matrix multiplication), to challenging (e.g. solving linear equation systems using Gauss elimination, which in fact can be done by creating only two arrays, recursively defined, of which one is the answer). Other problems have been notoriously resistant to attack; these usually involve some unpredictable processing order of the elements. One such problem is graph marking, i.e. marking the nodes reachable from a set of roots. Hitherto, no functional method has been known except emulating the traditional imperative solution (King \& Launchbury, 1995; Launchbury \& Peyton Jones, 1995).The contribution of this paper is to show how this problem, and some related ones, can be solved using a novel array creation primitive, lazier than previous ones.},
+	abstract = {Many, perhaps even most, algorithms that involve data structures are traditionally expressed by incremental updates of the data structures. In functional languages, however, incremental updates are usually both clumsy and inefficient, especially when the data structure is an array.In functional languages, we instead prefer to express such array algorithms using monolithic arrays – wholesale creation of the final answer – both for succinctness of expression, efficiency (only one array created) and (sometimes) implicit parallelism. The ease with which the solution can be reformulated of course depends on the problem, and varies from trivial (e.g. matrix multiplication), to challenging (e.g. solving linear equation systems using Gauss elimination, which in fact can be done by creating only two arrays, recursively defined, of which one is the answer). Other problems have been notoriously resistant to attack; these usually involve some unpredictable processing order of the elements. One such problem is graph marking, i.e. marking the nodes reachable from a set of roots. Hitherto, no functional method has been known except emulating the traditional imperative solution (King \& Launchbury, 1995; Launchbury \& Peyton Jones, 1995).The contribution of this paper is to show how this problem, and some related ones, can be solved using a novel array creation primitive, lazier than previous ones.},
 	number = {4},
 	journal = {J. Funct. Program.},
 	author = {Thomas Johnsson},
@@ -1239,7 +1262,7 @@
 	title = {A Formalization of Concepts for Generic Programming},
 	booktitle = {Concepts: a Linguistic Foundation of Generic Programming at Adobe Tech Summit},
 	publisher = {{Adobe Systems}},
-	author = {Jeremiah Willcock and Jaakko J{\~{A}?}rvi and Andrew Lumsdaine and David Musser},
+	author = {Jeremiah Willcock and Jaakko J{Ã¤}rvi and Andrew Lumsdaine and David Musser},
 	year = {2004},
 	keywords = {sibylle,wgp08}
 },
@@ -1282,13 +1305,23 @@
 	pages = {1--16}
 },
 
+@article{ghezzi_augmenting_1980,
+	title = {Augmenting Parsers to Support Incrementality},
+	volume = {27},
+	number = {3},
+	journal = {Journal of the ACM (JACM)},
+	author = {C. Ghezzi and D. Mandrioli},
+	year = {1980},
+	pages = {564--579}
+},
+
 @inproceedings{nielsen_call-by-name_1995,
 	title = {Call-By-Name CPS-Translation as a Binding-Time Improvement},
 	isbn = {3-540-60360-3},
 	url = {http://portal.acm.org/citation.cfm?id=717677},
 	booktitle = {Proceedings of the Second International Symposium on Static Analysis},
 	publisher = {Springer-Verlag},
-	author = {Kristian Nielsen and Morten Heine S?rensen},
+	author = {Kristian Nielsen and Morten Heine Sørensen},
 	year = {1995},
 	pages = {296--313}
 },
@@ -1338,7 +1371,7 @@
 @phdthesis{carlsson_fudgets:_1998,
 	type = {PhD Thesis},
 	title = {Fudgets: Purely Functional Processes with Applications to Graphical User Interfaces},
-	school = {Chalmers tekniska h\"{o}gskola},
+	school = {Chalmers tekniska högskola},
 	author = {M. Carlsson and T. Hallgren},
 	year = {1998}
 },
@@ -1383,7 +1416,7 @@
 @inbook{ruffell_pervasiveness_2006,
 	title = {The Pervasiveness of Global Data in Evolving Software Systems},
 	url = {http://dx.doi.org/10.1007/11693017\_30},
-	abstract = {In this research, we investigate the role of common coupling in evolving software systems. It can be argued that most software developers understand that the use of global data has many harmful side-effects, and thus should be avoided. We are therefore interested in the answer to the following question: if global data does exist within a software project, how does global data usage evolve over a software project\^{a}??s lifetime? Perhaps the constant refactoring and perfective maintenance eliminates global data usage, or conversely, perhaps the constant addition of features and rapid development introduce an increasing reliance on global data? We are also interested in identifying if global data usage patterns are useful as a software metric that is indicative of an interesting or significant event in the software\^{a}??s lifetime.},
+	abstract = {In this research, we investigate the role of common coupling in evolving software systems. It can be argued that most software developers understand that the use of global data has many harmful side-effects, and thus should be avoided. We are therefore interested in the answer to the following question: if global data does exist within a software project, how does global data usage evolve over a software projectâs lifetime? Perhaps the constant refactoring and perfective maintenance eliminates global data usage, or conversely, perhaps the constant addition of features and rapid development introduce an increasing reliance on global data? We are also interested in identifying if global data usage patterns are useful as a software metric that is indicative of an interesting or significant event in the softwareâs lifetime.},
 	journal = {Fundamental Approaches to Software Engineering},
 	author = {Fraser Ruffell and Jason Selby},
 	year = {2006},
