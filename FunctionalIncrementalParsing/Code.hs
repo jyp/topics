@@ -38,7 +38,7 @@ feed ss p = case p of
                   (Push x p') -> Push x (feed ss p')
                   (App p') -> App (feed ss p')
                   Done -> Done
-                  Best _ _ p' q' -> iBest (feed ss p') (feed ss q')
+                  Best _ _ p' q' -> mkBest (feed ss p') (feed ss q')
 
 data Progress = PSusp | PRes Int | !Int :> Progress
     deriving Show
@@ -93,11 +93,11 @@ toP :: Parser s a -> P s a
 toP (Case a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
 toP (f :*: x) = App . toP f . toP x
 toP (Pure x)   = Push x
-toP (Disj a b)  = \fut -> iBest (toP a fut) (toP b fut)
+toP (Disj a b)  = \fut -> mkBest (toP a fut) (toP b fut)
 toP (Yuck p) = Dislike . toP p 
 
-iBest :: Polish s a -> Polish s a -> Polish s a
-iBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
+mkBest :: Polish s a -> Polish s a -> Polish s a
+mkBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
 
 symbol f = Case empty $ \s -> if f s then Pure s else empty
 eof f = Case (Pure ()) (const empty)

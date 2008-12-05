@@ -22,7 +22,7 @@
 \end{quote}
 }
 
-\providecommand{\textmeta}[1]{\textsf{#1}}
+\providecommand{\textmeta}[1]{\begin{quote}\textsf{{#1}}\end{quote}}
 
 \begin{document}
 
@@ -76,7 +76,7 @@ the system responds to incremental movements of the portion of the
 output being viewed by the user (window) by incremental computation
 of the intermediate structures.
 
-This suggests that we can take advantage of lazy evaluation to
+The above observation suggests that we can take advantage of lazy evaluation to
 implement incremental parsing for an interactive application.
 Indeed, if we suppose that the user makes changes in the input that
 ``corresponds to'' the window being viewed, it suffices to cache
@@ -184,7 +184,7 @@ screenful at a time.
 
 In this section we concentrate on constructing parsing results, ignoring the
 dependence on input. The cornerstone of our approach to incremental parsing
-approach is that the parse tree is produced \emph{online}.We can ensure that
+approach is that the parse tree is produced \emph{online}. We can ensure that
 this is the case by forcing the structure of the result to be expressed in
 applicative \citet{mcbride_applicative_2007} form.
 
@@ -227,7 +227,7 @@ constructors}, then we know that demanding a given part of the result will force
 only the corresponding part of the applicative expression.
 
 Because they process the input in a linear fashion, our parsers require a
-linear structure (this will become apparent in section~\ref{sec:parsing}). As
+linear structure (it will become apparent in section~\ref{sec:parsing}). As
 \citet{hughes_polish_2003}, we convert the applicative expressions to polish
 representation to obtain such a linear structure.
 
@@ -262,7 +262,7 @@ stack.
 
 The expression |Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done| is an
 example producing a non-trivial stack. It produces the stack |(:) (Atom 'a')
-[]|. This can be expressed purely in Haskell as |(:) :< Atom 'a' :< [] :< Nil|,
+[]|, which can be expressed purely in Haskell as |(:) :< Atom 'a' :< [] :< Nil|,
 using the following representation for heterogeneous stacks.
 
 \begin{code}
@@ -516,7 +516,8 @@ simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
 simplify x = x
 \end{code}
 
-
+\textmeta{As the polish representation corresponds to call-by-name evaluation,
+reverse polish corresponds to call-by-value.}
 
 \section{Parsing}
 \label{sec:parsing}
@@ -532,8 +533,8 @@ transform it into an incremental algorithm.
 
 However, the most common way to produce such structured values is
 by \emph{parsing} the input string. To support convenient parsing,
-we can introduce a disjunction operator, exactly as Swierstra and
-Hughes do: the addition of the |Susp| operator does not
+we can introduce a disjunction operator, exactly as \citet{hughes_polish_2003}
+do: the addition of the |Susp| operator does not
 undermine their treatment of disjunction in any way.
 
 \begin{meta}
@@ -548,42 +549,110 @@ Indeed, the |evalR| function \emph{must} return a result (we want a
 total function!), so the parser must a conjure up a suitable result
 for \emph{any} input.
 
-If the grammar is sufficiently permissive, no error correction in
-the parsing algorithm itself is necessary. However, most
-interesting grammars produce a highly structured result, and are
-correspondingly restrictive on the input they accept. Augmenting
-the parser with error correction is therefore desirable.
+If the grammar is sufficiently permissive, no error correction in the parsing
+algorithm itself is necessary. This was the case for our simple s-expression parser.
+However, most interesting grammars produce a highly structured result, and are
+correspondingly restrictive on the input they accept. Augmenting the parser with
+error correction is therefore desirable.
 
-We can do so by introducing an other constructor in the |Polish|
-type to represent less desirable parses. The idea is that the
-grammar contains permissive rules, but those are tagged as less
-desirable. The parsing algorithm can then maximize the desirability
-of the set of rules used.
+We can do so by introducing an other constructor in the |Parser| type to denote
+less desirable parses. The intent is to extend the grammar with permissive rules
+for recovering errors, tagging those as less desirable. The parsing algorithm
+can then maximize the desirability of the set of rules used for parsing a given
+fragment of input.
 
-At each disjunction point, the parser will have to choose between
-two alternatives. Since we want online behavior, we would like to
-do so by looking ahead as few symbols as possible. We introduce a
-new type which represents this ``progress'' information. This data
-structure is similar to a list where the $n^{th}$ element contains
-how much we dislike to take this path after $n$ steps of following
-it. The difference is that the list may end with success, failure
-or suspension which indicates unknown final result.
+\begin{code}
+data Parser s a where
+    Pure :: a -> Parser s a
+    (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
+    Case :: Parser s a -> (s -> Parser s a) -> Parser s a
+    Disj :: Parser s a -> Parser s a -> Parser s a
+    Yuck :: Parser s a -> Parser s a
+\end{code}
 
-If one looks at the tail of the structures, we know exactly how
-much the path is desirable. However, as hinted before, we will look
-only only a few steps ahead, until we can safely disregard one of
-the paths.
+At each disjunction point, the evaluation function will have to choose between
+two alternatives. Since we want online behavior, we cannot afford to look
+further than a few symbols ahead to decide which parse might be the best.
+(Additionally the number of potential recovery paths grows exponentially with
+the amount of lookahead). We use widespread technique to thin out search after 
+some constant, small amount of lookahead.
 
-In order for this strategy to be efficient, we cache the progress
-information in each disjunction node.
+In contrast to \citep{hughes_polish_2003}, we do not compute the best path by
+direct manipulation of the polish representation. Instead, we introduce a new
+datatype which represents the ``progress'' information only.
 
-This technique can be re-formulated as dynamic programming, where
-we use lazy evaluation to automatically cut-off expansion of the
-search space. We first define a full tree of possibilities: (Polish
-with disjunction), then we compute a profile information that we
-tie to it; finally, finding the best path is a matter of looking
-only at a subset of the information we constructed, using any
-suitable heuristic.
+\begin{code}
+data Progress = PSusp | PRes Int | !Int :> Progress
+\end{code}
+\textmeta{We can't really use |fix Dislike|, because we use strict Ints.}
+
+This data structure is similar to a list where the $n^{th}$ element contains
+how much we dislike to take this path after shifting $n$ symbols following it.
+The difference is that the list may end with success or suspension,
+depending on wheter the parser reached the end of the input or not.
+
+Given two (terminated) |Progress| values, it is possible to determine which is
+best to take by demanding only a prefix of each (as long as the grammar is not
+ambiguous).
+
+We can now use this information to determinte which path to take when facing a
+disjunction. In turn, this allows to compute the progress information on the
+basis of the polish representation only.
+
+
+\begin{figure}
+\begin{code}
+data Polish s a where
+    Push   :: a -> Polish s r                      -> Polish s (a :< r)
+    App   :: Polish s ((b -> a) :< (b :< r))      -> Polish s (a :< r)
+    Done  ::                               Polish s ()
+    Shift ::           Polish s a        -> Polish s a
+    Sus :: Polish s a -> (s -> Polish s a) -> Polish s a
+    Best :: Ordering -> Progress -> Polish s a -> Polish s a -> Polish s a
+    Dislike :: Polish s a -> Polish s a
+
+progress :: Polish s r -> Progress
+progress (Push _ p) = progress p
+progress (App p) = progress p
+progress (Shift p) = 0 :> progress p
+progress (Done) = PRes 0 -- success with zero dislikes
+progress (Dislike p) = mapSucc (progress p)
+progress (Sus _ _) = PSusp
+progress (Best _ pr _ _) = pr
+
+toP (Case a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
+toP (f :*: x) = App . toP f . toP x
+toP (Pure x)   = Push x
+toP (Disj a b)  = \fut -> mkBest (toP a fut) (toP b fut)
+toP (Yuck p) = Dislike . toP p 
+
+mkBest :: Polish s a -> Polish s a -> Polish s a
+mkBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
+
+better :: Progress -> Progress -> (Ordering, Progress)
+...
+\end{code}
+\caption{Handling disjunction}
+\end{figure}
+
+Proceeding exactly as such is horribly inefficient, but we can use the classic
+trick \cite{swierstra} to cache the progress information in the |Polish|
+representation.
+
+Here, we finally see why the |Polish| representation is so important:
+the progress information cannot be associated to a |Parser|, because
+it may depend on whatever parser \emph{follows} it. This is not
+an issue in the |Polish| representation, because it is unfolded until
+the end of the parsing.
+
+
+The technique can be re-formulated as lazy dynamic programming
+\citet{allison_lazy_1992}. We first define a full tree of possibilities: (Polish
+with disjunction), then we compute a profile information that we tie to it;
+finally, finding the best path is a matter of looking only at a subset of the
+information we constructed, using any suitable heuristic. Our cut-off heuristic
+makes sure that only a part of the exponentially big data structure is demanded.
+Thanks to lazy evaluation, only that small will be actually constructed.
 
 \begin{meta}
 Here we almost need the whole code ...
@@ -591,6 +660,7 @@ Here we almost need the whole code ...
 
 \subsection{Ambiguous grammars}
 
+\textmeta{Conflict with online; solved as by error correction}
 
 \section{Getting rid of linear behavior}
 
@@ -802,6 +872,10 @@ is can cost
 \begin{meta}
 The full code is in Code.hs
 \end{meta}
+
+\section{Conclusion}
+
+Combination of many techniques to build a working application.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
