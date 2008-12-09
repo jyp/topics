@@ -179,6 +179,12 @@ screenful at a time.
     Roadmap for the paper
 \end{meta}
 
+The rest of the paper will describe how to build the parsing library step by
+step: production of results in a online way, map the input to these results and
+manage the incremental computation of intermediate state, treat disjunction and
+error correction. We discuss related work in section \ref{sec:relatedWork} and
+conclude in section \ref{sec:conclusion}.
+
 \section{Producing results} 
 \label{sec:applicative}
 
@@ -322,6 +328,7 @@ semantics.
 
 
 \section{Adding input}
+\label{sec:input}
 
 While studying the pure applicative language is interesting in its
 own right (we come back to it later for the Zipper), it is not enough
@@ -659,6 +666,7 @@ Thanks to lazy evaluation, only that small will be actually constructed.
 \textmeta{Conflict with online; solved as by error correction}
 
 \section{Eliminating linear behavior}
+\label{sec:sublinear}
 
 \begin{meta}
 
@@ -762,43 +770,42 @@ source of inefficiencies of our implementation.
 
 \end{enumerate}
 \section{Related work}
+\label{sec:relatedWork}
 
-The litterature on incremental parsing is so abundant that a complete
-survey would be necessary to cover all the possible approaches.
-Here we will compare our approach to some alternatives only.
-
+The litterature on incremental analysis of programs is so abundant that a
+complete survey would deserve its own treatment. Here we will compare our
+approach to some representatives alternatives only.
 
 \subsection{Incremental parsing in development environments} 
 
-State matching approaches
 
-\citet{celentano_incremental_1978}
 \citet{ghezzi_incremental_1979}
 \citet{ghezzi_augmenting_1980}
-
-
-\citet{hudson_incremental_1991} % comput
-
-This does not apply for combinator parser library, because the parser
-state is not really observable.
-
 \citet{wagner_efficient_1998} 
 \citet{bahlke_psg_1986} 
 
+
+State matching approaches.
+This does not apply for combinator parser library, because the parser
+state is not really observable.
+
+
 We have a much more modest approach, in the sense that we do not attempt to
-reuse the nodes that were created in previous parsing runs. Another drawback is
+reuse the (right-bound) nodes that were created in previous parsing runs. Another drawback is
 that we assume that the window moves by incremental steps. If the user jumps
 back and forth the beginning and the end of the file, while making changes at
 the beginning, our approach will force reparsing the whole file every time a
 change is made at the beginning followed by a jump to the end of the file.
 
 
-Somehow none of these solutions have caught up in the mainstream.
-
+Despite extensive research dating back as far as 30 years ago, somehow, none of
+these solutions have caught up in the mainstream.
 Editors typically work using regular expressions for syntax
 highlighting at the lexical level (Emacs, Vim, Textmate, \ldots{})
 or run a full compiler in the background for syntax level
-(Eclipse). We might argue that early solutions offered little
+(Eclipse). 
+
+We might argue that early solutions offered little
 benefit in comparison to their implementation cost. Our approach is
 much simpler. 
 
@@ -818,17 +825,26 @@ possible prefix.}
 
 \subsection{Incremental parsing in natural language processing} 
 
+\textmeta{Krasimir}
 
 \subsection{Incremental computation}
 
 \citet{saraiva_functional_2000}
 
+An alternative approach would be to build the system on top of a generic
+incremental computation system. Downsides are that there currently exists no
+such off-the-shelf system for Haskell. The closest matching solution is provided
+by \citet{carlsson_monads_2002} relies heavily on explicit threading of
+computation through monads and explict reference for storage of inputs or
+intermediate results. In our case, not only the contents of the inputs will change, but also their number.
+
+
+
 \subsection{Parser combinators}
 
-\citet{hughes_polish_2003}
+Our approach is in the tradition of parser combinator libraries, in
+particular as described by \citet{hughes_polish_2003}.
 \citet{swierstra_fast_1999}
-
-
 
 
 \subsection{Summary}
@@ -867,6 +883,7 @@ argumented that the complexity of the parsing is linear, and that
 is can cost
 
 \section{Conclusion}
+\label{sec:conclusion}
 
 \textmeta{Discuss how the tree must be used only locally}
 
