@@ -35,16 +35,15 @@
 
 
 \maketitle
-
+\textmeta{actually it probably applies only to free-form editors of structured documents?}
 \begin{abstract}
 In the context of an interactive application where the user
-observes only a small window of the output (that is, one that
-corresponds to a small part of the input), we show that combining
+observes only a small portion of the output, we show that combining
 lazy evaluation and caching of intermediate (partial) results
-provides incremental parsing. We also introduce a general purpose,
+enables to parse the input incrementally. We also introduce a general purpose,
 simple data structure, to eliminate the linear complexity caused
 by lazy lists traversals while retaining its lazy properties.
-Finally, we complete our treatment of incremental parsing in an
+Finally, we complete our treatment \annot{better word?} of incremental parsing in an
 interactive system by showing how our parsing machinery can be
 improved to support error-correction.
 \end{abstract}
@@ -64,12 +63,12 @@ Dynamic Programming, Polish representation, Editor, Haskell
 
 \section{Introduction}
 
-Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is an editor is written in
-Haskell. It provides features such as syntax highlighting and indentation hints
-for the Haskell language. In order to implement all syntax-dependent functions
-in a consistent way, the abstract syntax tree (AST) is available at all times,
-kept up to date as the user types. For the performance of the system to be
-acceptable, the editor must not parse the whole file at each keystroke.
+Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is an editor is written
+in Haskell. It provides features such as syntax highlighting and indentation
+hints for the Haskell language. In order to implement all syntax-dependent
+functions in a consistent way, the abstract syntax tree (AST) is available at
+all times, kept up to date as the user types. In order to maintain acceptable
+performance, the editor must not parse the whole file at each keystroke.
 
 In an interactive system, a lazy evaluation strategy provides a
 special form of incremental computation: the amount of output that
@@ -162,7 +161,6 @@ screenful at a time.
   We complete our treatment of incremental parsing with 
   error correction. This is essential, since online parsers
   need to be \emph{total}: they cannot fail on any input;
-  
 
 \item
   We craft a data structure to be used in place of lists, which is
@@ -245,7 +243,7 @@ The parenthesis are no longer needed, since we know that |@| is always followed
 by exactly two arguments. The final polish expression is therefore
 
 \begin{code}
-|@ S @ @ (:) @ Atom 'a' []|
+ S @ @ (:) @ Atom 'a' []
 \end{code}
 
 or, sticking to pure haskell syntax:
