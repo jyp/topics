@@ -6,6 +6,8 @@
 \usepackage[mathletters]{ucs}
 \usepackage[utf8x]{inputenc}
 \usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{tikz}
 % \setlength{\parindent}{0pt}
 % \setlength{\parskip}{6pt}
 \usepackage{enumerate}
@@ -525,7 +527,8 @@ As the input is traversed, we also simplify the prefix that
 we went past.
 
 \begin{meta}
-Note that this works only because we keep the automaton in "normal form"
+Note that this works only because we keep the automaton in "normal form":
+an |RApp| can be preceded by at most one |RPush|.
 \end{meta}
 
 \begin{code}
@@ -540,14 +543,16 @@ reverse polish corresponds to call-by-value.}
 \section{Parsing}
 \label{sec:parsing}
 \textmeta{Termination if there is no recursive call before parsing one token}
-\subsection{Disjunction}
 
 We kept the details of actual parsing out of the discussion so far.
 This is for good reason: the machinery for incremental computation
-and reuse of partial results is independent from them. Indeed,
+and reuse of partial results is independent from such details. Indeed,
 given any procedure to compute structured values from a linear
 input of symbols, one can use the procedure described above to
 transform it into an incremental algorithm.
+
+\subsection{Disjunction}
+\label{sec:disjunction}
 
 However, the most common way to produce such structured values is
 by \emph{parsing} the input string. To support convenient parsing,
@@ -562,22 +567,22 @@ if we assume that the parser has not much lookahead.
 
 \subsection{Error correction}
 
-Disjuction is not very useful unless when coupled with \emph{failure},
-otherwise all results would be equivalent. Still, the (unrestricted) usage of
-failure is problematic for our application: the online property
-requires that there is no error in the input. Indeed, since the |evalR| function
+Disjuction is not very useful unless coupled with \emph{failure} (otherwise all
+branches would be equivalent). Still, the (unrestricted) usage of failure is
+problematic for our application: the online property requires at least one
+branch to yield a successful outcome. Indeed, since the |evalR| function
 \emph{must} return a result (we want a total function!), the parser must a
 conjure up a suitable result for \emph{any} input.
 
 If the grammar is sufficiently permissive, no error correction in the parsing
-algorithm itself is necessary. This was the case for our simple s-expression parser.
+algorithm itself is necessary. This is the case for our simple s-expression parser.
 However, most interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting the parser with
 error correction is therefore desirable.
 
 We can do so by introducing an other constructor in the |Parser| type to denote
-less desirable parses. The intent is to extend the grammar with permissive rules
-for recovering errors, tagging those as less desirable. The parsing algorithm
+less desirable parses. The intent is to extend the grammar with more permissive rules
+to deal with incorrect input, tagging those as less desirable. The parsing algorithm
 can then maximize the desirability of the set of rules used for parsing a given
 fragment of input.
 
@@ -605,18 +610,34 @@ datatype which represents the ``progress'' information only.
 data Progress = PSusp | PRes Int | !Int :> Progress
 \end{code}
 
-\textmeta{Oops, We can't really use |fix Dislike| for failure, because we use strict Ints.}
+\textmeta{Oops, We can't really use |fix Dislike| for failure, because we use
+Ints, instead of Peano naturals.}
 
-This data structure is similar to a list where the $n^{th}$ element tells
-how much we dislike to take this path after shifting $n$ symbols following it.
-The difference is that the list may end with success or suspension,
-depending on wheter the parser reached the end of the input or not.
+This data structure is similar to a list where the $n^{th}$ element tells how
+much we dislike to take this path after shifting $n$ symbols following it,
+\emph{assuming we take the best choice at each disjunction}.
 
-Given two (terminated) |Progress| values, it is possible to determine which is
-best to take by demanding only a prefix of each, assuming the grammar is not
-ambiguous.
+The difference with a simple list is that progress information may end with
+success or suspension, depending on whether the process reaches |Done| or
+|Susp|.
 
-We can now use this information to determinte which path to take when facing a
+\begin{figure*}
+%\includegraphics[width=\pagewidth]{progress.ps}
+\include{progress}
+\caption{
+A parsing process and associated progress information. The process
+has been stripped of result information for clarity, since it is irrelevant
+to the computation of progress information.
+}
+\label{fig:progress}
+\end{figure*}
+
+Given two (terminated) |Progress| values, it is possible to determine which one
+is best by demanding only a prefix of each, using our thinning heuristic. 
+
+\textmeta{and assuming the grammar is not ambiguous.}
+
+We can now use this information to determine which path to take when facing a
 disjunction. In turn, this allows to compute the progress information on the
 basis of the polish representation only.
 
@@ -868,6 +889,11 @@ intermediate results. In our case, not only the contents of the inputs will chan
 
 Our approach is in the tradition of parser combinator libraries, in
 particular as described by \citet{hughes_polish_2003}.
+
+The introduction of the |Susp| operator is directly inspired by
+\citet{claessen_parallel_2004}. An other view of our extened |Polish| expression
+is a parsing process where results are returned bit by bit.
+
 \citet{swierstra_fast_1999}
 
 
