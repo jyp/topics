@@ -414,9 +414,9 @@ time. The list of all intermediate results is constructed lazily using |scanl|.
 
 \begin{code}
 feedOne :: Polish s a -> s -> Polish s a
-feedOne (Push x s)         ss = Push x (feedOne s ss)
-feedOne (App f)            ss = App (feedOne f ss)
-feedOne (Susp nil cons) s  = cons s
+feedOne (Push x s)         ss  = Push x (feedOne s ss)
+feedOne (App f)            ss  = App (feedOne f ss)
+feedOne (Susp nil cons)    s   = cons s
 
 partialParses = scanl feedOne
 \end{code}
@@ -458,7 +458,7 @@ evalL $ feed "(abcdefg" (toPolish parseList)
 
 This prefix will persist until the end of the input is reached. A
 possible remedy is to avoid writing expressions that lead to this
-sort of intermediate results, and we will see in section~\ref{sublinear} how
+sort of intermediate results, and we will see in section~\ref{sec:sublinear} how
 to do this in the particularly important case of lists. This however works
 only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the
