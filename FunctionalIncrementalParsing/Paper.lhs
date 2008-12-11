@@ -175,15 +175,13 @@ screenful at a time.
 
 \end{itemize}
 
-\begin{meta}
-    Roadmap for the paper
-\end{meta}
-
-The rest of the paper will describe how to build the parsing library step by
-step: production of results in a online way, map the input to these results and
-manage the incremental computation of intermediate state, treat disjunction and
-error correction. We discuss related work in section \ref{sec:relatedWork} and
-conclude in section \ref{sec:conclusion}.
+The rest of the paper describes how to build the parsing library step by
+step: production of results in a online way (section~\ref{sec:polish}), map the
+input to these results and manage the incremental computation of intermediate
+state (section~\ref{sec:input}), treat disjunction and error correction. In
+section~\ref{sec:sublinear} we will tackle the problem of incremental parsing of
+repetition. We discuss and compare our approach to alternatives in
+section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
 
 \section{Producing results} 
 \label{sec:applicative}
