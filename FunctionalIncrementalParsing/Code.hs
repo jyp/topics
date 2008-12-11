@@ -146,6 +146,7 @@ onLeft :: (forall i o. RPolish i o -> RPolish i o) -> Zip s a -> Zip s a
 onLeft f (Zip x y) = (Zip (f x) y)
 
 -- | Pre-compute a left-prefix of some steps (as far as possible)
+-- ATTN: this should go right many times.
 evalZL :: Zip s output -> Zip s output
 evalZL z = case right z of
     Zip l r -> Zip (simplify l) r
