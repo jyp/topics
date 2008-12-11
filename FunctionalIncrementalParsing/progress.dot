@@ -4,7 +4,7 @@ digraph progress {
 rankdir=LR;
 ranksep=0.4;
 size=5;
-node [shape=circle,fixedsize = true, width = 0.5];
+node [fontsize=10,shape=circle,fixedsize = true, width = 0.5];
 c0 [label = "Shift"];
 c1 [label = "Dislike"];
 c2 [label = "Dislike"];
@@ -19,8 +19,8 @@ c0 -> c1 -> c2 -> c3 -> c4a -> c5a;
                   c3 -> c4b -> c5b -> c6b -> c7b;
 
 // Progress info
-node [shape = plaintext]
-edge [minlen=0,style=dotted,arrowtail=none,headport=nw,arrowhead=none]
+node [shape = rectangle,height=0.2]
+edge [minlen=0,style=dotted,arrowtail=none,headport=n,tailport=s,arrowhead=none]
 
 
 p5a [label = "0!"];

@@ -30,6 +30,7 @@ Paper.pdf: begin.pdf mid.pdf progress.tex
 
 %.tex: %.dot
 	dot -Txdot $< | dot2tex --figonly > $@
+#	dot2tex --preproc $< | dot2tex --figonly > $@
 
 %.pdf: %.tex
 	pdflatex $<

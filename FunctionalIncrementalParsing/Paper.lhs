@@ -267,7 +267,7 @@ data Polish where
 \end{code}
 
 
-Unfortunately, the above type does not allow to evaluate expressions in a
+Unfortunately, the above datatype does not allow to evaluate expressions in a
 typeful manner. The key insight is to that polish expressions are in fact more
 general than applicative expressions: they produce a stack of values instead of
 just one.
@@ -445,17 +445,20 @@ partialParses = scanl (\c -> evalL . feedOne c)
 This still suffers from a major drawback: as long as a function
 application is not saturated, the polish expression will start with
 
-For example, after applying the s-expr parser to the string \verb!\(abcdefg!, 
+For example, after applying the s-expr parser to the string \verb!(abcdefg!, 
 |evalL| is unable to perform any simplification of the list prefix.
 
 \begin{code}
-evalL $ feed "\(abc" (toPolish parseList) 
-  == App $ Push (Atom 'a' :) $ App $ Push (Atom 'b' :) $ App $ Push (Atom 'b' :) $ App $ ...
+evalL $ feed "(abcdefg" (toPolish parseList) 
+  == App $ Push (Atom 'a' :) $ 
+     App $ Push (Atom 'b' :) $ 
+     App $ Push (Atom 'c' :) $ 
+     App $ ...
 \end{code}
 
 This prefix will persist until the end of the input is reached. A
 possible remedy is to avoid writing expressions that lead to this
-sort of intermediate results, and we will see in section~\ref{tree_struc} how
+sort of intermediate results, and we will see in section~\ref{sublinear} how
 to do this in the particularly important case of lists. This however works
 only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the
@@ -477,9 +480,11 @@ data Zip out where
    Zip :: RPolish stack out -> Polish stack -> Zip out
 
 data RPolish inp out where
-  RPush :: a -> RPolish (a :< r) out -> RPolish r out
-  RApp :: RPolish (b :< r) out -> RPolish ((a -> b) :< a :< r) out 
-  RStop :: RPolish r r
+  RPush  :: a -> RPolish (a :< r) out 
+                  -> RPolish r out
+  RApp   :: RPolish (b :< r) out 
+                  -> RPolish ((a -> b) :< a :< r) out 
+  RStop  :: RPolish r r
 \end{code}
 The data being linear, this zipper is very similar to the zipper
 for lists. The part that is already visited (``on the left''), is
@@ -533,7 +538,8 @@ an |RApp| can be preceded by at most one |RPush|.
 
 \begin{code}
 simplify :: RPolish s out -> RPolish s out
-simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
+simplify (RPush a (RPush f (RApp r))) = 
+             simplify (RPush (f a) r)
 simplify x = x
 \end{code}
 
@@ -599,10 +605,11 @@ At each disjunction point, the evaluation function will have to choose between
 two alternatives. Since we want online behavior, we cannot afford to look
 further than a few symbols ahead to decide which parse might be the best.
 (Additionally the number of potential recovery paths grows exponentially with
-the amount of lookahead). We use widespread technique to thin out search after 
-some constant, small amount of lookahead.
+the amount of lookahead). We use the widespread technique \citep[chapter
+8]{bird_algebra_1997} to thin out search after some constant, small amount of
+lookahead.
 
-In contrast to \citep{hughes_polish_2003}, we do not compute the best path by
+In contrast to \citet{hughes_polish_2003}, we do not compute the best path by
 direct manipulation of the polish representation. Instead, we introduce a new
 datatype which represents the ``progress'' information only.
 
@@ -622,12 +629,12 @@ success or suspension, depending on whether the process reaches |Done| or
 |Susp|.
 
 \begin{figure*}
-%\includegraphics[width=\pagewidth]{progress.ps}
 \include{progress}
 \caption{
 A parsing process and associated progress information. The process
 has been stripped of result information for clarity, since it is irrelevant
-to the computation of progress information.
+to the computation of progress information. TODO: The gray nodes will not be
+forced if the desirability difference is 1 for lookahead 1.
 }
 \label{fig:progress}
 \end{figure*}
@@ -673,7 +680,7 @@ toP (Yuck p)    = Dislike . toP p
 
 mkBest :: Polish s a -> Polish s a -> Polish s a
 mkBest p q = 
-   let  ~(choice, pr) = better 0 (progress p) (progress q) 
+   let  (choice, pr) = better 0 (progress p) (progress q) 
    in   Best choice pr p q
 
 better :: Progress -> Progress -> (Ordering, Progress)
@@ -684,7 +691,8 @@ better :: Progress -> Progress -> (Ordering, Progress)
 
 Proceeding exactly as such is horribly inefficient. We can use the classic
 trick \cite{swierstra} to cache the progress information in the |Polish|
-representation.
+representation. For simplicity, we cache the information only at disjunction
+nodes where we also remember which path is best to take.
 
 We finally see why the |Polish| representation is so important:
 the progress information cannot be associated to a |Parser|, because
@@ -693,21 +701,23 @@ an issue in the |Polish| representation, because it is unfolded until
 the end of the parsing.
 
 
-Our technique can be re-formulated as lazy dynamic programming
+Our technique can be re-formulated as lazy dynamic programming, in the style of
 \citet{allison_lazy_1992}. We first define a full tree of possibilities (Polish
-expressions with disjunction), then we compute a profile information that we tie to it;
-finally, finding the best path is a matter of looking only at a subset of the
-information we constructed, using any suitable heuristic. The cut-off heuristic
-makes sure that only a part of the exponentially big data structure is demanded.
-Thanks to lazy evaluation, only that small will be actually constructed.
+expressions with disjunction), then we compute a progress information that we
+tie to it, for each node; finally, finding the best path is a matter of looking
+only at a subset of the information we constructed, using any suitable
+heuristic. The cut-off heuristic makes sure that only a part of the
+exponentially big data structure is demanded. Thanks to lazy evaluation, only
+that small will be actually constructed.
 
 \subsection{Thinning out results and ambiguous grammars}
 
-\subsection{Ambiguous grammars}
+A sound basis for thinnig out less desirable paths is to discard those which
+are less preferrable by some amount. In order to pick one path after a constant
+amount of lookahead $l$, we must set this difference to 0 when compating the
+$l^{th}$ element of the progress information.
 
-\textmeta{Conflict with online; solved as by error correction}
 
-We require that our grammars are not ambiguous
 
 \section{Eliminating linear behavior}
 \label{sec:sublinear}
