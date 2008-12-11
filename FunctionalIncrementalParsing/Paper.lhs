@@ -314,10 +314,10 @@ And the value of an expression can be evaluated as follows:
 
 \begin{code}
 evalR :: Steps r -> r
-evalR (Val a r) = push a (evalR r)
-evalR (App s) = apply (evalR s)
-    where  apply  ~(f:< ~(a:<r))  = f a :< r
-           push  a                = (a :<)
+evalR (Val a r)  = a :< evalR r
+evalR (App s)    = apply (evalR s)
+evalR (Done)     = Nil
+    where  apply ~(f:< ~(a:<r))  = f a :< r
 \end{code}
 
 % evalR :: Polish (a :< r) -> (a, Polish r)
@@ -450,10 +450,10 @@ For example, after applying the s-expr parser to the string \verb!(abcdefg!,
 
 \begin{code}
 evalL $ feed "(abcdefg" (toPolish parseList) 
-  == App $ Push (Atom 'a' :) $ 
-     App $ Push (Atom 'b' :) $ 
-     App $ Push (Atom 'c' :) $ 
-     App $ ...
+  ==  App $ Push (Atom 'a' :) $ 
+      App $ Push (Atom 'b' :) $ 
+      App $ Push (Atom 'c' :) $ 
+      App $ ...
 \end{code}
 
 This prefix will persist until the end of the input is reached. A
