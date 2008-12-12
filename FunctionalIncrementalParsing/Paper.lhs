@@ -45,7 +45,7 @@ lazy evaluation and caching of intermediate (partial) results
 enables to parse the input incrementally. We also introduce a general purpose,
 simple data structure, to eliminate the linear complexity caused
 by lazy lists traversals while retaining its lazy properties.
-Finally, we complete our treatment \annot{better word?} of incremental parsing in an
+Finally, we complete our exposition of incremental parsing in an
 interactive system by showing how our parsing machinery can be
 improved to support error-correction.
 \end{abstract}
@@ -176,7 +176,7 @@ screenful at a time.
 \end{itemize}
 
 The rest of the paper describes how to build the parsing library step by
-step: production of results in a online way (section~\ref{sec:polish}), map the
+step: production of results in a online way (section~\ref{sec:applicative}), map the
 input to these results and manage the incremental computation of intermediate
 state (section~\ref{sec:input}), treat disjunction and error correction. In
 section~\ref{sec:sublinear} we will tackle the problem of incremental parsing of
@@ -629,9 +629,11 @@ success or suspension, depending on whether the process reaches |Done| or
 \begin{figure*}
 \include{progress}
 \caption{
-A parsing process and associated progress information. The process
-has been stripped of result information for clarity, since it is irrelevant
-to the computation of progress information. TODO: The gray nodes will not be
+A parsing process and associated progress information. The process has been
+stripped of result information for clarity, since it is irrelevant to the
+computation of progress information. Each constructor is represent by a circle.
+The progress information accociated with the process is written in the rectangle
+beside the node that starts the process. TODO: Only the gray nodes will not be
 forced if the desirability difference is 1 for lookahead 1.
 }
 \label{fig:progress}
@@ -670,7 +672,8 @@ progress (Dislike p)      = mapSucc (progress p)
 progress (Sus _ _)        = PSusp                               
 progress (Best _ pr _ _)  = pr                                  
 
-toP (Case a f)  = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
+toP (Case a f)  = \fut -> Sus  (toP a fut)
+                               (\s -> toP (f s) fut)
 toP (f :*: x)   = App . toP f . toP x
 toP (Pure x)    = Push x
 toP (Disj a b)  = \fut -> mkBest (toP a fut) (toP b fut)
@@ -851,12 +854,11 @@ the beginning, our approach will force reparsing the whole file every time a
 change is made at the beginning followed by a jump to the end of the file.
 
 
-Despite extensive research dating back as far as 30 years ago, somehow, none of
-these solutions have caught up in the mainstream.
-Editors typically work using regular expressions for syntax
-highlighting at the lexical level (Emacs, Vim, Textmate, \ldots{})
-or run a full compiler in the background for syntax level
-(Eclipse). 
+Despite extensive research dating as far back as 30 years ago, somehow, none of
+these solutions have caught up in the mainstream. Editors typically work using
+regular expressions for syntax highlighting at the lexical level (Emacs, Vim,
+Textmate, \ldots{}) and integrated development environments run a full compiler
+in the background for syntax level feedback (Eclipse).
 
 We might argue that early solutions offered little
 benefit in comparison to their implementation cost. Our approach is
