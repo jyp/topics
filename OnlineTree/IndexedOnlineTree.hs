@@ -64,6 +64,21 @@ sym x = symbol (== x)
 tree = runPolish test1 [1..100]
 main = putStrLn $ S.drawForest  $ shape $ tree
 
+
+dropBut amount t = drop' initialLeftSize id t amount []
+  where
+    drop' :: Int -> E [a] -> Tree a -> Int -> E [a]
+    drop' leftsize prec Leaf n = prec
+    drop' leftsize prec t@(Node x l r) index
+        | index == 0 = prec . toEndo t
+        | index <= leftsize = drop' initialLeftSize     (x :)         l (index - 1)            . toEndo r
+        | otherwise         = drop' (leftsize * factor) (last prec l) r (index - 1 - leftsize)
+    last :: E [a] -> Tree a -> [a] -> [a]
+    last prec t = case toReverseList t of
+        (x:xs) -> (x :)
+        _ -> prec
+
+
 {-
 newtype P s a = P ([s] -> Maybe ([s], a))
 

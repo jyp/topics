@@ -2,6 +2,7 @@
 \documentclass[preprint]{sigplanconf}
 %include lhs2TeX.fmt
 %format :*: = " \applbind"
+%format +> = " \secondPush"
 \usepackage{amsmath}
 \usepackage[mathletters]{ucs}
 \usepackage[utf8x]{inputenc}
@@ -16,6 +17,7 @@
 \providecommand{\TODO}[1]{\footnote{#1}}
 \providecommand{\annot}[1]{\marginpar{\footnotesize \raggedright #1}}
 \newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
+\newcommand{\secondPush}{\mathbin{+\!\!>}}
 
 \newenvironment{meta}{%
 \begin{quote}
@@ -193,7 +195,8 @@ this is the case by forcing the structure of the result to be expressed in
 applicative (\citet{mcbride_applicative_2007}) form.
 
 The idea is to make applications explicit. 
-\textmeta{If we have only constants in the tree... we cam make sure that demanding bits of the final result will demand the corresponding bits of our result construction. }
+
+\textmeta{If we have only constants in the tree... we can make sure that demanding bits of the final result will demand the corresponding bits of our result construction. }
 
 For example, the Haskell expression |S [Atom 'a']|, which stands for |S ((:)
 (Atom 'a') [])| if we remove syntactic sugar, can be represented in applicative
@@ -469,8 +472,8 @@ information).
 \label{sec:zipper}
 Thus we have to use a better strategy to simplify intermediate
 results. We want to avoid the cost of traversing the structure
-until we find a suspension at each step. This suggests to use a
-zipper structure with the focus at this suspension point.
+up to the suspension at each step. This suggests to use a
+zipper structure with the focus at the suspension point.
 
 
 \begin{code}
@@ -526,13 +529,9 @@ right (Zip l (App r)) = Zip (RApp l) r
 right (Zip l s) = (Zip l s)
 \end{code}
 
-As the input is traversed, we also simplify the prefix that
-we went past.
-
-\begin{meta}
-Note that this works only because we keep the automaton in "normal form":
-an |RApp| can be preceded by at most one |RPush|.
-\end{meta}
+As the input is traversed, we also simplify the prefix that we went past,
+evaluating every application, effectively ensuring that each |RApp| is preceded
+by at most one |RPush|.
 
 \begin{code}
 simplify :: RPolish s out -> RPolish s out
@@ -541,8 +540,19 @@ simplify (RPush a (RPush f (RApp r))) =
 simplify x = x
 \end{code}
 
-\textmeta{As the polish representation corresponds to call-by-name evaluation,
-reverse polish corresponds to call-by-value.}
+We see that simplifying a complete reverse polish expression requires $O(n)$
+steps, where $n$ is the length of the expression. This means that the
+\emph{amortized} complexity of parsing one token (i.e. computing an partial
+result based on the previous partial result) is $O(1)$, if the size of the
+result expression is proportional to the size of the input. We discuss the worst
+case complexity in section~\ref{sec:sublinear}.
+
+In summary, it is essential for our purposes to have two evaluation procedures 
+for our parsing results. The first one, presented in section~\ref{sec:applicative}
+provides the online property, and corresponds to a call-by-name transformation
+of the direct evaluation of applicative expressions. The second one, presented in
+this section, enables incremental evaluation of intermediate results, and corresponds to
+a call-by-value transformation of the same direct evaluation function.
 
 \section{Parsing}
 \label{sec:parsing}
@@ -570,6 +580,7 @@ if we assume that the parser has not much lookahead.
 \end{meta}
 
 \subsection{Error correction}
+
 
 Disjuction is not very useful unless coupled with \emph{failure} (otherwise all
 branches would be equivalent). Still, the (unrestricted) usage of failure is
@@ -607,6 +618,21 @@ the amount of lookahead). We use the widespread technique \citep[chapter
 8]{bird_algebra_1997} to thin out search after some constant, small amount of
 lookahead.
 
+
+\begin{figure*}
+\include{progress}
+\caption{
+A parsing process and associated progress information. The process has been
+stripped of result information for clarity, since it is irrelevant to the
+computation of progress information. Each constructor is represent by a circle.
+The progress information accociated with the process is written in the rectangle
+beside the node that starts the process. To decide which path to take at the
+disjunction, only the gray nodes will be forced, if the desirability difference
+is 1 for lookahead 1.
+}
+\label{fig:progress}
+\end{figure*}
+
 In contrast to \citet{hughes_polish_2003}, we do not compute the best path by
 direct manipulation of the polish representation. Instead, we introduce a new
 datatype which represents the ``progress'' information only.
@@ -626,23 +652,8 @@ The difference with a simple list is that progress information may end with
 success or suspension, depending on whether the process reaches |Done| or
 |Susp|.
 
-\begin{figure*}
-\include{progress}
-\caption{
-A parsing process and associated progress information. The process has been
-stripped of result information for clarity, since it is irrelevant to the
-computation of progress information. Each constructor is represent by a circle.
-The progress information accociated with the process is written in the rectangle
-beside the node that starts the process. TODO: Only the gray nodes will not be
-forced if the desirability difference is 1 for lookahead 1.
-}
-\label{fig:progress}
-\end{figure*}
-
 Given two (terminated) |Progress| values, it is possible to determine which one
 is best by demanding only a prefix of each, using our thinning heuristic. 
-
-\textmeta{and assuming the grammar is not ambiguous.}
 
 We can now use this information to determine which path to take when facing a
 disjunction. In turn, this allows to compute the progress information on the
@@ -715,8 +726,42 @@ that small will be actually constructed.
 
 A sound basis for thinnig out less desirable paths is to discard those which
 are less preferrable by some amount. In order to pick one path after a constant
-amount of lookahead $l$, we must set this difference to 0 when compating the
-$l^{th}$ element of the progress information.
+amount of lookahead $l$, we must set this difference to 0 when comparing the
+$l^{th}$ element of the progress information, so that the parser can pick a
+particular path, and return results. Unfortunately, applying this rule strictly
+is dangerous in if the grammar requires a large lookahead, and in particular if
+it is ambiguous. In that case, the algorithm can possibly commit to a prefix which will
+lead to errors while processing the rest of the output, while another prefix
+would match the rest of the input and yield no error. In the present version of
+the library we avoid the problem by keeping all valid prefixes.
+
+\begin{code}
+better :: Int -> Progress -> Progress -> (Ordering, Progress)
+better _ PSusp _ = (EQ, PSusp)
+better _ _ PSusp = (EQ, PSusp)
+better _ (PRes x) (PRes y) = 
+   if x <= y then (LT, PRes x) else (GT, PRes y)
+better lk xs@(PRes x) (y:>ys) = 
+   if x == 0 || y-x > dislikeThreshold lk 
+   then (LT, xs) 
+   else min x y +> better (lk+1) xs ys
+better lk (y:>ys) xs@(PRes x) = 
+   if x == 0 || y-x > dislikeThreshold lk 
+   then (GT, xs) 
+   else min x y +> better (lk+1) ys xs
+better lk (x:>xs) (y:>ys)
+    | x == 0 && y == 0 = rec
+    | y - x > threshold = (LT, x:>xs)
+    | x - y > threshold = (GT, y:>ys)
+    | otherwise = rec
+    where threshold = dislikeThreshold lk
+          rec = min x y +> better (lk + 1) xs ys
+x +> ~(ordering, xs) = (ordering, x :> xs)
+\end{code}
+
+
+The user of the parsing library has to be aware of this issue when designing
+grammars: it can affect the performance of the algorithm to a great extent.
 
 
 
@@ -724,9 +769,6 @@ $l^{th}$ element of the progress information.
 \label{sec:sublinear}
 
 \begin{meta}
-
-This is related to ``Binary random access lists'' in
-\citet[section~6.2.1]{okasaki_purely_1999}. \end{meta}
 
 As we noted in a section~\ref{sec:input}, partial computations sometimes
 cannot be performed. This is indeed a very common case: if the
@@ -740,8 +782,14 @@ identity = case_  (Pure [])
                   (\c -> Pure (:) :*: Pure c :*: identity)
 \end{code}
 
+The applications of |(:)| can be computed only when the end of the input is
+reached, and at that moment the construction of the result as a cost
+proportional to the length of the input. The bottom-most partial result contains
+such a long chain of partial applications, and using it does not improve the
+asymptotic performance of computing the final result.
+
 The key insight is that the performance problems come from the linearity of the
-list, and we can always use a tree whose structure can be ignored when
+output list, and we can always use a tree whose structure can be ignored when
 traversing the result. \citet[section 7]{wagner_efficient_1998} recognize this
 issue and propose to replace left or right recursive rules in the parsing with a
 special repetition construct. The parsing algorithm treats this construct
@@ -799,6 +847,24 @@ picture
 A complete tree of total depth $2 d$ can therefore store at least
 $\sum_{k=1}^d 2^{k}-1$ elements, fulfilling the second
 requirement.
+
+This structure is very similar to binary random access lists as presented by
+\citet[section~6.2.1]{okasaki_purely_1999}, but differ in purpose. In our case
+we want to construct the list in one go, without pattern matching on our arguments.
+(ie. we want the argument to Pure to be a constructor)
+
+
+\begin{code}
+toTree d [] = Leaf
+toTree d (x:xs) = Node x l (toTree (d+1) xs')
+    where (l,xs') = toFullTree d xs
+
+toFullTree 0 xs = (Leaf, xs)
+toFullTree d [] = (Leaf, [])
+toFullTree d (x:xs) = (Node x l r, xs'')
+    where (l,xs' ) = toFullTree (d-1) xs
+          (r,xs'') = toFullTree (d-1) xs'
+\end{code}
 
 \subsection{Quick access}
 
@@ -876,23 +942,41 @@ This is not very suitable in an interactive system where users expect consistent
 response times.
 
 \textmeta{A possible solution to that would be to have a parse result for every
-possible prefix.}
+possible prefix. Need this be mentioned?}
+
+Another downside of our approach is that it requires the consumption of the AST
+to be done in pre-order. If this is not the case, the online property becomes
+useless. For example, if one wishes to apply a sorting algorithm before
+displaying the output, this will force the whole input to be parsed before
+displaying the first element of the input. In particular, the arguments to the
+|Pure| constructor must not perform such operations on its arguments. Ideally,
+it should be a simple constructor. This leaves many opportunites for the user of
+the library to destroy its incremental properties.
 
 \subsection{Incremental parsing in natural language processing} 
 
-\textmeta{Krasimir}
+In natural language processing, a parsing alagorithm is deems incremental if it
+reads the input one token at a time and calculates all the possible consequences
+of the token, before the net token is read. (Citation? (quoted from Krasimir))
+
+We note that there is no notion of AST update in this definition.
+
+\textmeta{Krasimir: Does this correspond to the online property or the other?}
 
 \subsection{Incremental computation}
-
-\citet{saraiva_functional_2000}
 
 An alternative approach would be to build the system on top of a generic
 incremental computation system. Downsides are that there currently exists no
 such off-the-shelf system for Haskell. The closest matching solution is provided
 by \citet{carlsson_monads_2002} relies heavily on explicit threading of
 computation through monads and explict reference for storage of inputs or
-intermediate results. In our case, not only the contents of the inputs will change, but also their number.
+intermediate results. In our case, not only the contents of the inputs will
+change, but also their number.
 
+\begin{meta}
+Plugging an attribute evaluator on top of this?
+\citet{saraiva_functional_2000}
+\end{meta}
 
 
 \subsection{Parser combinators}
@@ -935,21 +1019,26 @@ We can summarize the unique points of our approach as follows:
 What does Visual Haskell do?
 
 \end{meta}
+
+
+
 \section{Results}
 
-We carried out development of a parser combinator library for
-incremental parsing with support for error correction. We
-argumented that the complexity of the parsing is linear, and that
-is can cost
+We carried out development of a parser combinator library for incremental
+parsing with support for error correction. We argumented that, using suitable
+data structures for the output, the complexity of parsing (without error
+correction) is $O(log~m + n)$ where $m$ is the number of tokens in the state we
+resume from and $n$ is the number of tokens to parse. Parsing an increment of
+constant size has an amortized complexity is $O(1)$.
 
-This paper has been edited in the Yi editor. The incremental parser used to
-indicate matching environment delimiters as well as parenthetical symbols in the
-\LaTeX source.
+This paper and accompanying source code has been edited in the Yi editor. The
+incremental parser was used to help matching parenthesis and layout the Haskell
+functions. Environment delimiters as well as parenthetical
+symbols were matched in the \LaTeX source.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-\textmeta{Discuss how the tree must be used only locally}
 
 Combination of many techniques to build a working application.
 
