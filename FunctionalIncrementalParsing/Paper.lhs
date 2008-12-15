@@ -768,8 +768,6 @@ grammars: it can affect the performance of the algorithm to a great extent.
 \section{Eliminating linear behavior}
 \label{sec:sublinear}
 
-\begin{meta}
-
 As we noted in a section~\ref{sec:input}, partial computations sometimes
 cannot be performed. This is indeed a very common case: if the
 output we construct is a list, then the spine of the list can only
@@ -840,10 +838,16 @@ is have a list of complete trees with increasing depth $k$,
 yielding a tree of size sizes $2^{k} - 1$. To make things more
 uniform we can encode the list using the same datatype.
 
-\begin{meta}
-picture
 
-\end{meta}
+\begin{figure}
+\include{tree}
+\caption{
+A tree storing the elements 0 \ldots{} 6
+}
+\label{fig:online_tree}
+\end{figure}
+
+
 A complete tree of total depth $2 d$ can therefore store at least
 $\sum_{k=1}^d 2^{k}-1$ elements, fulfilling the second
 requirement.

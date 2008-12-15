@@ -4,7 +4,7 @@
 %.pdf: %.svg
 	convert $< $@
 
-Paper.pdf: begin.pdf mid.pdf progress.tex
+Paper.pdf: begin.pdf mid.pdf progress.tex tree.tex
 
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<
@@ -22,8 +22,8 @@ Paper.pdf: begin.pdf mid.pdf progress.tex
 %.fig: %.dia
 	dia -e $@ $< 
 
-#%.tex: %.dia
-#	dia -e $@ $< 
+%.tex: %.dia
+	dia -e $@ $< 
 
 %.ps: %.dot
 	dot -Tps $< -o $@
