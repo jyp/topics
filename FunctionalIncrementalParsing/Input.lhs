@@ -15,21 +15,21 @@ own right (we come back to it in section~\ref{sec:zipper}), it is not enough
 to represent parsers: it lacks dependency on the input.
 
 We introduce an extra type argument (the type of symbols), as well as a new
-constructor: |Case|. It expresses that the rest of the expression depends on the
+constructor: |Symb|. It expresses that the rest of the expression depends on the
 (first symbol of) the output.
 
 \begin{code}
 data Parser s a where
     (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
     Pure :: a -> Parser s a
-    Case :: Parser s a -> (s -> Parser s a) -> Parser s a
+    Symb :: Parser s a -> (s -> Parser s a) -> Parser s a
 \end{code}
 
 Using just this we can write a simple parser for S-expressions.
 
 \begin{code}
 parseList :: Parser Char [SExpr]
-parseList = Case 
+parseList = Symb
    (Pure [])
    (\c -> case c of
        ')'  -> Pure []
@@ -54,9 +54,9 @@ data Polish s r where
 \end{code}
 
 \begin{spec}
-  toP (Case nil cons) = 
+  toP (Symb nil cons) = 
        \k -> Susp (toP nil k) (\s -> fromP (toP (cons s) k))
-  ... ( other cases unchanged)
+  ... (other cases unchanged)
 \end{spec}
 
 We broke the linearity of the type, but it does not matter since the parsing
