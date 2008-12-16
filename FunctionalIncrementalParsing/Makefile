@@ -5,7 +5,7 @@
 	convert $< $@
 
 Paper.pdf: begin.pdf mid.pdf progress.tex tree.tex
-Paper.tex: SExpr.lhs Applicative.lhs
+Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs
 
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<

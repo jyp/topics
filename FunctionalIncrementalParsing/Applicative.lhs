@@ -1,6 +1,9 @@
 \ignore{
 
+\begin{code}
 import SExpr
+import Stack
+\end{code}
 
 }
 
@@ -109,11 +112,7 @@ example producing a non-trivial stack. It produces the stack |(:) (Atom 'a')
 []|, which can be expressed purely in Haskell as |(:) :< Atom 'a' :< [] :< Nil|,
 using the following representation for heterogeneous stacks.
 
-\begin{code}
-data top :< rest = (:<) {top :: top, rest :: rest}
-data Nil = Nil
-infixr :<
-\end{code}
+%include Stack.lhs
 
 We are now able to properly type polish expressions, by indexing the datatype
 with the type of the stack produced.
