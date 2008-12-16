@@ -64,7 +64,7 @@ fragment of input.
 data Parser s a where
     Pure   :: a                                  -> Parser s a
     (:*:)  :: Parser s (b -> a) -> Parser s b    -> Parser s a
-    Case   :: Parser s a -> (s -> Parser s a)    -> Parser s a
+    Symb   :: Parser s a -> (s -> Parser s a)    -> Parser s a
     Disj   :: Parser s a -> Parser s a           -> Parser s a
     Yuck   :: Parser s a                         -> Parser s a
 \end{code}
@@ -145,7 +145,7 @@ progress (Sus _ _)        = PSusp
 progress (Best _ pr _ _)  = pr                                  
 
 toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
-toP (Case a f)  = \fut -> Sus  (toP a fut)
+toP (Symb a f)  = \fut -> Sus  (toP a fut)
                                (\s -> toP (f s) fut)
 toP (f :*: x)   = App . toP f . toP x
 toP (Pure x)    = Push x
