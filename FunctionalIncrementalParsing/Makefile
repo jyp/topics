@@ -7,6 +7,11 @@
 Paper.pdf: begin.pdf mid.pdf progress.tex tree.tex
 Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs
 
+checks:
+	ghc --make Applicative.lhs
+	ghc --make Input.lhs
+	ghc --make Choice.lhs
+
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<
 

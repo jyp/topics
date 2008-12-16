@@ -37,13 +37,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="96.711806"
+     inkscape:cx="101.45097"
      inkscape:cy="280.64199"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="786"
-     inkscape:window-height="1198"
+     inkscape:window-width="1329"
+     inkscape:window-height="1131"
      inkscape:window-x="24"
      inkscape:window-y="0"
      showguides="true">
@@ -86,17 +86,18 @@
        d="M 159.64781,452.20236 C 419.64781,32.202363 419.64781,32.202363 419.64781,32.202363 L 679.64781,452.20236 L 159.64781,452.20236 z"
        id="path3187" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.43612336"
-       d="M 420,32.362183 L 260,292.36218"
-       id="path2385" />
-    <path
-       style="fill:#0000ff;fill-opacity:0.32663317;fill-rule:evenodd;stroke:#000000;stroke-width:0.38161409px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="fill:#0000ff;fill-opacity:0.32663315999999998;fill-rule:evenodd;stroke:#0000ff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.36123347000000000;opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
        d="M 158.64348,453.21881 C 258.66088,294.21928 258.66088,294.21928 258.66088,294.21928 L 358.67829,453.21881 L 158.64348,453.21881 z"
        id="path3189" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 0,462.84024 C 10,452.84024 10,452.84024 10,452.84024 L 30,472.84024 L 50,452.84024 L 70,472.84024 L 90,452.84024 L 110,472.84024 L 130,452.84024 L 150,472.84024 L 170,452.84024 L 190,472.84024 L 200,462.84024 L 200,462.84024"
        id="path3163"
+       transform="translate(158.64782,30.362183)" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.32599117999999999;fill-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 260,2.8402405 L 100,262.84024"
+       id="path2388"
        transform="translate(158.64782,30.362183)" />
   </g>
 </svg>

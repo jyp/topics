@@ -42,12 +42,14 @@
 \maketitle
 \textmeta{actually it probably applies only to free-form editors of structured documents?}
 \begin{abstract}
-In the context of an interactive application where the user
-observes only a small portion of the output, we show that combining
+A free-form editor for structured documents may want to maintain
+a structured representation of the edited document. This has
+a number of applications: syntax highlighting of source code, etc. \textmeta{lame}
+We show that combining
 lazy evaluation and caching of intermediate (partial) results
 enables to parse the input incrementally. We also introduce a general purpose,
 simple data structure, to eliminate the linear complexity caused
-by lazy lists traversals while retaining its lazy properties.
+by lazy lists traversals while retaining their lazy properties.
 Finally, we complete our exposition of incremental parsing in an
 interactive system by showing how our parsing machinery can be
 improved to support error-correction.
@@ -68,10 +70,10 @@ Dynamic Programming, Polish representation, Editor, Haskell
 
 \section{Introduction}
 
-Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is an editor is written
+Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is a text editor written
 in Haskell. It provides features such as syntax highlighting and indentation
-hints for the Haskell language. In order to implement all syntax-dependent
-functions in a consistent way, the abstract syntax tree (AST) is available at
+hints for a number of programming languages. In order to implement all syntax-dependent
+functions in a consistent way, the abstract syntax tree (AST) of the source code is available at
 all times, kept up to date as the user types. In order to maintain acceptable
 performance, the editor must not parse the whole file at each keystroke.
 
@@ -95,7 +97,7 @@ printed to the user.
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
 \caption{Viewing the beginning of a file. 
-The triangle represents the syntax tree. The line at the bottom represents the
+The big triangle represents the syntax tree. The line at the bottom represents the
 file. The zagged part indicates the part that is parsed. The viewing window is
 depicted as a rectangle.
 }

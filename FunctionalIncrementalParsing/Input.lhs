@@ -20,9 +20,9 @@ constructor: |Symb|. It expresses that the rest of the expression depends on the
 
 \begin{code}
 data Parser s a where
-    (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
-    Pure :: a -> Parser s a
-    Symb :: Parser s a -> (s -> Parser s a) -> Parser s a
+    (:*:) :: Parser s (b -> a) -> Parser s b   -> Parser s a
+    Pure :: a                                  -> Parser s a
+    Symb :: Parser s a -> (s -> Parser s a)    -> Parser s a
 \end{code}
 
 Using just this we can write a simple parser for S-expressions.
