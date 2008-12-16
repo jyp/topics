@@ -9,11 +9,12 @@
 \usepackage{graphicx}
 \usepackage{pgf}
 \usepackage{tikz}
-% \setlength{\parindent}{0pt}
-% \setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
 \usepackage{enumerate}
-\usepackage[sort&compress,numbers]{natbib}
-
+% \usepackage[sort&compress,numbers]{natbib}
+\usepackage[sort&compress]{natbib}
+\newcommand{\ignore}[1]{}
 \providecommand{\TODO}[1]{\footnote{#1}}
 \providecommand{\annot}[1]{\marginpar{\footnotesize \raggedright #1}}
 \newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
@@ -33,7 +34,7 @@
 \titlebanner{Work in progress}        % These are ignored unless
 \preprintfooter{In preparation for ICFP09}   % 'preprint' option specified.
 
-\title{Functional Incremental Parsing}
+\title{Lazy Functional Incremental Parsing}
 
 \authorinfo{Jean-Philippe Bernardy}
 
@@ -74,21 +75,6 @@ functions in a consistent way, the abstract syntax tree (AST) is available at
 all times, kept up to date as the user types. In order to maintain acceptable
 performance, the editor must not parse the whole file at each keystroke.
 
-In an interactive system, a lazy evaluation strategy provides a
-special form of incremental computation: the amount of output that
-is demanded drives the computation to be performed. In other words,
-the system responds to incremental movements of the portion of the
-output being viewed by the user (window) by incremental computation
-of the intermediate structures.
-
-The above observation suggests that we can take advantage of lazy evaluation to
-implement incremental parsing for an interactive application.
-Indeed, if we suppose that the user makes changes in the input that
-``corresponds to'' the window being viewed, it suffices to cache
-partially computed results for each point in the input, to obtain a
-system that responds to changes in the input independently of the
-total size of that input.
-
 \subsection{Example}
 
 For the purpose of illustration, we demonstrate how the
@@ -104,10 +90,7 @@ is produced, by parsing the input. A value of the |SExpr| type
 is constructed. Second, it is linearized back and
 printed to the user.
 
-\begin{code}
-data SExpr = S [SExpr] | Atom Char
-\end{code}
-
+%include SExpr.lhs
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
@@ -149,6 +132,34 @@ parsing from that point. If we make sure to store partial results for every
 other point of the input, we can ensure that we will never parse more than a
 screenful at a time.
 
+List of constraints 
+\begin{itemize}
+\item pure
+\item parser-combinator library 
+\end{itemize}
+List of consequences
+\begin{itemize}
+\item maximize the use of lazy evaluation
+\item error correction
+\item 
+\end{itemize}
+
+In an interactive system, a lazy evaluation strategy provides a
+special form of incremental computation: the amount of output that
+is demanded drives the computation to be performed. In other words,
+the system responds to incremental movements of the portion of the
+output being viewed by the user (window) by incremental computation
+of the intermediate structures.
+
+The above observation suggests that we can take advantage of lazy evaluation to
+implement incremental parsing for an interactive application.
+Indeed, if we suppose that the user makes changes in the input that
+``corresponds to'' the window being viewed, it suffices to cache
+partially computed results for each point in the input, to obtain a
+system that responds to changes in the input independently of the
+total size of that input.
+
+
 \subsection{Contributions}
 
 \begin{itemize}
@@ -184,161 +195,8 @@ state (section~\ref{sec:input}), treat disjunction and error correction. In
 section~\ref{sec:sublinear} we will tackle the problem of incremental parsing of
 repetition. We discuss and compare our approach to alternatives in
 section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
-
-\section{Producing results} 
-\label{sec:applicative}
-
-In this section we concentrate on constructing parsing results, ignoring the
-dependence on input. The cornerstone of our approach to incremental parsing
-approach is that the parse tree is produced \emph{online}. We can ensure that
-this is the case by forcing the structure of the result to be expressed in
-applicative (\citet{mcbride_applicative_2007}) form.
-
-The idea is to make applications explicit. 
-
-\textmeta{If we have only constants in the tree... we can make sure that demanding bits of the final result will demand the corresponding bits of our result construction. }
-
-For example, the Haskell expression |S [Atom 'a']|, which stands for |S ((:)
-(Atom 'a') [])| if we remove syntactic sugar, can be represented in applicative
-form by
-
-\begin{code}
-S @ ((:) @ (Atom @ 'a') @ [])
-\end{code}
-
-
-The following data type captures the pure applicative language with embedding
-of Haskell values. It is indexed by the type of values it represents.
-
-\begin{code}
-data Applic a where
-    (:*:) :: Applic (b -> a) -> Applic b -> Applic a
-    Pure :: a -> Applic a
-infixl :*:
-\end{code}
-
-
-\begin{code}
-Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
-\end{code}
-
-We can evaluate such expressions as follows:
-
-\begin{code}
-evalA (f :*: x) = (evalA f) (evalA x)
-evalA (Pure a) = a
-\end{code}
-
-If the arguments to the |Pure| constructor are constants \annot{or
-constructors}, then we know that demanding a given part of the result will force
-only the corresponding part of the applicative expression.
-
-Because they process the input in a linear fashion, our parsers require a
-linear structure (it will become apparent in section~\ref{sec:parsing}). As
-\citet{hughes_polish_2003}, we convert the applicative expressions to polish
-representation to obtain such a linear structure.
-
-The key idea of the polish representation is to put the application in an
-prefix position rather than an infix one. Our example expression (in applicative form 
-|S @ ((:) @ (Atom @ 'a') @ [])|)
-becomes
-|@ S (@ (@ (:) (@ Atom 'a') []))|
-
-Since |@| is always followed by exactly two arguments, grouping information can
-be inferred from the applications, and the parenthesises can be dropped. The final
-polish expression is therefore
-
-\begin{code}
-@ S @ @ (:) @ Atom 'a' []
-\end{code}
-
-The Haskell datatype can also be linearized in the same way, yielding the following
-representation for the above expression.
-
-\begin{code}
-x = App $ Push S $ App $ App $ Push (:) $ 
-   App $ Push Atom $ Push 'a' $ Push [] $ Done
-\end{code}
-
-\begin{code}
-data Polish where
-    Push  :: a -> Polish      ->  Polish
-    App   :: Polish           ->  Polish
-    Done  ::                      Polish
-\end{code}
-
-
-Unfortunately, the above datatype does not allow to evaluate expressions in a
-typeful manner. The key insight is to that polish expressions are in fact more
-general than applicative expressions: they produce a stack of values instead of
-just one.
-
-As hinted by the constructor names we chose, we can reinterpret polish
-expressions as follows. |Push| produces a stack with one more value than its
-argument, |App| transforms the stack produced by its argument by applying the
-function on the top to the argument on the second position, and |Done| produces
-the empty stack.
-
-The expression |Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done| is an
-example producing a non-trivial stack. It produces the stack |(:) (Atom 'a')
-[]|, which can be expressed purely in Haskell as |(:) :< Atom 'a' :< [] :< Nil|,
-using the following representation for heterogeneous stacks.
-
-\begin{code}
-data top :< rest = (:<) {top :: top, rest :: rest}
-data Nil = Nil
-infixr :<
-\end{code}
-
-We are now able to properly type polish expressions, by indexing the datatype
-with the type of the stack produced.
-
-\begin{code}
-data Polish r where
-    Push  :: a -> Polish r                  ->  Polish (a :< r)
-    App   :: (Polish ((b -> a) :< b :< r))  ->  Polish (a :< r)
-    Done  ::                                    Polish Nil
-\end{code}
-
-We can now write a translation from the pure applicative language to
-polish expressions.
-
-\begin{code}
-toPolish :: Applic a -> Polish (a :< Nil)
-toPolish expr = toP expr Done
-  where toP :: Applic a -> (Polish r -> Polish (a,r))
-        toP (f :*: x)  = App . toP f . toP x
-        toP (Pure x)   = Push x
-\end{code}
-
-And the value of an expression can be evaluated as follows:
-
-\begin{code}
-evalR :: Steps r -> r
-evalR (Val a r)  = a :< evalR r
-evalR (App s)    = apply (evalR s)
-evalR (Done)     = Nil
-    where  apply ~(f:< ~(a:<r))  = f a :< r
-\end{code}
-
-% evalR :: Polish (a :< r) -> (a, Polish r)
-% evalR (Push a r) = (a,r)
-% evalR (App s) =  let  (f, s') = evalR s
-%                       (x, s'') = evalR s'
-%                  in (f x, s'')
-
-We have the equality |top (evalR (toPolish x)) == evalA x|.
-
-Finally, we note that this evaluation procedure still possesses the ``online''
-property: parts of the polish expression are demanded only if the corresponding
-parts of the input is demanded. This preserves the incremental properties of
-lazy evaluation that we required in the introduction. Furthermore, the equality
-above holds even when |undefined| appears as argument to the |Pure| constructor.
-
-In fact, the conversion from applicative to polish expressions can be seen as 
-a reification of the working stack of the |evalA| function with call-by-name
-semantics.
-
+    
+%include Applicative.lhs
 
 \section{Adding input}
 \label{sec:input}
@@ -384,11 +242,13 @@ data Polish s r where
     App      ::  Polish s ((b -> a) :< b :< r)  ->   Polish s (a :< r)
     Done     ::                                      Polish s Nil
     Susp     :: Polish s r -> (s -> Polish s r) ->   Polish s r
+\end{code}
 
+\begin{spec}
   toP (Case nil cons) = 
        \k -> Susp (toP nil k) (\s -> fromP (toP (cons s) k))
   ... ( other cases unchanged)
-\end{code}
+\end{spec}
 
 We broke the linearity of the type, but it does not matter since the parsing
 algorithm will not proceed further than the available input anyway, and
@@ -449,13 +309,13 @@ application is not saturated, the polish expression will start with
 For example, after applying the s-expr parser to the string \verb!(abcdefg!, 
 |evalL| is unable to perform any simplification of the list prefix.
 
-\begin{code}
+\begin{spec}
 evalL $ feed "(abcdefg" (toPolish parseList) 
   ==  App $ Push (Atom 'a' :) $ 
       App $ Push (Atom 'b' :) $ 
       App $ Push (Atom 'c' :) $ 
       App $ ...
-\end{code}
+\end{spec}
 
 This prefix will persist until the end of the input is reached. A
 possible remedy is to avoid writing expressions that lead to this
@@ -622,9 +482,11 @@ lookahead.
 \begin{figure*}
 \include{progress}
 \caption{
-A parsing process and associated progress information. The process has been
-stripped of result information for clarity, since it is irrelevant to the
-computation of progress information. Each constructor is represent by a circle.
+A parsing process and associated progress information. The process has been fed a whole input, so it is free of |Susp|
+constructors.
+It is also stripped of result information for clarity (|Push|, |App|), since it is irrelevant to the
+computation of progress information. Each constructor is represented by a circle, and their arguments
+by arrows.
 The progress information accociated with the process is written in the rectangle
 beside the node that starts the process. To decide which path to take at the
 disjunction, only the gray nodes will be forced, if the desirability difference
@@ -763,7 +625,7 @@ x +> ~(ordering, xs) = (ordering, x :> xs)
 The user of the parsing library has to be aware of this issue when designing
 grammars: it can affect the performance of the algorithm to a great extent.
 
-
+\textmeta{Final version of evalL?}
 
 \section{Eliminating linear behavior}
 \label{sec:sublinear}
@@ -866,8 +728,8 @@ toTree d (x:xs) = Node x l (toTree (d+1) xs')
 toFullTree 0 xs = (Leaf, xs)
 toFullTree d [] = (Leaf, [])
 toFullTree d (x:xs) = (Node x l r, xs'')
-    where (l,xs' ) = toFullTree (d-1) xs
-          (r,xs'') = toFullTree (d-1) xs'
+    where  (l,xs' ) = toFullTree (d-1) xs
+           (r,xs'') = toFullTree (d-1) xs'
 \end{code}
 
 \subsection{Quick access}

@@ -118,6 +118,11 @@ instance Show (Steps s r) where
     show (Sus _ _) = "..."
     show (Best _ _ p q) = "(" ++ show p ++ ")" ++ show q
 
+instance Show (RPolish i o) where
+    show (RPush _ p) = show p ++ "^"
+    show (RApp p) = show p ++ "@"
+    show (RStop) = "!"
+
 
 apply :: forall t t1 a. ((t -> a) :< (t :< t1)) -> a :< t1
 apply ~(f:< ~(a:<r)) = f a :< r
@@ -207,9 +212,23 @@ feedZ :: Maybe [s] -> Zip s r -> Zip s r
 feedZ x = onRight (feed x)
 
 
-evalZL :: forall s a. Zip s a -> Zip s a
-evalZL = onLeft simplify . simplAll
-    where simplAll = right simplAll . onLeft simplify
+-- Move the zipper to right, and simplify if something is pushed in
+-- the left part.
+
+evalZL :: Zip s output -> Zip s output
+evalZL (Zip l0 r0) = help l0 r0
+  where
+      help :: RPolish mid output -> Steps s mid -> Zip s output
+      help l rhs = case rhs of
+          (Val a r) -> help (simplify (RPush a l)) r
+          (App r)  -> help (RApp l) r
+          (Shift p) -> help l p
+          (Dislike p) -> help l p
+          (Best choice _ p q) -> case choice of
+              LT -> help l p
+              GT -> help l q
+              EQ -> Zip l rhs -- don't know where to go: don't speculate on evaluating either branch.
+          _ -> Zip l rhs
 
 
 -- | Push some symbols.
@@ -278,6 +297,9 @@ data Zip s output where
    Zip :: [String] -> RPolish mid output -> Steps s mid -> Zip s output
    -- note that the Stack produced by the Polish expression matches
    -- the stack consumed by the RP automaton.
+
+instance Show (Zip s output) where
+    show (Zip l r) = show l ++ "<>" ++ show r
 
 -- Move the zipper to right, and call continuation if something was pushed in
 -- the left part.
