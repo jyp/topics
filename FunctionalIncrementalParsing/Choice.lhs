@@ -186,6 +186,9 @@ that small will be actually constructed.
 
 \subsection{Thinning out results and ambiguous grammars}
 
+\textmeta{example}
+
+
 A sound basis for thinnig out less desirable paths is to discard those which
 are less preferrable by some amount. In order to pick one path after a constant
 amount of lookahead $l$, we must set this difference to 0 when comparing the

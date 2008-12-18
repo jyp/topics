@@ -4,12 +4,13 @@
 -- TODO:
 -- better interface
 -- have error messages in the right order
--- have a message for plain failures as well
+-- have a message for plain failures as well / remove failure in recoveries
+
 -- Optimize profile info (no more Ints)
 
-module IncrementalParser (Process, 
-                          recoverWith, symbol, eof, lookNext, testNext, runPolish, 
-                          runP, profile, pushSyms, pushEof, evalZL, evalZR, feedZ,
+module Parser.Incremental (Process, 
+                          recoverWith, symbol, eof, lookNext, testNext, run,
+                          mkProcess, profile, pushSyms, pushEof, evalL, evalR, feedZ,
                           P) where
 
 import Control.Applicative
@@ -128,12 +129,12 @@ apply :: forall t t1 a. ((t -> a) :< (t :< t1)) -> a :< t1
 apply ~(f:< ~(a:<r)) = f a :< r
 
 -- | Right-eval a fully defined process (ie. one that has no Sus)
-evalR' :: Steps s r -> ([String], r)
-evalR' Done = ([], ())
-evalR' (Val a r) = second (a :<) (evalR' r)
-evalR' (App s) = second apply (evalR' s)
+evalR' :: Steps s r -> (r, [String])
+evalR' Done = ((), [])
+evalR' (Val a r) = first (a :<) (evalR' r)
+evalR' (App s) = first apply (evalR' s)
 evalR' (Shift v) = evalR' v
-evalR' (Dislike err v) = first (err:) (evalR' v)
+evalR' (Dislike err v) = second (err:) (evalR' v)
 evalR' (Fail) = error "evalR: No parse!"
 evalR' (Sus _ _) = error "evalR: Not fully evaluated!"
 evalR' (Sh' _) = error "evalR: Sh' should be hidden by Sus"
@@ -215,21 +216,21 @@ feedZ x = onRight (feed x)
 -- Move the zipper to right, and simplify if something is pushed in
 -- the left part.
 
-evalZL :: Zip s output -> Zip s output
-evalZL (Zip l0 r0) = help l0 r0
+evalL :: Zip s output -> Zip s output
+evalL (Zip errs0 l0 r0) = help errs0 l0 r0
   where
-      help :: RPolish mid output -> Steps s mid -> Zip s output
-      help l rhs = case rhs of
-          (Val a r) -> help (simplify (RPush a l)) r
-          (App r)  -> help (RApp l) r
-          (Shift p) -> help l p
-          (Dislike p) -> help l p
+      help :: [String] -> RPolish mid output -> Steps s mid -> Zip s output
+      help errs l rhs = case rhs of
+          (Val a r) -> help errs (simplify (RPush a l)) r
+          (App r)  -> help errs (RApp l) r
+          (Shift p) -> help errs l p
+          (Dislike err p) -> help (err:errs) l p
           (Best choice _ p q) -> case choice of
-              LT -> help l p
-              GT -> help l q
-              EQ -> Zip l rhs -- don't know where to go: don't speculate on evaluating either branch.
-          _ -> Zip l rhs
-
+              LT -> help errs l p
+              GT -> help errs l q
+              EQ -> reZip errs l rhs -- don't know where to go: don't speculate on evaluating either branch.
+          _ -> reZip errs l rhs
+      reZip errs l r = l `seq` Zip errs l r
 
 -- | Push some symbols.
 pushSyms :: forall s r. [s] -> Zip s r -> Zip s r
@@ -239,12 +240,13 @@ pushSyms x = feedZ (Just x)
 pushEof :: forall s r. Zip s r -> Zip s r
 pushEof = feedZ Nothing
 
-runP :: forall s a. P s a -> Process s a
-runP p = Zip [] RStop (toP p Done)
+-- | Make a parser into a process.
+mkProcess :: forall s a. P s a -> Process s a
+mkProcess p = Zip [] RStop (toP p Done)
 
--- | Run a parser.
-runPolish :: forall s a. P s a -> [s] -> ([String],a)
-runPolish p input = second top $ evalZR $ pushEof $ pushSyms input $ runP p
+-- | Run a process (in case you do not need the incremental interface)
+run :: Process s a -> [s] -> (a, [String])
+run p input = evalR $ pushEof $ pushSyms input $ p
 
 testNext :: (Maybe s -> Bool) -> P s ()
 testNext f = Look (if f Nothing then ok else empty) (\s -> 
@@ -259,8 +261,8 @@ lookNext = Look (pure Nothing) (\s -> pure (Just s))
 -- | Parse the same thing as the argument, but will be used only as
 -- backup. ie, it will be used only if disjuncted with a failing
 -- parser.
-recoverWith :: forall s a. String -> P s a -> P s a
-recoverWith = Yuck
+recoverWith :: P s a -> P s a
+recoverWith = Yuck "recoverWith"
 
 ----------------------------------------------------
 
@@ -278,18 +280,17 @@ data RPolish input output where
 
 -- Evaluate the output of an RP automaton, given an input stack
 evalRP :: RPolish input output -> input -> output
-evalRP RStop acc = acc 
+evalRP RStop  acc = acc
 evalRP (RPush v r) acc = evalRP r (v :< acc)
-evalRP (RApp r) (f :< a :< acc) = evalRP r (f a :< acc)
-
+evalRP (RApp r) ~(f :< ~(a :< rest)) = evalRP r (f a :< rest)
 
 -- execute the automaton as far as possible
 simplify :: RPolish s output -> RPolish s output
-simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
+simplify (RPush a (RPush f (RApp r))) = let b = f a in b `seq` simplify (RPush b r)
 simplify x = x
 
-evalZR :: Zip token output -> ([String], output)
-evalZR (Zip errs l r) = ((errs ++) *** evalRP l) (evalR' r)
+evalR :: Zip token (a :< rest) -> (a, [String])
+evalR (Zip errs l r) = ((top . evalRP l) *** (errs ++)) (evalR' r)
 
 -- Gluing a Polish expression and an RP automaton.
 -- This can also be seen as a zipper of Polish expressions.
@@ -299,7 +300,7 @@ data Zip s output where
    -- the stack consumed by the RP automaton.
 
 instance Show (Zip s output) where
-    show (Zip l r) = show l ++ "<>" ++ show r
+    show (Zip errs l r) = show l ++ "<>" ++ show r ++ ", errs = " ++ show errs
 
 -- Move the zipper to right, and call continuation if something was pushed in
 -- the left part.

@@ -16,7 +16,7 @@ to represent parsers: it lacks dependency on the input.
 
 We introduce an extra type argument (the type of symbols), as well as a new
 constructor: |Symb|. It expresses that the rest of the expression depends on the
-(first symbol of) the output.
+first symbol of the input (if any).
 
 \begin{code}
 data Parser s a where
@@ -51,13 +51,13 @@ data Polish s r where
     App      ::  Polish s ((b -> a) :< b :< r)  ->   Polish s (a :< r)
     Done     ::                                      Polish s Nil
     Susp     :: Polish s r -> (s -> Polish s r) ->   Polish s r
-\end{code}
 
-\begin{spec}
   toP (Symb nil cons) = 
        \k -> Susp (toP nil k) (\s -> fromP (toP (cons s) k))
-  ... (other cases unchanged)
-\end{spec}
+  toP (f :*: x)       = App . toP f . toP x
+  toP (Pure x)        = Push x
+
+\end{code}
 
 We broke the linearity of the type, but it does not matter since the parsing
 algorithm will not proceed further than the available input anyway, and
@@ -177,12 +177,15 @@ an output stack, reverse expressions can be understood as automata
 which transform a stack to another. This is captured in the type
 indices |inp| and |out|.
 
-Running this automaton on an input stack offers no surprise.
+Running this automaton on an input stack requires only one bit
+of attention: matching on the input stack must be done lazily.
+Otherwise, the evaluation procedure will force the spine of the input,
+effectively forcing to parse the whole input file.
 \begin{code}
 evalRP :: RPolish inp out -> inp -> out
 evalRP RStop acc = acc 
 evalRP (RPush v r) acc = evalRP r (v :< acc)
-evalRP (RApp r) (f :< a :< acc) = evalRP r (f a :< acc)
+evalRP (RApp r) ~(f :< ~(a :< acc)) = evalRP r (f a :< acc)
 \end{code}
 
 

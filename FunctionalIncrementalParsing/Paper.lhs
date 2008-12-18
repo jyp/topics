@@ -485,6 +485,9 @@ Combination of many techniques to build a working application.
 
 Interesting application for/experiment in lazy evaluation.
 
+\acks
+
+
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
 
