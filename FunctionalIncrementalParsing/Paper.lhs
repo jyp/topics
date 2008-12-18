@@ -40,7 +40,6 @@
 
 
 \maketitle
-\textmeta{actually it probably applies only to free-form editors of structured documents?}
 \begin{abstract}
 A free-form editor for structured documents may want to maintain
 a structured representation of the edited document. This has
