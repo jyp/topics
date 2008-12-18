@@ -1,6 +1,8 @@
 \ignore{
 
 \begin{code}
+{-# LANGUAGE TypeOperators, GADTs #-}
+module Choice where
 import SExpr
 import Stack
 
@@ -79,6 +81,7 @@ lookahead.
 
 
 \begin{figure*}
+\centering
 \include{progress}
 \caption{
 A parsing process and associated progress information. The process has been fed a whole input, so it is free of |Susp|

@@ -8,7 +8,9 @@ Paper.pdf: begin.pdf mid.pdf progress.tex tree.tex
 Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs
 
 checks:
-	ghc --make Applicative.lhs
+	ghc -c SExpr.lhs
+	ghc -c Stack.lhs
+	ghc -c Applicative.lhs
 	ghc --make Input.lhs
 	ghc --make Choice.lhs
 
@@ -35,7 +37,7 @@ checks:
 	dot -Tps $< -o $@
 
 %.tex: %.dot
-	dot -Txdot $< | dot2tex --figonly > $@
+	dot -Txdot $< | dot2tex --texmode=raw --figonly > $@
 #	dot2tex --preproc $< | dot2tex --figonly > $@
 
 %.pdf: %.tex

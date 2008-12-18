@@ -1,6 +1,8 @@
 \ignore{
 
 \begin{code}
+{-# LANGUAGE TypeOperators, GADTs #-}
+module Input where
 import SExpr
 import Stack
 \end{code}
@@ -52,11 +54,11 @@ data Polish s r where
     Done     ::                                      Polish s Nil
     Susp     :: Polish s r -> (s -> Polish s r) ->   Polish s r
 
-  toP (Symb nil cons) = 
-       \k -> Susp (toP nil k) (\s -> fromP (toP (cons s) k))
-  toP (f :*: x)       = App . toP f . toP x
-  toP (Pure x)        = Push x
-
+toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
+toP (Symb nil cons) = 
+       \k -> Susp (toP nil k) (\s -> toP (cons s) k)
+toP (f :*: x)       = App . toP f . toP x
+toP (Pure x)        = Push x
 \end{code}
 
 We broke the linearity of the type, but it does not matter since the parsing

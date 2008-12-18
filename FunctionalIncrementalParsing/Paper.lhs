@@ -19,6 +19,7 @@
 \providecommand{\annot}[1]{\marginpar{\footnotesize \raggedright #1}}
 \newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
 \newcommand{\secondPush}{\mathbin{+\!\!>}}
+\newcommand{\prog}{\ensuremath{\mathbin{:>}}}
 
 \newenvironment{meta}{%
 \begin{quote}
@@ -279,7 +280,7 @@ uniform we can encode the list using the same datatype.
 \begin{figure}
 \include{tree}
 \caption{
-A tree storing the elements 0 \ldots{} 6
+A tree storing the elements 1 \ldots{} 14
 }
 \label{fig:online_tree}
 \end{figure}

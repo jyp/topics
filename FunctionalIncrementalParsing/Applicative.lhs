@@ -1,6 +1,8 @@
 \ignore{
 
 \begin{code}
+{-# LANGUAGE TypeOperators, GADTs #-}
+module Applicative where
 import SExpr
 import Stack
 \end{code}
@@ -15,7 +17,7 @@ import Stack
 
 In this section we concentrate on constructing parsing results, ignoring the
 dependence on input. The cornerstone of our approach to incremental parsing
-approach is that the parse tree is produced \emph{online}. We can ensure that
+is that the parse tree is produced \emph{online}. We can ensure that
 this is the case by forcing the structure of the result to be expressed in
 applicative (\citet{mcbride_applicative_2007}) form.
 
