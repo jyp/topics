@@ -160,7 +160,8 @@ mkBest p q =
    let  (choice, pr) = better 0 (progress p) (progress q) 
    in   Best choice pr p q
 
-better :: Int -> Progress -> Progress -> (Ordering, Progress)
+better :: Int -> Progress -> Progress
+                                 -> (Ordering, Progress)
 -- compute which progress is the better one (with a give lookahead), and return it.
 \end{code}
 \caption{Handling disjunction}
@@ -230,4 +231,4 @@ x +> ~(ordering, xs) = (ordering, x :> xs)
 The user of the parsing library has to be aware of this issue when designing
 grammars: it can affect the performance of the algorithm to a great extent.
 
-\textmeta{Final version of evalL?}
+\textmeta{Final version of evalL/evalR?}

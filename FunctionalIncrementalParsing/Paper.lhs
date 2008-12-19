@@ -38,13 +38,17 @@
 \title{Lazy Functional Incremental Parsing}
 
 \authorinfo{Jean-Philippe Bernardy}
+           {Computer Science and Engineering, 
+            Chalmers University of Technology and University of Gothenburg}
+           {bernardy@@chalmers.se}
 
 
 \maketitle
 \begin{abstract}
 A free-form editor for structured documents may want to maintain
 a structured representation of the edited document. This has
-a number of applications: syntax highlighting of source code, etc. \textmeta{lame}
+a number of applications: structural navigation (and optional strucural edition), 
+highlighting of source code, etc. 
 We show that combining
 lazy evaluation and caching of intermediate (partial) results
 enables to parse the input incrementally. We also introduce a general purpose,
@@ -134,39 +138,30 @@ parsing from that point. If we make sure to store partial results for every
 other point of the input, we can ensure that we will never parse more than a
 screenful at a time.
 
-List of constraints 
+The main characteristics of our solutions are that:
 \begin{itemize}
-\item pure
-\item parser-combinator library 
-\end{itemize}
-List of consequences
-\begin{itemize}
-\item maximize the use of lazy evaluation
-\item error correction
-\item 
+\item it will be a parser combinator library;
+\item it makes maximal usage of laziness;
+\item it must be performant enough of interactive usage.
 \end{itemize}
 
-In an interactive system, a lazy evaluation strategy provides a
-special form of incremental computation: the amount of output that
-is demanded drives the computation to be performed. In other words,
-the system responds to incremental movements of the portion of the
-output being viewed by the user (window) by incremental computation
-of the intermediate structures.
+This has a number of consequences:
+\begin{itemize}
 
-The above observation suggests that we can take advantage of lazy evaluation to
-implement incremental parsing for an interactive application.
-Indeed, if we suppose that the user makes changes in the input that
-``corresponds to'' the window being viewed, it suffices to cache
-partially computed results for each point in the input, to obtain a
-system that responds to changes in the input independently of the
-total size of that input.
+\item We will not attempt to update the previous parsing results;
+
+\item Returning the result lazily requires our parsing function to be total,
+hence we will have to provide error correction.
+
+\end{itemize}
 
 
 \subsection{Contributions}
 
+Our contributions can be summarized as follows.
+
 \begin{itemize}
 \item
-
   We describe a novel, purely functional approach to incremental parsing, which
   makes essential use of lazy evaluation. This is achieved by
   combinining online parsers with caching of intermediate
@@ -190,149 +185,36 @@ total size of that input.
 
 \end{itemize}
 
+\subsection{Summary and outlook}
+
+In an interactive system, a lazy evaluation strategy provides a
+special form of incremental computation: the amount of output that
+is demanded drives the computation to be performed. In other words,
+the system responds to incremental movements of the portion of the
+output being viewed by the user (window) by incremental computation
+of the intermediate structures.
+
+The above observation suggests that we can take advantage of lazy evaluation to
+implement incremental parsing for a text editor.
+Indeed, if we suppose that the user makes changes in the input that
+``corresponds to'' the window being viewed, it suffices to cache
+partially computed results for each point in the input, to obtain a
+system that responds to changes in the input independently of the
+total size of that input.
+
 The rest of the paper describes how to build the parsing library step by
 step: production of results in a online way (section~\ref{sec:applicative}), map the
 input to these results and manage the incremental computation of intermediate
-state (section~\ref{sec:input}), treat disjunction and error correction. In
-section~\ref{sec:sublinear} we will tackle the problem of incremental parsing of
+state (section~\ref{sec:input}) and treat disjunction and error correction (section~\ref{sec:parsing}).
+In section~\ref{sec:sublinear} we will tackle the problem of incremental parsing of
 repetition. We discuss and compare our approach to alternatives in
 section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
     
 %include Applicative.lhs
 %include Input.lhs
 %include Choice.lhs
+%include Sublinear.lhs
 
-
-\section{Eliminating linear behavior}
-\label{sec:sublinear}
-
-As we noted in a section~\ref{sec:input}, partial computations sometimes
-cannot be performed. This is indeed a very common case: if the
-output we construct is a list, then the spine of the list can only
-be constructed once we get hold of the very tail of it. In
-particular, our system will behave very badly for a parser that
-returns its input unmodified, as a list of tokens:
-
-\begin{code}
-identity = case_  (Pure []) 
-                  (\c -> Pure (:) :*: Pure c :*: identity)
-\end{code}
-
-The applications of |(:)| can be computed only when the end of the input is
-reached, and at that moment the construction of the result as a cost
-proportional to the length of the input. The bottom-most partial result contains
-such a long chain of partial applications, and using it does not improve the
-asymptotic performance of computing the final result.
-
-The key insight is that the performance problems come from the linearity of the
-output list, and we can always use a tree whose structure can be ignored when
-traversing the result. \citet[section 7]{wagner_efficient_1998} recognize this
-issue and propose to replace left or right recursive rules in the parsing with a
-special repetition construct. The parsing algorithm treats this construct
-specially and does re-balancing of the tree as needed. We choose a different
-approach, which builds upon the combinators we have introduced so far. The
-advantage is that we do not need to complicate, not change at all, the parsing
-algorithms.
-
-As \citet{wagner_efficient_1998}, we produce a different data structure for the
-output, but the difference are that our basic combinators are powerful enough to
-produce this data structure with no modification: this is because we can
-parameterize our parsing rules by haskell values (for free), and because we have
-no tree update.
-
-Let us summarize the requirements we put on the data structure:
-
-\begin{itemize}
-\item
-  It must provide the same laziness properties as a list: accessing
-  an element in the structure should not force to parse the input
-  further than necessary if we had used a list.
-
-\item
-  the $n^{th}$ element in a list should not be further away than
-  $O(log~n)$ elements from the root of the structure. In other words,
-  if such a structure contains a suspension in place of an element at
-  position $n$, there will be no more than $O(log~n)$ partial
-  applications on the stack of the corresponding partial result. This
-  in turn means that the resuming cost for that partial result will
-  be in $O(log~n)$.
-
-\end{itemize}
-The second requirement suggests tree-like structure, and the first
-requirement implies that whether the structure is empty or not can
-be determined by entering only the root constructor. This suggests
-the following data type, with the idea that it will be traversed in
-preorder.
-
-\label{tree_structure}
-\begin{code}
-data Tree a  = Node a (Tree a) (Tree a)
-             | Leaf
-\end{code}
-The only choice that remains is the size of the subtrees. The
-specific choice we make is not important as long as we make sure
-that each element is reachable in $O(log~n)$ steps. A simple choice
-is have a list of complete trees with increasing depth $k$,
-yielding a tree of size sizes $2^{k} - 1$. To make things more
-uniform we can encode the list using the same datatype.
-
-
-\begin{figure}
-\include{tree}
-\caption{
-A tree storing the elements 1 \ldots{} 14
-}
-\label{fig:online_tree}
-\end{figure}
-
-
-A complete tree of total depth $2 d$ can therefore store at least
-$\sum_{k=1}^d 2^{k}-1$ elements, fulfilling the second
-requirement.
-
-This structure is very similar to binary random access lists as presented by
-\citet[section~6.2.1]{okasaki_purely_1999}, but differ in purpose. In our case
-we want to construct the list in one go, without pattern matching on our arguments.
-(ie. we want the argument to Pure to be a constructor)
-
-
-\begin{code}
-toTree d [] = Leaf
-toTree d (x:xs) = Node x l (toTree (d+1) xs')
-    where (l,xs') = toFullTree d xs
-
-toFullTree 0 xs = (Leaf, xs)
-toFullTree d [] = (Leaf, [])
-toFullTree d (x:xs) = (Node x l r, xs'')
-    where  (l,xs' ) = toFullTree (d-1) xs
-           (r,xs'') = toFullTree (d-1) xs'
-\end{code}
-
-\subsection{Quick access}
-
-A key observation is that, given the above structure, one can
-access an element without pattern matching on any other node that
-is not the direct path to it. This allows efficient access without
-loosing any property of laziness. Thus, we can avoid the other
-source of inefficiencies of our implementation.
-
-\begin{enumerate}[1.]
-\item
-  We can fetch the partial result that corresponds to the user change
-  without traversing the whole list of partial results or forcing its
-  length to be computed. Of course, the first time it is accessed
-  intermediate results up to the one we require still have to be
-  computed.
-
-\item
-  The final results that the user observe will be in linear form as
-  well. We don't want to store them in a structure that forces the
-  length, otherwise our parser will be forced to process the whole
-  input. Still, we want to access the part corresponding to the
-  window being viewed efficiently. Storing the results in the same
-  type of structure saves the day again.
-
-\end{enumerate}
 \section{Related work}
 \label{sec:relatedWork}
 
@@ -462,7 +344,13 @@ What does Visual Haskell do?
 
 \end{meta}
 
+\subsection {Future work}
 
+represent failure by fix dislike
+
+left-recursive parsers
+
+re-using right-side parsing results
 
 \section{Results}
 
@@ -473,21 +361,28 @@ correction) is $O(log~m + n)$ where $m$ is the number of tokens in the state we
 resume from and $n$ is the number of tokens to parse. Parsing an increment of
 constant size has an amortized complexity is $O(1)$.
 
-This paper and accompanying source code has been edited in the Yi editor. The
+This paper and accompanying source code have been edited in the Yi editor. The
 incremental parser was used to help matching parenthesis and layout the Haskell
-functions. Environment delimiters as well as parenthetical
+functions, and environment delimiters as well as parenthetical
 symbols were matched in the \LaTeX source.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
+This paper presented three independent ideas, that, combined, ....
+ build a
+working application.
 
-Combination of many techniques to build a working application.
+online
+saving intermediate results
+error-correction
+sublinear structure
 
-Interesting application for/experiment in lazy evaluation.
+
 
 \acks
-
+Koen Claessen (encouragement, presentation)
+Krasimir Angelov (parsing discussions, incremental parsing)
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}

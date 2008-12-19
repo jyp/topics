@@ -10,6 +10,9 @@ import Stack
 }
 
 %format UPolish = Polish
+%format UPush = Push
+%format UApp = App
+%format UDone = Done
 \section{Producing results} 
 \label{sec:applicative}
 
@@ -39,17 +42,19 @@ of Haskell values. It is indexed by the type of values it represents.
 
 \begin{code}
 data Applic a where
-    (:*:) :: Applic (b -> a) -> Applic b -> Applic a
-    Pure :: a -> Applic a
+    (:*:) :: Applic (b -> a) -> Applic b    -> Applic a
+    Pure :: a                               -> Applic a
 infixl :*:
 \end{code}
 
+The application annotations can then be written using Haskell syntax as follows:
 
 \begin{spec}
-Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
+Pure S :*: (Pure (:)  :*: (Pure Atom :*: Pure 'a') 
+                      :*: Pure [])
 \end{spec}
 
-We can evaluate such expressions as follows:
+We can also write a function for evaluation:
 
 \begin{code}
 evalA :: Applic a -> a
@@ -57,8 +62,7 @@ evalA (f :*: x)  = (evalA f) (evalA x)
 evalA (Pure a)   = a
 \end{code}
 
-If the arguments to the |Pure| constructor are constants \annot{or
-constructors}, then we know that demanding a given part of the result will force
+If the arguments to the |Pure| constructor are constructors, then we know that demanding a given part of the result will force
 only the corresponding part of the applicative expression. In that case, the
 |Applic| type effectively allows us to define partial computations and reason
 about them.
@@ -122,7 +126,7 @@ with the type of the stack produced.
 \begin{code}
 data Polish r where
     Push  :: a -> Polish r                  ->  Polish (a :< r)
-    App   :: (Polish ((b -> a) :< b :< r))  ->  Polish (a :< r)
+    App   :: Polish ((b -> a) :< b :< r)    ->  Polish (a :< r)
     Done  ::                                    Polish Nil
 \end{code}
 
@@ -142,9 +146,9 @@ And the value of an expression can be evaluated as follows:
 \begin{code}
 evalR :: Polish r -> r
 evalR (Push a r)  = a :< evalR r
-evalR (App s)    = apply (evalR s)
+evalR (App s)     = apply (evalR s)
     where  apply ~(f :< ~(a:<r))  = f a :< r
-evalR (Done)     = Nil
+evalR (Done)      = Nil
 \end{code}
 
 % evalR :: Polish (a :< r) -> (a, Polish r)
@@ -155,12 +159,12 @@ evalR (Done)     = Nil
 
 We have the equality |top (evalR (toPolish x)) == evalA x|.
 
-Finally, we note that this evaluation procedure still possesses the ``online''
+Additionally, we note that this evaluation procedure still possesses the ``online''
 property: parts of the polish expression are demanded only if the corresponding
 parts of the input is demanded. This preserves the incremental properties of
 lazy evaluation that we required in the introduction. Furthermore, the equality
 above holds even when |undefined| appears as argument to the |Pure| constructor.
 
-In fact, the conversion from applicative to polish expressions can be seen as 
+In fact, the conversion from applicative to polish expressions can be understood as 
 a reification of the working stack of the |evalA| function with call-by-name
 semantics.

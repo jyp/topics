@@ -61,7 +61,7 @@ toP (f :*: x)       = App . toP f . toP x
 toP (Pure x)        = Push x
 \end{code}
 
-We broke the linearity of the type, but it does not matter since the parsing
+We broke the linearity of the type, but it does not harm since the parsing
 algorithm will not proceed further than the available input anyway, and
 therefore will stop at the first |Susp|. When the input is made available, it is
 used to remove the |Susp| constructors. Suspensions in a polish expression can
@@ -185,9 +185,10 @@ Otherwise, the evaluation procedure will force the spine of the input,
 effectively forcing to parse the whole input file.
 \begin{code}
 evalRP :: RPolish inp out -> inp -> out
-evalRP RStop acc = acc 
-evalRP (RPush v r) acc = evalRP r (v :< acc)
-evalRP (RApp r) ~(f :< ~(a :< acc)) = evalRP r (f a :< acc)
+evalRP RStop acc          = acc 
+evalRP (RPush v r) acc    = evalRP r (v :< acc)
+evalRP (RApp r) ~(f :< ~(a :< acc)) 
+                          = evalRP r (f a :< acc)
 \end{code}
 
 

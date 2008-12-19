@@ -5,14 +5,15 @@
 	convert $< $@
 
 Paper.pdf: begin.pdf mid.pdf progress.tex tree.tex
-Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs
+Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs Sublinear.lhs
 
 checks:
 	ghc -c SExpr.lhs
 	ghc -c Stack.lhs
 	ghc -c Applicative.lhs
-	ghc --make Input.lhs
-	ghc --make Choice.lhs
+	ghc -c Input.lhs
+	ghc -c Choice.lhs
+	ghc -c Sublinear.lhs
 
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<
