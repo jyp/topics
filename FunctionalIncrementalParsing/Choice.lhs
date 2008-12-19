@@ -105,9 +105,6 @@ datatype which represents the ``progress'' information only.
 data Progress = PSusp | PRes Int | !Int :> Progress
 \end{code}
 
-\textmeta{Oops, We can't really use |fix Dislike| for failure, because we use
-Ints, instead of Peano naturals.}
-
 This data structure is similar to a list where the $n^{th}$ element tells how
 much we dislike to take this path after shifting $n$ symbols following it,
 \emph{assuming we take the best choice at each disjunction}.
@@ -162,7 +159,8 @@ mkBest p q =
 
 better :: Int -> Progress -> Progress
                                  -> (Ordering, Progress)
--- compute which progress is the better one (with a give lookahead), and return it.
+-- compute which progress is the better one
+--  (with a given lookahead), and return it.
 \end{code}
 \caption{Handling disjunction}
 \end{figure}
@@ -191,7 +189,6 @@ that small will be actually constructed.
 \subsection{Thinning out results and ambiguous grammars}
 
 \textmeta{example}
-
 
 A sound basis for thinnig out less desirable paths is to discard those which
 are less preferrable by some amount. In order to pick one path after a constant

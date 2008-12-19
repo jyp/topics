@@ -140,7 +140,7 @@ screenful at a time.
 
 The main characteristics of our solutions are that:
 \begin{itemize}
-\item it will be a parser combinator library;
+\item it is a parser combinator library;
 \item it makes maximal usage of laziness;
 \item it must be performant enough of interactive usage.
 \end{itemize}
@@ -265,9 +265,6 @@ right-bound parts of the parse tree seems to be optimizing for a special case.
 This is not very suitable in an interactive system where users expect consistent
 response times.
 
-\textmeta{A possible solution to that would be to have a parse result for every
-possible prefix. Need this be mentioned?}
-
 Another downside of our approach is that it requires the consumption of the AST
 to be done in pre-order. If this is not the case, the online property becomes
 useless. For example, if one wishes to apply a sorting algorithm before
@@ -285,7 +282,7 @@ of the token, before the net token is read. (Citation? (quoted from Krasimir))
 
 We note that there is no notion of AST update in this definition.
 
-\textmeta{Krasimir: Does this correspond to the online property or the other?}
+\textmeta{Does this correspond to the online property or the other?}
 
 \subsection{Incremental computation}
 
@@ -299,7 +296,11 @@ change, but also their number.
 
 \begin{meta}
 Plugging an attribute evaluator on top of this?
+This does not really work since we do not reuse the result. 
 \citet{saraiva_functional_2000}
+
+We could put a semantic layer by replacing the constructors with arbitrary
+semantic functions. Incrementality is not guaranteed then.
 \end{meta}
 
 
@@ -346,11 +347,15 @@ What does Visual Haskell do?
 
 \subsection {Future work}
 
-represent failure by fix dislike
+Proper failure.
+\textmeta{Oops, We can't really use |fix Dislike| for failure, because we use
+Ints, instead of Peano naturals.}
+
 
 left-recursive parsers
 
-re-using right-side parsing results
+\textmeta{A possible solution to that would be to have a parse result for every
+possible prefix. Need this be mentioned?}
 
 \section{Results}
 

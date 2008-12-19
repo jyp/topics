@@ -16,17 +16,37 @@ import Stack
 \section{Producing results} 
 \label{sec:applicative}
 
-\textmeta{give the interface we aim at.}
 
-In this section we concentrate on constructing parsing results, ignoring the
-dependence on input. The cornerstone of our approach to incremental parsing
-is that the parse tree is produced \emph{online}. We can ensure that
-this is the case by forcing the structure of the result to be expressed in
-applicative (\citet{mcbride_applicative_2007}) form.
+Our goal is to provide a combinator library with an interface similar to that
+presented by \citet{swierstra_combinator_2000}, with sequencing, disjunction,
+production of results and reading of symbols. 
+% Such an interface can be captured
+% in a GADT as follows. (Throughout this paper we will make extensive use of GADT
+% for modeling purposes.)
+% 
+% \begin{code}
+% data Parser s a where
+%     Pure   :: a                                  ->  Parser s a
+%     (:*:)  :: Parser s (b -> a) -> Parser s b    ->  Parser s a
+%     Symb   :: Parser s a -> (s -> Parser s a)    ->  Parser s a
+%     Disj   :: Parser s a -> Parser s a           ->  Parser s a
+%     Fail   ::                                        Parser s a
+% \end{code}
+% 
+\textmeta{I don't like to give the parser type here already. There is a perfectly good explanation to comeup with the applicative stuff; pulling the full thing out of my hat renders the following argument futile.}
 
-The idea is to make applications explicit. 
+However, in this section we step back and concentrate solely on constructing
+parsing results, ignoring the dependence on input. 
+% This leaves us with the constructors |Pure| and |(:*:)|.
 
-\textmeta{If we have only constants in the tree... we can make sure that demanding bits of the final result will demand the corresponding bits of our result construction. }
+
+The cornerstone of our
+approach to incremental parsing is that the parse tree is produced
+\emph{online}. We can ensure that this is the case by forcing the structure of
+the result to be expressed in applicative (\citet{mcbride_applicative_2007})
+form.
+
+The idea is to make function applications explicit. 
 
 For example, the Haskell expression |S [Atom 'a']|, which stands for |S ((:)
 (Atom 'a') [])| if we remove syntactic sugar, can be represented in applicative
