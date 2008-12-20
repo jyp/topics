@@ -1,3 +1,14 @@
+\ignore{
+
+\begin{code}
+{-# LANGUAGE TypeOperators, GADTs #-}
+module Choice where
+import SExpr
+import Stack
+
+\end{code}
+
+}
 \section{Eliminating linear behavior}
 \label{sec:sublinear}
 

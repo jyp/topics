@@ -138,7 +138,11 @@ parsing from that point. If we make sure to store partial results for every
 other point of the input, we can ensure that we will never parse more than a
 screenful at a time.
 
-The main characteristics of our solutions are that:
+Another feature of Yi is that it is configurable in Haskell. Therefore, we
+prefer to use the Haskell language for every aspect of the application. In
+particular, syntaxes should be described using a combinator library.
+
+The main characteristics of our solution can be summarized as follows:
 \begin{itemize}
 \item it is a parser combinator library;
 \item it makes maximal usage of laziness;

@@ -35,9 +35,13 @@ production of results and reading of symbols.
 % 
 \textmeta{I don't like to give the parser type here already. There is a perfectly good explanation to comeup with the applicative stuff; pulling the full thing out of my hat renders the following argument futile.}
 
+\textmeta{Alt: The above interface is the traditional interface for combinator parser library.}
+
 However, in this section we step back and concentrate solely on constructing
 parsing results, ignoring the dependence on input. 
 % This leaves us with the constructors |Pure| and |(:*:)|.
+
+\textmeta{Alt: We will strive to give an rationale for choosing this interface, given our goals.}
 
 
 The cornerstone of our
