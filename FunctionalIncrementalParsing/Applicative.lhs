@@ -17,40 +17,35 @@ import Stack
 \label{sec:applicative}
 
 
-Our goal is to provide a combinator library with an interface similar to that
+Our goal is to provide a combinator library with a standard interface, similar to that
 presented by \citet{swierstra_combinator_2000}, with sequencing, disjunction,
 production of results and reading of symbols. 
-% Such an interface can be captured
-% in a GADT as follows. (Throughout this paper we will make extensive use of GADT
-% for modeling purposes.)
-% 
-% \begin{code}
-% data Parser s a where
-%     Pure   :: a                                  ->  Parser s a
-%     (:*:)  :: Parser s (b -> a) -> Parser s b    ->  Parser s a
-%     Symb   :: Parser s a -> (s -> Parser s a)    ->  Parser s a
-%     Disj   :: Parser s a -> Parser s a           ->  Parser s a
-%     Fail   ::                                        Parser s a
-% \end{code}
-% 
-\textmeta{I don't like to give the parser type here already. There is a perfectly good explanation to comeup with the applicative stuff; pulling the full thing out of my hat renders the following argument futile.}
 
-\textmeta{Alt: The above interface is the traditional interface for combinator parser library.}
+Such an interface can be captured
+in a GADT as follows. (Throughout this paper we will make extensive use of GADT
+for modeling purposes.)
 
-However, in this section we step back and concentrate solely on constructing
-parsing results, ignoring the dependence on input. 
-% This leaves us with the constructors |Pure| and |(:*:)|.
-
-\textmeta{Alt: We will strive to give an rationale for choosing this interface, given our goals.}
+\begin{code}
+data Parser s a where
+    Pure   :: a                                  ->  Parser s a
+    (:*:)  :: Parser s (b -> a) -> Parser s b    ->  Parser s a
+    Symb   :: Parser s a -> (s -> Parser s a)    ->  Parser s a
+    Disj   :: Parser s a -> Parser s a           ->  Parser s a
+    Fail   ::                                        Parser s a
+\end{code}
 
 
-The cornerstone of our
-approach to incremental parsing is that the parse tree is produced
-\emph{online}. We can ensure that this is the case by forcing the structure of
-the result to be expressed in applicative (\citet{mcbride_applicative_2007})
-form.
+\citet{huges_polish_2001} show that the sequencing operator must be applicative
+(\citet{mcbride_applicative_2007}) to allow for online production of results.
 
-The idea is to make function applications explicit. 
+Since this is the cornerstone to our approach of incremental parsing, 
+we review the result in this section. While doing so we also introduce
+the concepts necessary for the computation of intermediate results.
+
+A requirement for online result production is that the top-level constructors
+are available before their argument are computed. This can be done only if the
+parser can observe the structure of the result. Hnence, we make function
+applications explicit in the expression describing the results.
 
 For example, the Haskell expression |S [Atom 'a']|, which stands for |S ((:)
 (Atom 'a') [])| if we remove syntactic sugar, can be represented in applicative
@@ -59,7 +54,6 @@ form by
 \begin{spec}
 S @ ((:) @ (Atom @ 'a') @ [])
 \end{spec}
-
 
 The following data type captures the pure applicative language with embedding
 of Haskell values. It is indexed by the type of values it represents.
@@ -86,13 +80,13 @@ evalA (f :*: x)  = (evalA f) (evalA x)
 evalA (Pure a)   = a
 \end{code}
 
-If the arguments to the |Pure| constructor are constructors, then we know that demanding a given part of the result will force
-only the corresponding part of the applicative expression. In that case, the
-|Applic| type effectively allows us to define partial computations and reason
-about them.
+If the arguments to the |Pure| constructor are constructors, then we know that
+demanding a given part of the result will force only the corresponding part of
+the applicative expression. In that case, the |Applic| type effectively allows
+us to define partial computations and reason about them.
 
 Because they process the input in a linear fashion, our parsers require a
-linear structure (it will become apparent in section~\ref{sec:parsing}). As
+linear structure for the output as well. (it will become apparent in section~\ref{sec:parsing}). As
 \citet{hughes_polish_2003}, we convert the applicative expressions to polish
 representation to obtain such a linear structure.
 

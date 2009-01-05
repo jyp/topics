@@ -370,10 +370,13 @@ correction) is $O(log~m + n)$ where $m$ is the number of tokens in the state we
 resume from and $n$ is the number of tokens to parse. Parsing an increment of
 constant size has an amortized complexity is $O(1)$.
 
-This paper and accompanying source code have been edited in the Yi editor. The
-incremental parser was used to help matching parenthesis and layout the Haskell
+The parsing library presented in this paper is 
+used in the Yi editor to help matching parenthesis and layout the Haskell
 functions, and environment delimiters as well as parenthetical
 symbols were matched in the \LaTeX source.
+
+This paper and accompanying source code have been edited in this environment.
+
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -390,8 +393,10 @@ sublinear structure
 
 
 \acks
-Koen Claessen (encouragement, presentation)
-Krasimir Angelov (parsing discussions, incremental parsing)
+
+We thank Koen Claessen for persuading us to write this paper, and his unfading support.
+This paper was greatly improved by its comments on early drafts.
+Krasimir Angelov helped sorting out the notions of incremental parsing.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}

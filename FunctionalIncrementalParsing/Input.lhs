@@ -41,7 +41,7 @@ parseList = Symb
 \end{code}
 
 
-We introduce the corresponding construct in the |Polish| expressions and amend
+We adapt the |Polish| expressions with the corresponding construct  and amend
 the translation. Intermediate results are represented by a polish expression
 with a |Susp| element. The part before the |Susp| element corresponds to the
 constant part that is fixed by the input already parsed. The arguments of
@@ -61,7 +61,7 @@ toP (f :*: x)       = App . toP f . toP x
 toP (Pure x)        = Push x
 \end{code}
 
-We broke the linearity of the type, but it does not harm since the parsing
+Although we broke the linearity of the type, it does no harm since the parsing
 algorithm will not proceed further than the available input anyway, and
 therefore will stop at the first |Susp|. When the input is made available, it is
 used to remove the |Susp| constructors. Suspensions in a polish expression can
@@ -119,9 +119,11 @@ partialParses = scanl (\c -> evalL . feedOne c)
 \end{code}
 This still suffers from a major drawback: as long as a function
 application is not saturated, the polish expression will start with
+a long prefix of partial applications, which has to be traversed again
+by following calls to |evalL| step.
 
 For example, after applying the s-expr parser to the string \verb!(abcdefg!, 
-|evalL| is unable to perform any simplification of the list prefix.
+|evalL| is unable to perform any simplification of the list prefix:
 
 \begin{spec}
 evalL $ feed "(abcdefg" (toPolish parseList) 
@@ -177,10 +179,10 @@ polish expressions.
 In contrast to forward polish expressions, which directly produce
 an output stack, reverse expressions can be understood as automata
 which transform a stack to another. This is captured in the type
-indices |inp| and |out|.
+indices |inp| and |out|, which stand respectively for the input and the output stack.
 
-Running this automaton on an input stack requires only one bit
-of attention: matching on the input stack must be done lazily.
+Running this automaton on an input stack requires some care:
+matching on the input stack must be done lazily.
 Otherwise, the evaluation procedure will force the spine of the input,
 effectively forcing to parse the whole input file.
 \begin{code}
@@ -191,14 +193,13 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
                           = evalRP r (f a :< acc)
 \end{code}
 
-
 In our zipper type, the direct polish expression yet-to-visit
 (``on the right'') has to correspond to the reverse polish
 automation (``on the left''): the output of the latter has to match
 the input of the former.
 
-We capture all these properties in the types by using GADTs. This
-allows properly type the traversal of polish expressions.
+Capture all these properties in the types by using GADTs
+allows to write a properly typed traversal of polish expressions.
 
 \begin{code}
 right :: Zip s out -> Zip s out
@@ -227,7 +228,7 @@ case complexity in section~\ref{sec:sublinear}.
 
 In summary, it is essential for our purposes to have two evaluation procedures 
 for our parsing results. The first one, presented in section~\ref{sec:applicative}
-provides the online property, and corresponds to a call-by-name transformation
+provides the online property, and corresponds to a call-by-name CPS transformation
 of the direct evaluation of applicative expressions. The second one, presented in
 this section, enables incremental evaluation of intermediate results, and corresponds to
 a call-by-value transformation of the same direct evaluation function.

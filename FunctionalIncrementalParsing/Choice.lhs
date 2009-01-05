@@ -51,7 +51,7 @@ branch to yield a successful outcome. Indeed, since the |evalR| function
 conjure up a suitable result for \emph{any} input.
 
 If the grammar is sufficiently permissive, no error correction in the parsing
-algorithm itself is necessary. This is the case for our simple s-expression parser.
+library itself is necessary. This is the case for our simple s-expression parser.
 However, most interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting the parser with
 error correction is therefore desirable.
@@ -105,16 +105,21 @@ datatype which represents the ``progress'' information only.
 data Progress = PSusp | PRes Int | !Int :> Progress
 \end{code}
 
-This data structure is similar to a list where the $n^{th}$ element tells how
+This data structure is an abstraction of the |Polish| type,
+which tells how many |Dislike| are encountered after parsing so many symbols.
+It is similar to a list where the $n^{th}$ element tells how
 much we dislike to take this path after shifting $n$ symbols following it,
 \emph{assuming we take the best choice at each disjunction}.
 
 The difference with a simple list is that progress information may end with
 success or suspension, depending on whether the process reaches |Done| or
 |Susp|.
+Figure~\ref{fig:progress} shows a |Polish| structure and the associated
+progress for each of its parts.
 
-Given two (terminated) |Progress| values, it is possible to determine which one
-is best by demanding only a prefix of each, using our thinning heuristic. 
+If we accept our thinning heuristic, 
+given two (terminated) |Progress| values, it is possible to determine which one
+is best by demanding only a prefix of each.
 
 We can now use this information to determine which path to take when facing a
 disjunction. In turn, this allows to compute the progress information on the
@@ -159,8 +164,8 @@ mkBest p q =
 
 better :: Int -> Progress -> Progress
                                  -> (Ordering, Progress)
--- compute which progress is the better one
---  (with a given lookahead), and return it.
+-- compute which progress is the better one (with a given lookahead), and return
+-- it.
 \end{code}
 \caption{Handling disjunction}
 \end{figure}
