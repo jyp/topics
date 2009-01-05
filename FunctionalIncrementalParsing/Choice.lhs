@@ -86,12 +86,12 @@ lookahead.
 \caption{
 A parsing process and associated progress information. The process has been fed a whole input, so it is free of |Susp|
 constructors.
-It is also stripped of result information for clarity (|Push|, |App|), since it is irrelevant to the
+It is also stripped of result information (|Push|, |App|) for conciseness, since it is irrelevant to the
 computation of progress information. Each constructor is represented by a circle, and their arguments
-by arrows.
+are indicated by arrows.
 The progress information accociated with the process is written in the rectangle
 beside the node that starts the process. To decide which path to take at the
-disjunction, only the gray nodes will be forced, if the desirability difference
+disjunction (|Best|), only the gray nodes will be forced, if the desirability difference
 is 1 for lookahead 1.
 }
 \label{fig:progress}
@@ -137,7 +137,7 @@ data Polish s a where
     Sus      ::  Polish s a -> (s -> Polish s a) 
                                                       ->  Polish s a
     Best     ::  Ordering -> Progress -> 
-                   Polish s a -> Polish s a           ->  Polish s a
+                 Polish s a -> Polish s a           ->  Polish s a
     Dislike  ::  Polish s a                           ->  Polish s a
 
 progress :: Polish s r -> Progress
@@ -164,8 +164,8 @@ mkBest p q =
 
 better :: Int -> Progress -> Progress
                                  -> (Ordering, Progress)
--- compute which progress is the better one (with a given lookahead), and return
--- it.
+-- compute which progress is the better one 
+-- (with a given lookahead), and return it.
 \end{code}
 \caption{Handling disjunction}
 \end{figure}

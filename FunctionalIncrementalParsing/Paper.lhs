@@ -315,7 +315,7 @@ particular as described by \citet{hughes_polish_2003}.
 
 The introduction of the |Susp| operator is directly inspired by
 \citet{claessen_parallel_2004}. An other view of our extened |Polish| expression
-is a parsing process where results are returned bit by bit.
+is a parsing process where the results are returned bit by bit.
 
 \citet{swierstra_fast_1999}
 
@@ -351,15 +351,31 @@ What does Visual Haskell do?
 
 \subsection {Future work}
 
-Proper failure.
-\textmeta{Oops, We can't really use |fix Dislike| for failure, because we use
-Ints, instead of Peano naturals.}
+Athough it is trivial to add a \emph{failure} combinator to the library
+presented here, we refrained from doing so because it can lead to failing
+parsers. However, in practise this can most often be emulated by a repetitive
+usage of the |Dislike| combinator. This can lead to some performance loss, as
+the failing branch. Indeed, if one takes things to the extreme and tries to use
+the fixpoint (|fix Dislike|) to represent failure, it will lead to
+nontermination. This is due to our use of strict integers in the progress
+information. We have chosen this representation to emphasize the dynamic
+programming aspect of our solution, but it might be more efficient to represent
+progress by a mere interleaving of |Shift| and |Dislike| constructors.
 
+Our library suffers from the usual drawbacks of parser combinator approaches.
+In particular, it is impossible to write left-recursive parsers, because they
+yield a non-terminating loop in the parsing algorithm. We could proceed as
+\citet{swierstra_} and represent the grammar rules and optimize them on the fly.
+It is interesting to note however that we could represent traditional
+left-recursive parsers as long as they either consume or \emph{produce} data,
+provided the progress information is indexed by the number of |Push|es in addition to
+|Shift|s.
 
-left-recursive parsers
-
-\textmeta{A possible solution to that would be to have a parse result for every
-possible prefix. Need this be mentioned?}
+Finally, we might want to re-use the right hand side of previous parses. This could
+be done by keeping the parsing results \emph{for all possible prefixes}. Proceeding
+in this fashion would avoid the cahotic situation where a small modification might
+invalidate all the parsing work that follows it, since we take in account \emph{all}
+possible prefixes ahead of time.
 
 \section{Results}
 
@@ -368,12 +384,12 @@ parsing with support for error correction. We argumented that, using suitable
 data structures for the output, the complexity of parsing (without error
 correction) is $O(log~m + n)$ where $m$ is the number of tokens in the state we
 resume from and $n$ is the number of tokens to parse. Parsing an increment of
-constant size has an amortized complexity is $O(1)$.
+constant size has an amortized complexity of $O(1)$.
 
 The parsing library presented in this paper is 
 used in the Yi editor to help matching parenthesis and layout the Haskell
 functions, and environment delimiters as well as parenthetical
-symbols were matched in the \LaTeX source.
+symbols were matched in the \LaTeX{} source.
 
 This paper and accompanying source code have been edited in this environment.
 
@@ -394,9 +410,11 @@ sublinear structure
 
 \acks
 
-We thank Koen Claessen for persuading us to write this paper, and his unfading support.
-This paper was greatly improved by its comments on early drafts.
-Krasimir Angelov helped sorting out the notions of incremental parsing.
+We thank Koen Claessen for persuading us to write this paper, and for his
+unfading support throughout the writing process. This paper was greatly improved
+by his comments on early and late drafts. Krasimir Angelov helped sorting out
+the notions of incremental parsing.
+\textmeta{!!!Your name here!!!}
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
