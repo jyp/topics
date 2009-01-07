@@ -2,9 +2,10 @@
 
 \begin{code}
 {-# LANGUAGE TypeOperators, GADTs #-}
-module Choice where
+module Sublinear where
 import SExpr
 import Stack
+import Choice
 
 \end{code}
 
@@ -134,22 +135,26 @@ as follows.
 
 
 \begin{code}
-parseTree d = Case 
-       (pure Leaf)
-       (\s -> pure (Node s) :*: parseFullTree d :*: parseTree (d+1))
+parseTree d = Symb
+       (Pure Leaf)
+       (\s -> Pure (Node s) :*: 
+           parseFullTree d :*: 
+           parseTree (d+1))
 
-parseFullTree 0 = pure Leaf
-parseFullTree d = Case 
-       (pure Leaf) 
-       (\s -> pure (Node s) :*: parseFullTree (d-1) :*: parseTree (d-1))
+parseFullTree 0 = Pure Leaf
+parseFullTree d = Symb 
+       (Pure Leaf) 
+       (\s -> Pure (Node s) :*: 
+           parseFullTree (d-1) :*: 
+           parseTree (d-1))
 \end{code}
 
 \textmeta{What if we parse something else than symbols? Left out.}
 
-\begin{code}
+\begin{spec}
 parseTree d p = (pure Leaf) <|> (Pure Node :*: p :*: parseFullTree d :*: parseTree (d+1))
 parseFullTree p 0 = pure Leaf <|> (pure Node :*: p :*: parseFullTree (d-1) :*: parseTree (d-1))
-\end{code}
+\end{spec}
 
 
 \subsection{Quick access}

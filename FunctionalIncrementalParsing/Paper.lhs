@@ -278,6 +278,13 @@ displaying the first element of the input. In particular, the arguments to the
 it should be a simple constructor. This leaves many opportunites for the user of
 the library to destroy its incremental properties.
 
+
+\begin{meta}
+What does Visual Haskell do?
+
+\end{meta}
+
+
 \subsection{Incremental parsing in natural language processing} 
 
 In natural language processing, a parsing alagorithm is deems incremental if it
@@ -336,27 +343,12 @@ and laziness to explore the tree of all possible parses.
 \subsection{Summary}
 
 
-We can summarize the unique points of our approach as follows:
+Due to our choice to commit to a purely functional, lazy approach, our 
+incremental parsing library occupies a unique point in the design space.
 
-\begin{itemize}
-\item
-  simple
+More specifically, it is the first time an incremental parsing system
+is implemented in a combinator library.
 
-\item
-  no tree update
-
-\item
-  taking advantage of lazy evaluation: no startup cost to parse the
-  whole file the first time a file is loaded.
-
-\item 
-  in a parsing combinator library
-
-\end{itemize}
-\begin{meta}
-What does Visual Haskell do?
-
-\end{meta}
 
 \subsection {Future work}
 

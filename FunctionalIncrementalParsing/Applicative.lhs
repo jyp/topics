@@ -25,14 +25,14 @@ Such an interface can be captured
 in a GADT as follows. (Throughout this paper we will make extensive use of GADT
 for modeling purposes.)
 
-\begin{code}
+\begin{spec}
 data Parser s a where
     Pure   :: a                                  ->  Parser s a
     (:*:)  :: Parser s (b -> a) -> Parser s b    ->  Parser s a
     Symb   :: Parser s a -> (s -> Parser s a)    ->  Parser s a
     Disj   :: Parser s a -> Parser s a           ->  Parser s a
     Fail   ::                                        Parser s a
-\end{code}
+\end{spec}
 
 
 \citet{huges_polish_2001} show that the sequencing operator must be applicative
