@@ -42,6 +42,23 @@ if we assume that the parser has not much lookahead.
 
 \subsection{Error correction}
 
+\begin{figure*}
+\centering
+\include{progress}
+\caption{
+A parsing process and associated progress information. The process has been fed a whole input, so it is free of |Susp|
+constructors.
+It is also stripped of result information (|Push|, |App|) for conciseness, since it is irrelevant to the
+computation of progress information. Each constructor is represented by a circle, and their arguments
+are indicated by arrows.
+The progress information accociated with the process is written in the rectangle
+beside the node that starts the process. To decide which path to take at the
+disjunction (|Best|), only the gray nodes will be forced, if the desirability difference
+is 1 for lookahead 1.
+}
+\label{fig:progress}
+\end{figure*}
+
 
 Disjuction is not very useful unless coupled with \emph{failure} (otherwise all
 branches would be equivalent). Still, the (unrestricted) usage of failure is
@@ -79,24 +96,6 @@ the amount of lookahead). We use the widespread technique \citep[chapter
 8]{bird_algebra_1997} to thin out search after some constant, small amount of
 lookahead.
 
-
-\begin{figure*}
-\centering
-\include{progress}
-\caption{
-A parsing process and associated progress information. The process has been fed a whole input, so it is free of |Susp|
-constructors.
-It is also stripped of result information (|Push|, |App|) for conciseness, since it is irrelevant to the
-computation of progress information. Each constructor is represented by a circle, and their arguments
-are indicated by arrows.
-The progress information accociated with the process is written in the rectangle
-beside the node that starts the process. To decide which path to take at the
-disjunction (|Best|), only the gray nodes will be forced, if the desirability difference
-is 1 for lookahead 1.
-}
-\label{fig:progress}
-\end{figure*}
-
 In contrast to \citet{hughes_polish_2003}, we do not compute the best path by
 direct manipulation of the polish representation. Instead, we introduce a new
 datatype which represents the ``progress'' information only.
@@ -124,7 +123,6 @@ is best by demanding only a prefix of each.
 We can now use this information to determine which path to take when facing a
 disjunction. In turn, this allows to compute the progress information on the
 basis of the polish representation only.
-
 
 \begin{figure}
 \begin{code}
@@ -175,6 +173,23 @@ trick \cite{swierstra} to cache the progress information in the |Polish|
 representation. For simplicity, we cache the information only at disjunction
 nodes where we also remember which path is best to take.
 
+We can adapt our evaluation functions accordingly. We write the 
+the online evalution only: partial result computation is modified similarly.
+\begin{code}
+-- Right-eval a fully defined process
+evalR :: Polish s (a :< r) -> (a, Polish s r)
+evalR (Push a r) = (a,r)
+evalR (App s) = let (f, s') = evalR s
+                    (x, s'') = evalR s'
+                in (f x, s'')
+evalR (Shift v) = evalR v
+evalR (Dislike p) = evalR p
+evalR (Best choice _ p q) = case choice of
+    LT -> evalR p
+    GT -> evalR q
+    EQ -> error $ "evalR: Ambiguous parse!"
+\end{code}
+
 We finally see why the |Polish| representation is so important:
 the progress information cannot be associated to a |Parser|, because
 it may depend on whatever parser \emph{follows} it. This is not
@@ -202,7 +217,7 @@ $l^{th}$ element of the progress information, so that the parser can pick a
 particular path, and return results. Unfortunately, applying this rule strictly
 is dangerous in if the grammar requires a large lookahead, and in particular if
 it is ambiguous. In that case, the algorithm can possibly commit to a prefix which will
-plead to errors while processing the rest of the output, while another prefix
+lead to errors while processing the rest of the output, while another prefix
 would match the rest of the input and yield no error. In the present version of
 the library we avoid the problem by keeping all valid prefixes.
 
@@ -224,8 +239,8 @@ better lk (x:>xs) (y:>ys)
     | y - x > threshold = (LT, x:>xs)
     | x - y > threshold = (GT, y:>ys)
     | otherwise = rec
-    where threshold = dislikeThreshold lk
-          rec = min x y +> better (lk + 1) xs ys
+    where  threshold = dislikeThreshold lk
+           rec = min x y +> better (lk + 1) xs ys
 x +> ~(ordering, xs) = (ordering, x :> xs)
 \end{code}
 
@@ -233,4 +248,4 @@ x +> ~(ordering, xs) = (ordering, x :> xs)
 The user of the parsing library has to be aware of this issue when designing
 grammars: it can affect the performance of the algorithm to a great extent.
 
-\textmeta{Final version of evalL/evalR?}
+

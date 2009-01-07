@@ -86,7 +86,7 @@ performance, the editor must not parse the whole file at each keystroke.
 For the purpose of illustration, we demonstrate how the
 technique works on a simple problem: interactive feedback of
 parenthesis matching for a lisp-like language. Given an input such
-as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display
+as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display an annotated version:
 \verb!(+ 1 {* 5 [+ 3 4]} 2)!. The idea is that matching pairs are
 displayed using different parenthetical symbols for each level,
 making the extent of each sub-expression more apparent.
@@ -222,9 +222,9 @@ section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
 \section{Related work}
 \label{sec:relatedWork}
 
-The litterature on incremental analysis of programs is so abundant that a
-complete survey would deserve its own treatment. Here we will compare our
-approach to some representatives alternatives only.
+The litterature on analysis of programs, incremental or not, is so abundant
+that a complete survey would deserve its own treatment. Here we will compare our
+approach to some of the closest alternatives.
 
 \subsection{Incremental parsing in development environments} 
 
@@ -290,13 +290,19 @@ We note that there is no notion of AST update in this definition.
 
 \subsection{Incremental computation}
 
-An alternative approach would be to build the system on top of a generic
-incremental computation system. Downsides are that there currently exists no
-such off-the-shelf system for Haskell. The closest matching solution is provided
-by \citet{carlsson_monads_2002} relies heavily on explicit threading of
-computation through monads and explict reference for storage of inputs or
-intermediate results. In our case, not only the contents of the inputs will
-change, but also their number.
+An alternative approach would be to build the library as a plain parser on top
+of a generic incremental computation system. The main drawback is that there
+currently exists no such off-the-shelf such system for Haskell. The closest
+matching solution is provided by \citet{carlsson_monads_2002}, and relies
+heavily on explicit threading of computation through monads and explict
+reference for storage of inputs and intermediate results. This imposes an
+imperative description of the incremental algorithm, which does not match our
+goals. Furthermore, in the case of parsing, the inputs would be the individual
+symbols. This means that, not only their contents will change from one run to
+another, but their numbers will as well. One then might want to rely on laziness,
+as we do, to avoid depending unnecessarily on the tail of the input, but then we
+hit the problem that the algorithm must be described imperatively.
+Therefore, we think that such an approch would be awkward, if not unapplicable.
 
 \begin{meta}
 Plugging an attribute evaluator on top of this?
@@ -310,14 +316,21 @@ semantic functions. Incrementality is not guaranteed then.
 
 \subsection{Parser combinators}
 
-Our approach is in the tradition of parser combinator libraries, in
-particular as described by \citet{hughes_polish_2003}.
+Our approach is firmly anchored in the tradition of parser combinator libraries
+\citep{hutton_monadic_1998}, and particularly close to the version of
+\citet{hughes_polish_2003}.
 
 The introduction of the |Susp| operator is directly inspired by
-\citet{claessen_parallel_2004}. An other view of our extened |Polish| expression
-is a parsing process where the results are returned bit by bit.
+\citet{claessen_parallel_2004}. We presented our implementation as a version of
+polish parsers extended with an evaluation precedure ``by-value'', but we could
+equally have started with parallel parsing processes and extended them with
+``by-name'' evaluation. The combination of both evaluation techniques is unique
+to our library.
 
-\citet{swierstra_fast_1999}
+While error correction mechanism was developed independently, it bears many
+similarities with that presented by \citet{swierstra_fast_1999}: they also
+associate some variant of progress information to parsers and rely on thinning
+and laziness to explore the tree of all possible parses.
 
 
 \subsection{Summary}
@@ -335,10 +348,6 @@ We can summarize the unique points of our approach as follows:
 \item
   taking advantage of lazy evaluation: no startup cost to parse the
   whole file the first time a file is loaded.
-
-\item
-  idea is independent of parsing algorithm details (we want an online
-  algorithm with error correction)
 
 \item 
   in a parsing combinator library
@@ -365,11 +374,11 @@ progress by a mere interleaving of |Shift| and |Dislike| constructors.
 Our library suffers from the usual drawbacks of parser combinator approaches.
 In particular, it is impossible to write left-recursive parsers, because they
 yield a non-terminating loop in the parsing algorithm. We could proceed as
-\citet{swierstra_} and represent the grammar rules and optimize them on the fly.
-It is interesting to note however that we could represent traditional
+\citet{baars_typed_2009} and represent the grammar rules and transform them on
+the fly. It is interesting to note however that we could represent traditional
 left-recursive parsers as long as they either consume or \emph{produce} data,
-provided the progress information is indexed by the number of |Push|es in addition to
-|Shift|s.
+provided the progress information is indexed by the number of |Push|es in
+addition to |Shift|s.
 
 Finally, we might want to re-use the right hand side of previous parses. This could
 be done by keeping the parsing results \emph{for all possible prefixes}. Proceeding
@@ -397,14 +406,32 @@ This paper and accompanying source code have been edited in this environment.
 \section{Conclusion}
 \label{sec:conclusion}
 
-This paper presented three independent ideas, that, combined, ....
- build a
-working application.
+We have shown that the combination of three techniques
+achieve the goal of incremental parsing.
 
-online
-saving intermediate results
-error-correction
-sublinear structure
+\begin{enumerate}
+
+\item In a lazy setting, the combination of online production of results and
+saving intermediate results provide incrementality;
+
+\item \textmeta {not sure what to write about error-correction}
+
+\item Provided that they are carefully constructed to preserve laziness, tree
+structures can always replace lists in functional programs. Doing so can improve
+the complexity class of algorithms.
+
+\end{enumerate}
+
+While these techniques work together here, we believe that they are valuable
+independent on each other. In particular, our error correction scheme can be
+replaced by an other one without invalidating the approach. 
+
+Also, while functional data structures are often presented in a way that
+ignores their lazy constructions (and thus are not always as good as plain
+lists), we have shown that this need not be the case. The simple structure
+presented here has tree applications in our system only, and is virtually always
+an improvement over plain lists.
+
 
 
 

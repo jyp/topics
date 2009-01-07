@@ -49,10 +49,10 @@ constant part that is fixed by the input already parsed. The arguments of
 
 \begin{code}
 data Polish s r where
-    Push     :: a -> Polish s r ->                   Polish s (a :< r)
-    App      ::  Polish s ((b -> a) :< b :< r)  ->   Polish s (a :< r)
+    Push     :: a -> Polish s r                  ->  Polish s (a :< r)
+    App      :: Polish s ((b -> a) :< b :< r)    ->  Polish s (a :< r)
     Done     ::                                      Polish s Nil
-    Susp     :: Polish s r -> (s -> Polish s r) ->   Polish s r
+    Susp     :: Polish s r -> (s -> Polish s r)  ->  Polish s r
 
 toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
 toP (Symb nil cons) = 
@@ -157,11 +157,11 @@ data Zip s out where
    Zip :: RPolish stack out -> Polish s stack -> Zip s out
 
 data RPolish inp out where
-  RPush  :: a -> RPolish (a :< r) out 
-                  -> RPolish r out
-  RApp   :: RPolish (b :< r) out 
-                  -> RPolish ((a -> b) :< a :< r) out 
-  RStop  :: RPolish r r
+  RPush  :: a -> RPolish (a :< r) out ->
+               RPolish r out
+  RApp   :: RPolish (b :< r) out ->
+               RPolish ((a -> b) :< a :< r) out 
+  RStop  ::    RPolish r r
 \end{code}
 The data being linear, this zipper is very similar to the zipper
 for lists. The part that is already visited (``on the left''), is
@@ -203,9 +203,9 @@ allows to write a properly typed traversal of polish expressions.
 
 \begin{code}
 right :: Zip s out -> Zip s out
-right (Zip l (Push a r)) = Zip (RPush a l) r
-right (Zip l (App r)) = Zip (RApp l) r
-right (Zip l s) = (Zip l s)
+right (Zip l (Push a r))  = Zip (RPush a l) r
+right (Zip l (App r))     = Zip (RApp l) r   
+right (Zip l s)           = (Zip l s)        
 \end{code}
 
 As the input is traversed, we also simplify the prefix that we went past,

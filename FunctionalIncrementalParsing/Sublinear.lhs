@@ -43,24 +43,19 @@ whole prefix has to be traversed.
 Therefore, in the worst case, the construction of the result has a cost
 proportional to the length of the input. 
 
-
-The insight that helps solving the issue is that the culprit for linear complexity is 
+The culprit for linear complexity is 
 the linear shape of the list. Fortunately, nothing forces to use such a structure: it
 can always be replaced by a tree structure, which can then be traversed in pre-order
-to discover the elements in the same order as for the corresponding list.
+to discover the elements in the same order as in the corresponding list.
 \citet[section 7]{wagner_efficient_1998} recognize this
 issue and propose to replace left or right recursive rules in the parsing with a
 special repetition construct. The parsing algorithm treats this construct
 specially and does re-balancing of the tree as needed. We choose a different
-approach, which builds upon the combinators we have introduced so far. The
-advantage is that we do not need to complicate, not change at all, the parsing
-algorithms.
-
-As \citet{wagner_efficient_1998}, we produce a different data structure for the
-output, but the difference are that our basic combinators are powerful enough to
-produce this data structure with no modification: this is because we can
-parameterize our parsing rules by haskell values (for free), and because we have
-no tree update.
+approach, which builds upon the combinators we have introduced so far. We 
+produce such a tree without complication, nor any modification of library
+because it is based on combinators: we can parameterize our parsing by
+arbitray values, for free. Also, since we do not update a tree, but
+produce a fresh version every time, we need not worry about re-balancing issues.
 
 Let us summarize the requirements we put on the data structure:
 
@@ -93,9 +88,11 @@ data Tree a  = Node a (Tree a) (Tree a)
 The only choice that remains is the size of the subtrees. The
 specific choice we make is not important as long as we make sure
 that each element is reachable in $O(log~n)$ steps. A simple choice
-is have a list of complete trees with increasing depth $k$,
-yielding a tree of size sizes $2^{k} - 1$. To make things more
-uniform we can encode the list using the same datatype.
+is a series of complete trees of increasing depth. The $k^{th}$ tree
+will have depth $k$ and contain $2^{k} - 1$ nodes. For simplicity, all these subtrees
+are chained using the same data type: they are attached as the left child
+of the spine of a right-leaning linear tree. Such a structure is depicted in
+figure~\ref{fig:online_tree}.
 
 
 \begin{figure}
@@ -107,54 +104,72 @@ A tree storing the elements 1 \ldots{} 14
 \end{figure}
 
 
-A complete tree of total depth $2 d$ can therefore store at least
+We note that a complete tree of total depth $2 d$ can therefore store at least
 $\sum_{k=1}^d 2^{k}-1$ elements, fulfilling the second
 requirement.
 
 This structure is very similar to binary random access lists as presented by
 \citet[section~6.2.1]{okasaki_purely_1999}, but differ in purpose. In our case
-we want to construct the list in one go, without pattern matching on our arguments.
-(ie. we want the argument to Pure to be a constructor). Indeed, the construction 
-procedure is the only novel idea we introduce:
+we want to construct the list in one go, without pattern matching on our
+arguments. Indeed, the construction procedure is the only
+novel idea we introduce:
 
 
 \begin{code}
-toTree d [] = Leaf
-toTree d (x:xs) = Node x l (toTree (d+1) xs')
+toTree d []      = Leaf
+toTree d (x:xs)  = Node x l (toTree (d+1) xs')
     where (l,xs') = toFullTree d xs
 
-toFullTree 0 xs = (Leaf, xs)
-toFullTree d [] = (Leaf, [])
-toFullTree d (x:xs) = (Node x l r, xs'')
-    where  (l,xs' ) = toFullTree (d-1) xs
-           (r,xs'') = toFullTree (d-1) xs'
+toFullTree 0 xs       = (Leaf, xs)
+toFullTree d []       = (Leaf, [])
+toFullTree d (x:xs)   = (Node x l r, xs'')
+    where  (l,xs' )  = toFullTree (d-1) xs
+           (r,xs'')  = toFullTree (d-1) xs'
 \end{code}
 
-\textmeta{In fact, we will have to construct the list directly in the parser,
-as follows:}
+In extenso, we must do this to guarantee online production of results: we want
+the argument of |Pure| to be in a simple value (not an abstraction), as explained in
+section~\ref{sec:applicative}. In fact, we will have to construct the list directly in the parser,
+as follows.
+
+
+\begin{code}
+parseTree d = Case 
+       (pure Leaf)
+       (\s -> pure (Node s) :*: parseFullTree d :*: parseTree (d+1))
+
+parseFullTree 0 = pure Leaf
+parseFullTree d = Case 
+       (pure Leaf) 
+       (\s -> pure (Node s) :*: parseFullTree (d-1) :*: parseTree (d-1))
+\end{code}
+
+\textmeta{What if we parse something else than symbols? Left out.}
+
+\begin{code}
+parseTree d p = (pure Leaf) <|> (Pure Node :*: p :*: parseFullTree d :*: parseTree (d+1))
+parseFullTree p 0 = pure Leaf <|> (pure Node :*: p :*: parseFullTree (d-1) :*: parseTree (d-1))
+\end{code}
+
 
 \subsection{Quick access}
 
-A key observation is that, given the above structure, one can
-access an element without pattern matching on any other node that
-is not the direct path to it. This allows efficient access without
-loosing any property of laziness. Thus, we can avoid the other
-source of inefficiencies of our implementation.
+There is an other source of inefficiency caused by the use of lists:
+merely finding the part of the tree corresponding to the edition window
+takes linear time. 
 
-\begin{enumerate}[1.]
-\item
-  We can fetch the partial result that corresponds to the user change
-  without traversing the whole list of partial results or forcing its
-  length to be computed. Of course, the first time it is accessed
-  intermediate results up to the one we require still have to be
-  computed.
+Fortunately, this issue is solved as well by using
+the tree structure described above.
+Indeed,the size of each subtree depends only on its
+relative position to the root. Therefore, one can access an element by its index
+without pattern matching on any node which is not the direct path to it.
+This allows efficient indexed access without loosing any property of laziness. 
 
-\item
-  The final results that the user observe will be in linear form as
-  well. We don't want to store them in a structure that forces the
-  length, otherwise our parser will be forced to process the whole
-  input. Still, we want to access the part corresponding to the
-  window being viewed efficiently. Storing the results in the same
-  type of structure saves the day again.
 
-\end{enumerate}
+In our application, there is yet another structure that can benefit from 
+the usage of this tree structure: the list of intermediate results. Indeed,
+while we have shown that the computation of a new partial result is efficient,
+the mere search for the previous partial result that we can reuse can take
+linear time, if we store partial results for every point of the input
+in a list.
+
