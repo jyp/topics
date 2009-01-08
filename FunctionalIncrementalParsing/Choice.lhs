@@ -210,7 +210,7 @@ that small will be actually constructed.
 
 \textmeta{example}
 
-A sound basis for thinnig out less desirable paths is to discard those which
+A sound basis for thinning out less desirable paths is to discard those which
 are less preferrable by some amount. In order to pick one path after a constant
 amount of lookahead $l$, we must set this difference to 0 when comparing the
 $l^{th}$ element of the progress information, so that the parser can pick a
@@ -220,6 +220,8 @@ it is ambiguous. In that case, the algorithm can possibly commit to a prefix whi
 lead to errors while processing the rest of the output, while another prefix
 would match the rest of the input and yield no error. In the present version of
 the library we avoid the problem by keeping all valid prefixes.
+The user of the parsing library has to be aware of this issue when designing
+grammars: it can affect the performance of the algorithm to a great extent.
 
 \begin{code}
 better _ PSusp _ = (EQ, PSusp)
@@ -245,7 +247,5 @@ x +> ~(ordering, xs) = (ordering, x :> xs)
 \end{code}
 
 
-The user of the parsing library has to be aware of this issue when designing
-grammars: it can affect the performance of the algorithm to a great extent.
 
 

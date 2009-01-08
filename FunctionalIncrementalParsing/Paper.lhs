@@ -2,6 +2,7 @@
 \documentclass[preprint]{sigplanconf}
 %include lhs2TeX.fmt
 %format :*: = " \applbind"
+%format :|: = " \disjunct"
 %format +> = " \secondPush"
 \usepackage{amsmath}
 \usepackage[mathletters]{ucs}
@@ -18,6 +19,7 @@
 \providecommand{\TODO}[1]{\footnote{#1}}
 \providecommand{\annot}[1]{\marginpar{\footnotesize \raggedright #1}}
 \newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
+\newcommand{\disjunct}{\mathbin{:\!\!||\!\!:}}
 \newcommand{\secondPush}{\mathbin{+\!\!>}}
 \newcommand{\prog}{\ensuremath{\mathbin{:>}}}
 
@@ -32,7 +34,7 @@
 
 \begin{document}
 
-\titlebanner{Work in progress}        % These are ignored unless
+\titlebanner{Draft}        % These are ignored unless
 \preprintfooter{In preparation for ICFP09}   % 'preprint' option specified.
 
 \title{Lazy Functional Incremental Parsing}
@@ -226,80 +228,105 @@ The litterature on analysis of programs, incremental or not, is so abundant
 that a complete survey would deserve its own treatment. Here we will compare our
 approach to some of the closest alternatives.
 
-\subsection{Incremental parsing in development environments} 
+\subsection{Development environments} 
 
 
-\citet{ghezzi_incremental_1979}
-\citet{ghezzi_augmenting_1980}
-\citet{wagner_efficient_1998} 
-\citet{bahlke_psg_1986} 
+The idea of incremental analysis of programs is not new.
+\citet{wilcox_design_1976} already implemented such a system. The program would
+work very similarly to ours: parsing states to the left of the cursor were saved
+so that changes to the program would not force a complete re-parse. A big
+difference is that it would not rely on built-in lazy evaluation: the online production
+of ``results'' would have to be managed entirely by hand. It also did not
+provide error correction nor analysis to the right of the cursor.
 
 
-State matching approaches.
-This does not apply for combinator parser library, because the parser
-state is not really observable.
+\citet{ghezzi_incremental_1979} 
+% and \citet{ghezzi_augmenting_1980}
+improved the concept by also reused parsing results to the right of the cursor:
+after parsing every symbol they check if the new state of the LR automaton
+matches that of the previous run. If it does they know they can reuse the
+results from that point on. 
 
+This improvement offers some advantages over \citet{wilcox_design_1976} which
+still apply when compared to our solution.
 
-We have a much more modest approach, in the sense that we do not attempt to
-reuse the (right-bound) nodes that were created in previous parsing runs. Another drawback is
-that we assume that the window moves by incremental steps. If the user jumps
-back and forth the beginning and the end of the file, while making changes at
-the beginning, our approach will force reparsing the whole file every time a
-change is made at the beginning followed by a jump to the end of the file.
+\begin{enumerate} 
+\item If the user jumps back and forth between the beginning and the end of the
+file, every forward jump will force reparsing the whole file. Note that we
+mitigate this drawback in our system by cacheing the (lazily constructed)
+whole parse tree: a full reparse is required only when the user makes a change
+while viewing the beginning of the file.
 
+\item Another advantage is that the AST is fully constructed at all times.
+In our case only the part to the left of the window is available.
+This means that the functions that traverse the AST should do
+so in pre-order. If this is not the case, the online property becomes
+useless. For example, if one wishes to apply a sorting algorithm before
+displaying an output, this will force the whole input to be parsed before
+displaying the first element of the input. In particular, the arguments to the
+|Pure| constructor must not perform such operations on its arguments. Ideally,
+they should be a simple constructors. This leaves many opportunites for the user of
+the library to destroy its incremental properties.
+\end{enumerate}
+
+While our approach is much more modest, it is not worse in all cases.
+
+\begin{enumerate}
+\item One benefit of not analysing the part of the input to the right of the cursor
+is that there is no start-up cost: only a screenful of text needs to be parsed
+to start displaying it.
+
+\item Another important point is that a small change in the input may often
+completely invalidate the results from the previous parsing runs. 
+A simple example is the opening of a comment. (For example,
+while editing an Haskell source file, typing \verb!{-! implies that the rest of
+the file becomes a comment up to the next \verb!-}!.)
+
+It is therefore questionable if trying to reuse right-bound parts of the parse
+tree offers any reasonable benefit in practise: it seems to be optimizing for a
+special case. This is not very suitable in an interactive system where users
+expect consistent response times.
+
+\item Finally, comparing parser states is very tricky to do accomplish the
+context of a combinator library: since parsing states normally contain
+abstractions, it is not clear how they can be compared to one another.
+\end{enumerate}
+
+Later, \citet{wagner_efficient_1998} improved on the state-matching technique.
+They contributed the first incremental parser that took in account the
+inefficiency of linear repetition. We compared our approach to theirs in
+section~\ref{sec:sublinear}.
 
 Despite extensive research dating as far back as 30 years ago, somehow, none of
 these solutions have caught up in the mainstream. Editors typically work using
 regular expressions for syntax highlighting at the lexical level (Emacs, Vim,
 Textmate, \ldots{}) and integrated development environments run a full compiler
 in the background for syntax level feedback (Eclipse).
-
-We might argue that early solutions offered little
-benefit in comparison to their implementation cost. Our approach is
-much simpler. 
-
-One might argue that node reuse is an essential component of incremental
-parsing. However, it is notable that programming languages syntaxes are often
-specified with a forward reading approach. A consequence is that a small change
-in the beginning of the file can completely invalidate the parse tree obtained
-in the previous run. A simple example is the opening of a comment. (For example,
-while editing an Haskell source file, typing \verb!{-! implies that the rest of
-the file becomes a comment up to the next \verb!-}!.) Hence, trying to reuse
-right-bound parts of the parse tree seems to be optimizing for a special case.
-This is not very suitable in an interactive system where users expect consistent
-response times.
-
-Another downside of our approach is that it requires the consumption of the AST
-to be done in pre-order. If this is not the case, the online property becomes
-useless. For example, if one wishes to apply a sorting algorithm before
-displaying the output, this will force the whole input to be parsed before
-displaying the first element of the input. In particular, the arguments to the
-|Pure| constructor must not perform such operations on its arguments. Ideally,
-it should be a simple constructor. This leaves many opportunites for the user of
-the library to destroy its incremental properties.
-
-
 \begin{meta}
 What does Visual Haskell do?
-
 \end{meta}
 
+It is possible that the implementation cost of earlier solutions outweighed
+their benefits. We hope that the simplicity of our approach will permit more
+widespread application.
 
-\subsection{Incremental parsing in natural language processing} 
 
-In natural language processing, a parsing alagorithm is deems incremental if it
-reads the input one token at a time and calculates all the possible consequences
-of the token, before the net token is read. (Citation? (quoted from Krasimir))
-
-We note that there is no notion of AST update in this definition.
-
-\textmeta{Does this correspond to the online property or the other?}
+% \subsection{Incremental parsing in natural language processing} 
+% 
+% 
+% In natural language processing, a parsing alagorithm is deemed incremental if ``it
+% reads the input one token at a time and calculates all the possible consequences
+% of the token, before the net token is read.''
+% 
+% We note that there is no notion of AST update in this definition.
+% 
+% \textmeta{Does this correspond to the online property or the other?}
 
 \subsection{Incremental computation}
 
 An alternative approach would be to build the library as a plain parser on top
 of a generic incremental computation system. The main drawback is that there
-currently exists no such off-the-shelf such system for Haskell. The closest
+currently exists no such off-the-shelf system for Haskell. The closest
 matching solution is provided by \citet{carlsson_monads_2002}, and relies
 heavily on explicit threading of computation through monads and explict
 reference for storage of inputs and intermediate results. This imposes an
@@ -309,26 +336,18 @@ symbols. This means that, not only their contents will change from one run to
 another, but their numbers will as well. One then might want to rely on laziness,
 as we do, to avoid depending unnecessarily on the tail of the input, but then we
 hit the problem that the algorithm must be described imperatively.
-Therefore, we think that such an approch would be awkward, if not unapplicable.
-
-\begin{meta}
-Plugging an attribute evaluator on top of this?
-This does not really work since we do not reuse the result. 
-\citet{saraiva_functional_2000}
-
-We could put a semantic layer by replacing the constructors with arbitrary
-semantic functions. Incrementality is not guaranteed then.
-\end{meta}
-
+Therefore, we think that such an approch would be awkward, if at all applicable.
 
 \subsection{Parser combinators}
 
 Our approach is firmly anchored in the tradition of parser combinator libraries
-\citep{hutton_monadic_1998}, and particularly close to the version of
+\citep{hutton_monadic_1998}, and particularly close to the polish parsers of
 \citet{hughes_polish_2003}.
 
-The introduction of the |Susp| operator is directly inspired by
-\citet{claessen_parallel_2004}. We presented our implementation as a version of
+The introduction of the |Susp| operator is directly inspired by the parallel
+parsing processes of \citet{claessen_parallel_2004}, that feature a very similar
+constructor to access the first symbol of the input and make it accessible to
+the rest of the computation. This paper presents our implementation as a version of
 polish parsers extended with an evaluation precedure ``by-value'', but we could
 equally have started with parallel parsing processes and extended them with
 ``by-name'' evaluation. The combination of both evaluation techniques is unique
@@ -350,18 +369,19 @@ More specifically, it is the first time an incremental parsing system
 is implemented in a combinator library.
 
 
-\subsection {Future work}
+\subsection {Further work}
 
 Athough it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
 parsers. However, in practise this can most often be emulated by a repetitive
 usage of the |Dislike| combinator. This can lead to some performance loss, as
-the failing branch. Indeed, if one takes things to the extreme and tries to use
-the fixpoint (|fix Dislike|) to represent failure, it will lead to
+the ``very disliked'' branck would require more analysis to be discarded than an
+immediate failure. Indeed, if one takes this idea to the extreme and tries to
+use the fixpoint (|fix Dislike|) to represent failure, it will lead to
 nontermination. This is due to our use of strict integers in the progress
 information. We have chosen this representation to emphasize the dynamic
-programming aspect of our solution, but it might be more efficient to represent
-progress by a mere interleaving of |Shift| and |Dislike| constructors.
+programming aspect of our solution, but in general it might be more efficient to
+represent progress by a mere interleaving of |Shift| and |Dislike| constructors.
 
 Our library suffers from the usual drawbacks of parser combinator approaches.
 In particular, it is impossible to write left-recursive parsers, because they
@@ -378,7 +398,20 @@ in this fashion would avoid the cahotic situation where a small modification mig
 invalidate all the parsing work that follows it, since we take in account \emph{all}
 possible prefixes ahead of time.
 
+
+\begin{meta}
+Plugging an attribute evaluator on top of this?
+This does not really work since we do not reuse the result. 
+\citet{saraiva_functional_2000}
+
+We could put a semantic layer by replacing the constructors with arbitrary
+semantic functions. Incrementality is not guaranteed then.
+\end{meta}
+
+
+
 \section{Results}
+
 
 We carried out development of a parser combinator library for incremental
 parsing with support for error correction. We argumented that, using suitable

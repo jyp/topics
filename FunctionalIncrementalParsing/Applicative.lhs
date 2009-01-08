@@ -35,7 +35,7 @@ data Parser s a where
 \end{spec}
 
 
-\citet{huges_polish_2001} show that the sequencing operator must be applicative
+\citet{hughes_polish_2001} show that the sequencing operator must be applicative
 (\citet{mcbride_applicative_2007}) to allow for online production of results.
 
 Since this is the cornerstone to our approach of incremental parsing, 

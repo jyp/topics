@@ -152,8 +152,16 @@ parseFullTree d = Symb
 \textmeta{What if we parse something else than symbols? Left out.}
 
 \begin{spec}
-parseTree d p = (pure Leaf) <|> (Pure Node :*: p :*: parseFullTree d :*: parseTree (d+1))
-parseFullTree p 0 = pure Leaf <|> (pure Node :*: p :*: parseFullTree (d-1) :*: parseTree (d-1))
+parseTree d p = (pure Leaf) 
+   :|: (  Pure Node 
+          :*: p 
+          :*: parseFullTree d 
+          :*: parseTree (d+1))
+parseFullTree p 0 = pure Leaf
+   :|: (  Pure Node 
+          :*: p 
+          :*: parseFullTree (d-1) 
+          :*: parseTree (d-1))
 \end{spec}
 
 
