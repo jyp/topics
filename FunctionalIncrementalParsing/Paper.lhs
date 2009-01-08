@@ -10,6 +10,7 @@
 \usepackage{graphicx}
 \usepackage{pgf}
 \usepackage{tikz}
+\usetikzlibrary{trees,positioning,arrows}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{3pt}
 \usepackage{enumerate}

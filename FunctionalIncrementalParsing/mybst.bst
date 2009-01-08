@@ -273,7 +273,7 @@ FUNCTION {format.editors}
 FUNCTION {format.isbn}
 { isbn empty$
     { "" }
-    { new.block "ISBN " isbn * }
+    { "" }
   if$
 }
 

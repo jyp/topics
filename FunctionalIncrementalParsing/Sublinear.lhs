@@ -97,9 +97,11 @@ figure~\ref{fig:online_tree}.
 
 
 \begin{figure}
-\include{tree}
+\include{pgf-tree}
 \caption{
-A tree storing the elements 1 \ldots{} 14
+A tree storing the elements 1 \ldots{} 14. Additional elements would be
+attached to the right child of node 7: there would be no impact on the 
+tree constructed so far.
 }
 \label{fig:online_tree}
 \end{figure}

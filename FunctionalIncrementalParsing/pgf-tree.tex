@@ -2,32 +2,26 @@
 % Label style
 %    label distance=3mm,
 %    every label/.style={blue},
-% Event style
-    event/.style={circle,draw,%fill=yellow!20, 
-        minimum size=5mm,
-        text centered % ,anchor=north
-        },
 % Children and edges style
 %    edge from parent/.style={draw=black!70},
 %     edge from parent path={(\tikzparentnode.south) % -- ++(0,-1.05cm)
 %                           -- (\tikzchildnode.north)},
     level 1/.style={% sibling distance=7cm,
-                    level distance=1.4cm,
-                   % growth parent anchor=south,
-                   nodes=event},
+                    level distance=1.4cm}
+                   % growth parent anchor=south}
 %    level 2/.style={sibling distance=2.8cm},
 %    level 3/.style={sibling distance=1.4cm},
 %    level 4/.style={sibling distance=1.4cm}
 %%  For compatability with PGF CVS add the absolute option:
 %   absolute
     ]
-%% Draw events and edges
 %    \tikzstyle{}
-    \node [event] (n1)  {1}
+    \tikzstyle{every node}=[circle,draw,minimum size=7mm,text centered]
+    \node  (n1)  {1}
       child{node (n2) {2}}
     ; 
 
-    \node [event] (n3) [right=of n1]  {3} edge (n1)
+    \node  (n3) [right=of n1]  {3} edge (n1)
       child{node (n4) {4}
           child{node (n5) {5}}
           child{node (n6) {6}}
@@ -36,7 +30,7 @@
 
     \tikzstyle{level 2}=[sibling distance=3cm]
     \tikzstyle{level 3}=[sibling distance=1.5cm]
-    \node at (5,0) [event] (n7)  {7} edge (n3)
+    \node at (5,0)  (n7)  {7} edge (n3)
       child{node (n8) {8}        
           child{node (n9) {9}
               child{node (n10) {10}}
@@ -48,6 +42,8 @@
                 }
             }
     ;
+
+    \node [coordinate] at (7,0) (n15) {} edge [dashed](n7);
 
 
 \end{tikzpicture}
