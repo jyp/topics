@@ -283,7 +283,7 @@ A simple example is the opening of a comment. (For example,
 while editing an Haskell source file, typing \verb!{-! implies that the rest of
 the file becomes a comment up to the next \verb!-}!.)
 
-It is therefore questionable if trying to reuse right-bound parts of the parse
+It is therefore questionable that reusing right-bound parts of the parse
 tree offers any reasonable benefit in practise: it seems to be optimizing for a
 special case. This is not very suitable in an interactive system where users
 expect consistent response times.
@@ -370,7 +370,7 @@ More specifically, it is the first time an incremental parsing system
 is implemented in a combinator library.
 
 
-\subsection {Further work}
+\subsection{Further work}
 
 Athough it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
