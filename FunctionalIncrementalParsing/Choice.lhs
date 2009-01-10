@@ -88,17 +88,19 @@ data Parser s a where
     Yuck   :: Parser s a                         -> Parser s a
 \end{code}
 
+\textmeta{explain better}
+
 At each disjunction point, the evaluation function will have to choose between
 two alternatives. Since we want online behavior, we cannot afford to look
 further than a few symbols ahead to decide which parse might be the best.
 (Additionally the number of potential recovery paths grows exponentially with
 the amount of lookahead). We use the widespread technique \citep[chapter
-8]{bird_algebra_1997} to thin out search after some constant, small amount of
+8]{bird_algebra_1997} to \emph{thin out} the search after some constant, small amount of
 lookahead.
 
-In contrast to \citet{hughes_polish_2003}, we do not compute the best path by
-direct manipulation of the polish representation. Instead, we introduce a new
-datatype which represents the ``progress'' information only.
+While \citet{hughes_polish_2003} compute the best path by direct manipulation
+of the polish representation, we want to clearly separate this concern by
+introducing a new datatype which represents the ``progress'' information only.
 
 \begin{code}
 data Progress = PSusp | PRes Int | !Int :> Progress
@@ -168,8 +170,8 @@ better :: Int -> Progress -> Progress
 \caption{Handling disjunction}
 \end{figure}
 
-Proceeding exactly as such is horribly inefficient. We can use the classic
-trick \cite{swierstra} to cache the progress information in the |Polish|
+Proceeding exactly as such is horribly inefficient. We can use the well known technique
+\cite{swierstra} to cache the progress information by tupling it with the |Polish|
 representation. For simplicity, we cache the information only at disjunction
 nodes where we also remember which path is best to take.
 

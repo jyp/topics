@@ -18,7 +18,9 @@ to represent parsers: it lacks dependency on the input.
 
 We introduce an extra type argument (the type of symbols), as well as a new
 constructor: |Symb|. It expresses that the rest of the expression depends on the
-first symbol of the input (if any).
+next of the input (if any): its first argument is the parser to be used if the
+end of input has been reached, while its second argument is used when there is
+at least one symbol available, and it can depend on it.
 
 \begin{code}
 data Parser s a where
@@ -27,7 +29,7 @@ data Parser s a where
     Symb :: Parser s a -> (s -> Parser s a)    -> Parser s a
 \end{code}
 
-Using just this we can write a simple parser for S-expressions.
+Using just this, as an example, we can write a simple parser for S-expressions.
 
 \begin{code}
 parseList :: Parser Char [SExpr]
@@ -63,8 +65,7 @@ toP (Pure x)        = Push x
 
 Although we broke the linearity of the type, it does no harm since the parsing
 algorithm will not proceed further than the available input anyway, and
-therefore will stop at the first |Susp|. When the input is made available, it is
-used to remove the |Susp| constructors. Suspensions in a polish expression can
+therefore will stop at the first |Susp|. Suspensions in a polish expression can
 be resolved by feeding input into it. When facing a suspension, we pattern match
 on the input, and choose the corresponding branch in the result.
 
@@ -78,7 +79,7 @@ feed ss p = case p of
                   (App p')         -> App     (feed ss p')
 \end{code}
 
-|feed "(a)" (toPolish parseList)| yields back our example expression.
+For example, |feed "(a)" (toPolish parseList)| yields back our example expression.
 
 
 We can also obtain intermediate parsing results by feeding symbols one at a
@@ -146,10 +147,11 @@ information).
 
 \subsection{Zipping into Polish}
 \label{sec:zipper}
-Thus we have to use a better strategy to simplify intermediate
-results. We want to avoid the cost of traversing the structure
-up to the suspension at each step. This suggests to use a
-zipper structure with the focus at the suspension point.
+
+Thus we have to use a better strategy to simplify intermediate results. We want
+to avoid the cost of traversing the structure up to the suspension at each step.
+This suggests to use a zipper structure (\citep{huet_zipper_1997}) with the
+focus at the suspension point.
 
 
 \begin{code}

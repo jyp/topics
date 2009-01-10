@@ -16,7 +16,6 @@ import Choice
 As we noted in a section~\ref{sec:input}, partial computations sometimes
 cannot be performed. 
 
-
 This is indeed a very common case: if the
 output we construct is a list, then the spine of the list can only
 be constructed once we get hold of the very tail of it. 
@@ -35,14 +34,19 @@ evalL $ feed "(abcdefg" (toPolish parseList)
 
 Section~\ref{sec:zipper} explained how to optimize the creation of intermediate
 results, by skipping this prefix. 
-
 Unfortunately this does not improve the asymptotic performance of computing the
 final result. The bottom-most partial result contains the long chain of partial
-applications (in reverse polish representation). To produce the final result the
+applications (in reverse polish representation), and to produce the final result the
 whole prefix has to be traversed.
 
 Therefore, in the worst case, the construction of the result has a cost
 proportional to the length of the input. 
+
+While the above example might seem trivial, the same result applies to all
+repetition constructs, which are very common in language descriptions. For
+example, a very long Haskell file is typically constituted of a very long list
+of declarations, for which a very high cost must be paid every time the result
+is constructed.
 
 The culprit for linear complexity is 
 the linear shape of the list. Fortunately, nothing forces to use such a structure: it
@@ -52,11 +56,13 @@ to discover the elements in the same order as in the corresponding list.
 issue and propose to replace left or right recursive rules in the parsing with a
 special repetition construct. The parsing algorithm treats this construct
 specially and does re-balancing of the tree as needed. We choose a different
-approach, which builds upon the combinators we have introduced so far. We 
-produce such a tree without complication, nor any modification of library
-because it is based on combinators: we can parameterize our parsing by
-arbitray values, for free. Also, since we do not update a tree, but
-produce a fresh version every time, we need not worry about re-balancing issues.
+approach: only the result type is changed, not the parsing library.
+We can do so for two reasons:
+\begin{itemize}
+ \item Cominators can be parameterized by arbitray values
+ \item Since we do not update a tree, but
+ produce a fresh version every time, we need not worry about re-balancing issues.
+\end{itemize}
 
 Let us summarize the requirements we put on the data structure:
 
@@ -130,7 +136,7 @@ toFullTree d (x:xs)   = (Node x l r, xs'')
            (r,xs'')  = toFullTree (d-1) xs'
 \end{code}
 
-In extenso, we must do this to guarantee online production of results: we want
+In other words, we must use a special construction function to guarantee the online production of results: we want
 the argument of |Pure| to be in a simple value (not an abstraction), as explained in
 section~\ref{sec:applicative}. In fact, we will have to construct the list directly in the parser,
 as follows.
@@ -169,22 +175,20 @@ parseFullTree p 0 = pure Leaf
 
 \subsection{Quick access}
 
-There is an other source of inefficiency caused by the use of lists:
-merely finding the part of the tree corresponding to the edition window
-takes linear time. 
-
-Fortunately, this issue is solved as well by using
-the tree structure described above.
+Another benefit of using the tree structure as above is that
+finding the parts part of the tree corresponding to the edition window
+takes also logarithmic time. 
 Indeed,the size of each subtree depends only on its
 relative position to the root. Therefore, one can access an element by its index
 without pattern matching on any node which is not the direct path to it.
 This allows efficient indexed access without loosing any property of laziness. 
 
 
-In our application, there is yet another structure that can benefit from 
-the usage of this tree structure: the list of intermediate results. Indeed,
-while we have shown that the computation of a new partial result is efficient,
-the mere search for the previous partial result that we can reuse can take
-linear time, if we store partial results for every point of the input
-in a list.
+In our application, there is yet another structure that can benefit from the
+usage of this lazily constructed tree: the list of intermediate results. Indeed, while we
+have shown that the computation of a new partial result is efficient, the mere
+search for the previous partial result that we can reuse can take linear time,
+if we store partial results for every point of the input in a list. Again, since
+the length the length of the input cannot be forced, we have to use the lazy
+construction procedure.
 

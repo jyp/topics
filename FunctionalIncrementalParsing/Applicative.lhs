@@ -38,13 +38,17 @@ data Parser s a where
 \citet{hughes_polish_2003} show that the sequencing operator must be applicative
 (\citet{mcbride_applicative_2007}) to allow for online production of results.
 
-Since this is the cornerstone to our approach of incremental parsing, 
-we review the result in this section. While doing so we also introduce
-the concepts necessary for the computation of intermediate results.
+Since this is the cornerstone to our approach of incremental parsing, we review
+the result in this section. We will focus on the first two constructors of the
+above datatype, corresponding to the applicative sublanguage. While doing so we
+also introduce the concepts necessary for the computation of intermediate
+results.
+
+\subsection{The applicative sublanguage}
 
 A requirement for online result production is that the top-level constructors
-are available before their argument are computed. This can be done only if the
-parser can observe the structure of the result. Hnence, we make function
+are available before their arguments are computed. This can be done only if the
+parser can observe the structure of the result. Hence, we make function
 applications explicit in the expression describing the results.
 
 For example, the Haskell expression |S [Atom 'a']|, which stands for |S ((:)
@@ -85,8 +89,8 @@ demanding a given part of the result will force only the corresponding part of
 the applicative expression. In that case, the |Applic| type effectively allows
 us to define partial computations and reason about them.
 
-Because they process the input in a linear fashion, our parsers require a
-linear structure for the output as well. (it will become apparent in section~\ref{sec:parsing}). As
+Because our parsers process the input in a linear fashion, they require a
+linear structure for the output as well. (This is revisited in section~\ref{sec:parsing}). As
 \citet{hughes_polish_2003}, we convert the applicative expressions to polish
 representation to obtain such a linear structure.
 
@@ -154,9 +158,9 @@ polish expressions.
 \begin{code}
 toPolish :: Applic a -> Polish (a :< Nil)
 toPolish expr = toP expr Done
-  where toP :: Applic a -> (Polish r -> Polish (a :< r))
-        toP (f :*: x)  = App . toP f . toP x
-        toP (Pure x)   = Push x
+  where  toP :: Applic a -> (Polish r -> Polish (a :< r))
+         toP (f :*: x)  = App . toP f . toP x
+         toP (Pure x)   = Push x
 \end{code}
 
 And the value of an expression can be evaluated as follows:

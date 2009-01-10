@@ -7,10 +7,29 @@
 }
 
 \begin{code}
- data SExpr = S [SExpr] | Atom Char
+data SExpr = S [SExpr] | Atom Char
 \end{code}
 
 \ignore{
+data SExpr = S [SExpr] (Maybe Char) | Atom Char | Quoted [SExpr] (Maybe Char) | Inserted Char | Deleted Char
+
+showS _ (Atom c) = [c]
+showS ([open,close]:ps) (S cl) = open : concatMap (showS ps) s ++ [close]
+
+instance Show SExpr where
+    show = showS (cycle ["()","[]","{}"])
+
+parseList :: Parser Char [SExpr]
+parseList = Symb
+   (Pure [])
+   (\c -> case c of
+       ' '  -> parseList -- ignore spaces
+       '('  -> Pure (\h t -> S h : t) :*: parseList :*: parseList
+       c    -> Pure (Atom c :) :*: parseList)
+
+
+-----
+
 
 data SExpr = Cons SExpr SExpr | Leaf Char | Tip
    deriving Show

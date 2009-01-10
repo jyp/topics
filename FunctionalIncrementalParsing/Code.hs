@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
 module FullIncrParser where
-
+import Control.Applicative
 import Data.Function (fix)
 
 -- data a :< b = a :< b
@@ -12,7 +12,7 @@ data Nil = Nil
 data Parser s a where
     Pure :: a -> Parser s a
     (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
-    Case :: Parser s a -> (s -> Parser s a) -> Parser s a
+    Symb :: Parser s a -> (s -> Parser s a) -> Parser s a
     Disj :: Parser s a -> Parser s a -> Parser s a
     Yuck :: Parser s a -> Parser s a
 
@@ -90,7 +90,7 @@ evalR (Best choice _ p q) = case choice of
 
 type P s a = forall r. (Polish s r) -> (Polish s (a :< r))
 toP :: Parser s a -> P s a 
-toP (Case a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
+toP (Symb a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
 toP (f :*: x) = App . toP f . toP x
 toP (Pure x)   = Push x
 toP (Disj a b)  = \fut -> mkBest (toP a fut) (toP b fut)
@@ -99,10 +99,9 @@ toP (Yuck p) = Dislike . toP p
 mkBest :: Polish s a -> Polish s a -> Polish s a
 mkBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
 
-symbol f = Case empty $ \s -> if f s then Pure s else empty
-eof f = Case (Pure ()) (const empty)
+symbol f = Symb empty $ \s -> if f s then Pure s else empty
+eof f = Symb (Pure ()) (const empty)
 
-empty = fix Yuck
 
 --------------------------------
 -- The zipper for efficient evaluation:
@@ -170,25 +169,10 @@ evalX z s0 = case s0 of
 
 --------------------------------
 
-data SExpr = S [SExpr] | Atom Char
-
-showL d = concatMap (showS (d+1))
-
-showS d (Atom c) = [c]
-showS d (S s) = open : showL d s ++ [close]
-    where [open,close] = pp !! (d `mod` length pp) 
-          pp = ["()","[]","{}"]
 
 runParser :: Parser s a -> [s] -> a
 runParser p i = fst $ evalR $ feed Nothing $ feed (Just i)  $ toP p $ Done
 
-parseList :: Parser Char [SExpr]
-parseList = Case 
-   (Pure [])
-   (\c -> case c of
-       ')' -> Pure []
-       '(' -> Pure (\arg rest -> S arg : rest ) :*: parseList :*: parseList
-       c -> Pure (Atom c :) :*:  parseList)
 
 
 -- The expression `(+ 2 3)` in direct, applicative and polish style.
@@ -198,8 +182,6 @@ expr' = Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
 expr'' = App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
 
 suff = Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
-
-
 
 -------------
 evalA :: Parser s a -> a

@@ -47,11 +47,19 @@
 
 
 \maketitle
+
+\textmeta{API section? Full example?}
+
+
 \begin{abstract}
-A free-form editor for structured documents may want to maintain
-a structured representation of the edited document. This has
-a number of applications: structural navigation (and optional strucural edition), 
-highlighting of source code, etc. 
+
+A free-form editor for structured documents may want to maintain a structured
+representation of the edited document. This has a number of applications:
+structural navigation (and optional strucural edition), highlighting of source
+code, etc. The construction of the structure must be done incrementally to be
+efficient: the time to process an editition operation should be propotinal to the
+size of the change, and (ideally) independent of the total size of the document.
+
 We show that combining
 lazy evaluation and caching of intermediate (partial) results
 enables to parse the input incrementally. We also introduce a general purpose,
@@ -86,7 +94,7 @@ performance, the editor must not parse the whole file at each keystroke.
 
 \subsection{Example}
 
-For the purpose of illustration, we demonstrate how the
+For the purpose of illustration, we sketch how the  
 technique works on a simple problem: interactive feedback of
 parenthesis matching for a lisp-like language. Given an input such
 as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display an annotated version:
@@ -139,17 +147,19 @@ parsing algorithms to our advantage. Indeed, if we have stored the parser state
 for the input point where the user made the modification, we can \emph{resume}
 parsing from that point. If we make sure to store partial results for every
 other point of the input, we can ensure that we will never parse more than a
-screenful at a time.
+screenful at a time. Thereby, we achieve incremental parsing, in the sense that
+the amount of parsing work needed after each user interaction is constant. 
 
 Another feature of Yi is that it is configurable in Haskell. Therefore, we
-prefer to use the Haskell language for every aspect of the application. In
-particular, syntaxes should be described using a combinator library.
+prefer to use the Haskell language for every aspect of the application, so that
+the user can configure it. In particular, syntaxes should be described using a
+combinator library.
 
-The main characteristics of our solution can be summarized as follows:
+Our main goals can be formulated as constraints on the parsing library:
 \begin{itemize}
-\item it is a parser combinator library;
-\item it makes maximal usage of laziness;
-\item it must be performant enough of interactive usage.
+\item it must be programmable through a combinator interface;
+\item it should make maximal usage of laziness;
+\item it must be efficient enough for interactive usage.
 \end{itemize}
 
 This has a number of consequences:
@@ -187,8 +197,7 @@ Our contributions can be summarized as follows.
   We have implemented such a system in a parser-combinator library;
 
 \item
-  We have implemented such a system and made use of it to provide
-  syntax-dependent feedback in a production-quality editor.
+  We made use of it to provide syntax-dependent feedback in a production-quality editor.
 
 \end{itemize}
 
@@ -203,7 +212,7 @@ of the intermediate structures.
 
 The above observation suggests that we can take advantage of lazy evaluation to
 implement incremental parsing for a text editor.
-Indeed, if we suppose that the user makes changes in the input that
+Indeed, if we suppose that the user makes changes in the part of the input that
 ``corresponds to'' the window being viewed, it suffices to cache
 partially computed results for each point in the input, to obtain a
 system that responds to changes in the input independently of the
@@ -270,7 +279,7 @@ they should be a simple constructors. This leaves many opportunites for the user
 the library to destroy its incremental properties.
 \end{enumerate}
 
-While our approach is much more modest, it is not worse in all cases.
+While our approach is much more modest, it is better in some respects.
 
 \begin{enumerate}
 \item One benefit of not analysing the part of the input to the right of the cursor
@@ -329,7 +338,7 @@ An alternative approach would be to build the library as a plain parser on top
 of a generic incremental computation system. The main drawback is that there
 currently exists no such off-the-shelf system for Haskell. The closest
 matching solution is provided by \citet{carlsson_monads_2002}, and relies
-heavily on explicit threading of computation through monads and explict
+heavily on explicit threading of computation through monads and explicit
 reference for storage of inputs and intermediate results. This imposes an
 imperative description of the incremental algorithm, which does not match our
 goals. Furthermore, in the case of parsing, the inputs would be the individual
@@ -346,8 +355,8 @@ Our approach is firmly anchored in the tradition of parser combinator libraries
 \citet{hughes_polish_2003}.
 
 The introduction of the |Susp| operator is directly inspired by the parallel
-parsing processes of \citet{claessen_parallel_2004}, that feature a very similar
-constructor to access the first symbol of the input and make it accessible to
+parsing processes of \citet{claessen_parallel_2004}, which features a very similar
+construct to access the first symbol of the input and make it accessible to
 the rest of the computation. This paper presents our implementation as a version of
 polish parsers extended with an evaluation precedure ``by-value'', but we could
 equally have started with parallel parsing processes and extended them with
@@ -360,7 +369,7 @@ associate some variant of progress information to parsers and rely on thinning
 and laziness to explore the tree of all possible parses.
 
 
-\subsection{Summary}
+\section{Discussion}
 
 
 Due to our choice to commit to a purely functional, lazy approach, our 
@@ -369,16 +378,20 @@ incremental parsing library occupies a unique point in the design space.
 More specifically, it is the first time an incremental parsing system
 is implemented in a combinator library.
 
+\textmeta{pro and con of using laziness. where do we use laziness? where are we forced to be careful because of that?
+Big advantage: the users of the tree are decoupled from their producers.
+}
 
-\subsection{Further work}
+
+\section{Future work}
 
 Athough it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
 parsers. However, in practise this can most often be emulated by a repetitive
-usage of the |Dislike| combinator. This can lead to some performance loss, as
+usage of the |Yuck| combinator. This can lead to some performance loss, as
 the ``very disliked'' branck would require more analysis to be discarded than an
 immediate failure. Indeed, if one takes this idea to the extreme and tries to
-use the fixpoint (|fix Dislike|) to represent failure, it will lead to
+use the fixpoint (|fix Yuck|) to represent failure, it will lead to
 nontermination. This is due to our use of strict integers in the progress
 information. We have chosen this representation to emphasize the dynamic
 programming aspect of our solution, but in general it might be more efficient to

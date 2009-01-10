@@ -8,7 +8,7 @@
 
 -- Optimize profile info (no more Ints)
 
-module Parser.Incremental (Process, 
+module Parsers.Incremental (Process, 
                           recoverWith, symbol, eof, lookNext, testNext, run,
                           mkProcess, profile, pushSyms, pushEof, evalL, evalR, feedZ,
                           P) where
@@ -196,7 +196,7 @@ feed (Just []) p = p  -- nothing more left to feed
 feed ss p = case p of
                   (Sus nil cons) -> case ss of
                       Just [] -> p -- no more info, stop feeding
-                      Nothing -> feed Nothing nil -- finish
+                      Nothing -> nil -- finish
                       Just (s:_) -> feed ss (cons s)
                   (Shift p') -> Shift (feed ss p')
                   (Sh' p')   -> Shift (feed (fmap (drop 1) ss) p')
