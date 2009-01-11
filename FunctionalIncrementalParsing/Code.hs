@@ -1,35 +1,67 @@
 {-# OPTIONS -fglasgow-exts #-}
-module FullIncrParser where
-import Control.Applicative
-import Data.Function (fix)
+module Code(
+            -- * Parser construction
+            Parser(..),
+            -- * Working with parsing processes
+            mkProcess,
+            evalZR,
+            evalZL,
+            feedSyms,
+            -- * Debug
+            runParser
+           ) where
 
--- data a :< b = a :< b
+-- * Parser Interface
+
+-- Parser specification
+data Parser s a where
+    Pure   :: a                               ->  Parser s a
+    (:*:)  :: Parser s (b -> a) -> Parser s b ->  Parser s a
+    Symb   :: Parser s a -> (s -> Parser s a) ->  Parser s a
+    (:|:)  :: Parser s a -> Parser s a        ->  Parser s a
+    Yuck   :: Parser s a                      ->  Parser s a
+
+-- Running interface
+--- interface 
+
+mkProcess :: Parser s a -> Zip s (a :< Nil)
+mkProcess p = Zip RStop (toP p $ Done)
+
+feedSyms :: Maybe [s] -> Zip s t -> Zip s t
+feedSyms syms (Zip l r) = evalZL (Zip l (feed syms r))
+
+evalZR :: Zip token (a :< rest) -> a
+evalZR (Zip l r) = top (evalRP l (evalR r))
+
+-- Stacks
 data top :< rest = (:<) {top :: top, rest :: rest}
 infixr :<
 data Nil = Nil
 
--- Parser specification
-data Parser s a where
-    Pure :: a -> Parser s a
-    (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
-    Symb :: Parser s a -> (s -> Parser s a) -> Parser s a
-    Disj :: Parser s a -> Parser s a -> Parser s a
-    Yuck :: Parser s a -> Parser s a
-
-
+-- Polish + Progress
 data Polish s a where
-    Push   :: a -> Polish s r                      -> Polish s (a :< r)
-    App   :: Polish s ((b -> a) :< (b :< r))      -> Polish s (a :< r)
-    Done  ::                               Polish s ()
-    Shift ::           Polish s a        -> Polish s a
-    Sus :: Polish s a -> (s -> Polish s a) -> Polish s a
-    Best :: Ordering -> Progress -> Polish s a -> Polish s a -> Polish s a
+    Push    :: a -> Polish s r                      -> Polish s (a :< r)
+    App     :: Polish s ((b -> a) :< (b :< r))      -> Polish s (a :< r)
+    Done    ::                               Polish s Nil
+    Shift   ::           Polish s a        -> Polish s a
+    Sus     :: Polish s a -> (s -> Polish s a) -> Polish s a
+    Best    :: Ordering -> Progress -> Polish s a -> Polish s a -> Polish s a
     Dislike :: Polish s a -> Polish s a
 
+-- From Parsers to Polish
+type P s a = forall r. (Polish s r) -> (Polish s (a :< r))
+toP :: Parser s a -> P s a 
+toP (Symb a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
+toP (f :*: x) = App . toP f . toP x
+toP (Pure x)   = Push x
+toP ((:|:) a b)  = \fut -> mkBest (toP a fut) (toP b fut)
+toP (Yuck p) = Dislike . toP p 
+
+-- Working with polish representation
 feed :: Maybe [s] -> Polish s r -> Polish s r
 feed (Just []) p = p  -- nothing more left to feed
 feed ss p = case p of
-                  (Sus nil cons) -> case ss of
+                  (Sus nil cons) ->Shift $ case ss of
                       Nothing -> feed ss nil
                       Just [] -> p
                       Just (s:ss') -> feed (Just ss') (cons s)
@@ -40,6 +72,8 @@ feed ss p = case p of
                   Done -> Done
                   Best _ _ p' q' -> mkBest (feed ss p') (feed ss q')
 
+
+-- Handling disjunction and errors.
 data Progress = PSusp | PRes Int | !Int :> Progress
     deriving Show
 
@@ -75,57 +109,26 @@ progress (Dislike p) = mapSucc (progress p)
 progress (Sus _ _) = PSusp
 progress (Best _ pr _ _) = pr
 
--- Right-eval a fully defined process
-evalR :: Polish s (a :< r) -> (a, Polish s r)
-evalR (Push a r) = (a,r)
-evalR (App s) = let (f, s') = evalR s
-                    (x, s'') = evalR s'
-                in (f x, s'')
-evalR (Shift v) = evalR v
-evalR (Dislike p) = evalR p
-evalR (Best choice _ p q) = case choice of
-    LT -> evalR p
-    GT -> evalR q
-    EQ -> error $ "evalR: Ambiguous parse!"
-
-type P s a = forall r. (Polish s r) -> (Polish s (a :< r))
-toP :: Parser s a -> P s a 
-toP (Symb a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
-toP (f :*: x) = App . toP f . toP x
-toP (Pure x)   = Push x
-toP (Disj a b)  = \fut -> mkBest (toP a fut) (toP b fut)
-toP (Yuck p) = Dislike . toP p 
-
 mkBest :: Polish s a -> Polish s a -> Polish s a
 mkBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
 
-symbol f = Symb empty $ \s -> if f s then Pure s else empty
-eof f = Symb (Pure ()) (const empty)
+------------------------------------
+-- Feeding symbols into the process
 
-
---------------------------------
--- The zipper for efficient evaluation:
-
--- Arbitrary expressions in Reverse Polish notation.
--- This can also be seen as an automaton that transforms a stack.
--- RPolish is indexed by the types in the stack consumed by the automaton (input),
--- and the stack produced (output)
+-----------------------
+-- By-value evaluation
 data RPolish input output where
   RPush :: a -> RPolish (a :< rest) output -> RPolish rest output
   RApp :: RPolish (b :< rest) output -> RPolish ((a -> b) :< a :< rest) output 
   RStop :: RPolish rest rest
 
--- Evaluate the output of an RP automaton, given an input stack
+
+-- Evaluate the output of an RPolish automaton, given an input stack
 evalRP :: RPolish input output -> input -> output
-evalRP RStop acc = acc 
+evalRP RStop  acc = acc
 evalRP (RPush v r) acc = evalRP r (v :< acc)
-evalRP (RApp r) (f :< a :< acc) = evalRP r (f a :< acc)
+evalRP (RApp r) ~(f :< ~(a :< rest)) = evalRP r (f a :< rest)
 
-
--- execute the automaton as far as possible
-simplify :: RPolish s output -> RPolish s output
-simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
-simplify x = x
 
 -- Gluing a Polish expression and an RP automaton.
 -- This can also be seen as a zipper of Polish expressions.
@@ -144,46 +147,85 @@ right (Zip l s) = (Zip l s)
 onLeft :: (forall i o. RPolish i o -> RPolish i o) -> Zip s a -> Zip s a
 onLeft f (Zip x y) = (Zip (f x) y)
 
--- | Pre-compute a left-prefix of some steps (as far as possible)
--- ATTN: this should go right many times.
+
+
+evalR :: Polish s r -> r
+evalR Done = Nil
+evalR (Push a r) = a :< evalR r
+evalR (App s) = apply (evalR s)
+  where apply ~(f:< ~(a:<r)) = f a :< r
+evalR (Shift v) = evalR v
+evalR (Dislike v) = (evalR v)
+evalR (Sus _ _) = error "evalR: Not fully evaluated!"
+evalR (Best choice _ p q) = case choice of
+    LT -> evalR p
+    GT -> evalR q
+    EQ -> error $ "evalR: Ambiguous parse: " ++ show p ++ " ~~~ " ++ show q
+
 evalZL :: Zip s output -> Zip s output
-evalZL z = case right z of
-    Zip l r -> Zip (simplify l) r
+evalZL (Zip l (Push a r)) = evalZL (Zip (simplify (RPush a l)) r)
+evalZL (Zip l (App r)) = evalZL (Zip (RApp l) r)
+evalZL (Zip l (Shift p)) = evalZL (Zip l p)
+evalZL (Zip l (Dislike p)) = evalZL (Zip l p)
+evalZL (Zip l r@(Best choice _ p q)) = case choice of
+              LT -> evalZL (Zip l p)
+              GT -> evalZL (Zip l q)
+              EQ -> Zip l r -- don't know where to go: don't speculate on evaluating either branch.
+evalZL (Zip l r) = Zip l r -- done or susp
 
-apply ~(f:< ~(a:<r)) = f a :< r
-push a = (a :<)
-
--- | Right-eval with input
-evalR' :: Polish s r -> r
-evalR' (Push a r) = push a $ evalR' r
-evalR' (App s) = apply (evalR' s)
-
--- | Eval in both directions
-evalX :: Zip s output -> Polish s r -> (r, [Zip s output])
-evalX z s0 = case s0 of
-    Push a r -> m (push a)  (evalX z' r)
-    App s -> m apply (evalX z' s)
-   where z' = onLeft simplify (right z)
-         m f ~(s, zz) = z' `seq` (f s, z':zz) -- tie the evaluation of the intermediate stuffs
-
-
---------------------------------
-
-
-runParser :: Parser s a -> [s] -> a
-runParser p i = fst $ evalR $ feed Nothing $ feed (Just i)  $ toP p $ Done
-
-
-
--- The expression `(+ 2 3)` in direct, applicative and polish style.
-expr = S [Atom 'a']
-expr0 = S ((:) (Atom 'a') [])
-expr' = Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
-expr'' = App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
-
-suff = Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
+----------------------------------------
+-- Extra functions for explanation
 
 -------------
 evalA :: Parser s a -> a
 evalA (f :*: x) = (evalA f) (evalA x)
 evalA (Pure x) = x
+
+
+-- The expression `(+ 2 3)` in direct, applicative and polish style.
+-- expr = S [Atom 'a']
+-- expr0 = S ((:) (Atom 'a') [])
+-- expr' = Pure S :*: (Pure (:) :*: (Pure Atom :*: Pure 'a') :*: Pure [])
+-- expr'' = App $ Push S $ App $ App $ Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
+-- 
+-- suff = Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
+
+-- execute the automaton as far as possible
+simplify :: RPolish s output -> RPolish s output
+simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
+simplify x = x
+
+-- | Eval in both directions
+evalX :: Zip s output -> Polish s r -> (r, [Zip s output])
+evalX z s0 = case s0 of
+    Push a r -> m (a :<)  (evalX z' r)
+    App s -> m apply (evalX z' s)
+   where z' = onLeft simplify (right z)
+         m f ~(s, zz) = z' `seq` (f s, z':zz) -- tie the evaluation of the intermediate stuffs
+
+apply ~(f:< ~(a:<r)) = f a :< r
+
+---------------
+-- Debug
+
+instance Show (Zip s o) where
+    show (Zip l r) = show l ++ show r
+
+instance Show (Polish s r) where
+    show (Push _ p) = "v" ++ show p
+    show (App p) = "*" ++ show p
+    show (Done) = "1"
+    show (Shift p) = ">" ++ show p
+    show (Dislike p) = "?"  ++ show p
+    show (Sus _ _) = "..."
+    show (Best _ _ p q) = "(" ++ show p ++ ")" ++ show q
+
+instance Show (RPolish i o) where
+    show (RPush _ p) = show p ++ "^"
+    show (RApp p) = show p ++ "@"
+    show (RStop) = "!"
+
+
+
+runParser :: Parser s a -> [s] -> a
+runParser p i = top $ evalR $ feed Nothing $ feed (Just i)  $ toP p $ Done

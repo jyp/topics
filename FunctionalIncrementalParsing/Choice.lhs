@@ -179,13 +179,13 @@ We can adapt our evaluation functions accordingly. We write the
 the online evalution only: partial result computation is modified similarly.
 \begin{code}
 -- Right-eval a fully defined process
-evalR :: Polish s (a :< r) -> (a, Polish s r)
-evalR (Push a r) = (a,r)
-evalR (App s) = let (f, s') = evalR s
-                    (x, s'') = evalR s'
-                in (f x, s'')
+evalR :: Polish s r -> r
+evalR Done = Nil
+evalR (Push a r) = a :< evalR r
+evalR (App s) = apply (evalR s)
 evalR (Shift v) = evalR v
-evalR (Dislike p) = evalR p
+evalR (Dislike v) = (evalR v)
+evalR (Sus _ _) = error "evalR: Not fully evaluated!"
 evalR (Best choice _ p q) = case choice of
     LT -> evalR p
     GT -> evalR q
