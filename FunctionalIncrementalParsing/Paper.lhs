@@ -484,6 +484,7 @@ the notions of incremental parsing.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
-
+\section {Appendix: The complete code}
+The complete code of the library described in this paper can be found here: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.hs}
 
 \end{document}
