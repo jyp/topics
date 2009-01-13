@@ -28,7 +28,7 @@ mkProcess :: Parser s a -> Zip s (a :< Nil)
 mkProcess p = Zip RStop (toP p $ Done)
 
 feedSyms :: Maybe [s] -> Zip s t -> Zip s t
-feedSyms syms (Zip l r) = evalZL (Zip l (feed syms r))
+feedSyms syms (Zip l r) = Zip l (feed syms r)
 
 evalZR :: Zip token (a :< rest) -> a
 evalZR (Zip l r) = top (evalRP l (evalR r))
