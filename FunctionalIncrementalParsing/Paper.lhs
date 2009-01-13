@@ -49,23 +49,24 @@
 \maketitle
 
 \textmeta{API section? Full example?}
+\textmeta{Make sure online and incremental parsing are well defined.}
 
 
 \begin{abstract}
 
 A free-form editor for structured documents may want to maintain a structured
 representation of the edited document. This has a number of applications:
-structural navigation (and optional strucural edition), highlighting of source
+structural navigation (and optional structural edition), highlighting of source
 code, etc. The construction of the structure must be done incrementally to be
-efficient: the time to process an editition operation should be propotinal to the
+efficient: the time to process an edit operation should be propotinal to the
 size of the change, and (ideally) independent of the total size of the document.
 
 We show that combining
 lazy evaluation and caching of intermediate (partial) results
-enables to parse the input incrementally. We also introduce a general purpose,
-simple data structure, to eliminate the linear complexity caused
-by lazy lists traversals while retaining their lazy properties.
-Finally, we complete our exposition of incremental parsing in an
+enables to parse the input incrementally. 
+% This is crap!
+% We also introduce a simple general purpose data structure, to eliminate the linear complexity caused by lazy lists traversals while retaining their lazy properties.
+We complete our exposition of incremental parsing in an
 interactive system by showing how our parsing machinery can be
 improved to support error-correction.
 \end{abstract}
@@ -89,7 +90,7 @@ Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is a text editor written
 in Haskell. It provides features such as syntax highlighting and indentation
 hints for a number of programming languages. In order to implement all syntax-dependent
 functions in a consistent way, the abstract syntax tree (AST) of the source code is available at
-all times, kept up to date as the user types. In order to maintain acceptable
+all times, and kept up to date as the user types. But, in order to maintain acceptable
 performance, the editor must not parse the whole file at each keystroke.
 
 \subsection{Example}
@@ -123,7 +124,7 @@ The initial situation is depicted in figure~\ref{fig:begin}. The user views the
 beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
 pre-order). This in turn forces parsing the corresponding part of
-the output, but \emph{only so far} (or maybe a few tokens ahead,
+the input, but \emph{only so far} (or maybe a few tokens ahead,
 depending on the amount of lookahead required). If the user modifies
 the input at this point, it invalidates the AST, but discarding it and
 re-parsing is not too costly: only a screenful of parsing needs to be
@@ -132,10 +133,12 @@ re-done.
 \begin{figure}
 \includegraphics[width=\columnwidth]{mid}
 \caption{
-Viewing the middle of a file. 
-Although only a small amount of the
-parse tree may be demanded, parsing must start from the beginning of the
-file.}
+Viewing the middle of a file.
+Parsing proceeds in linear fashion:  
+although only a small amount of the
+parse tree may be demanded, it will depend not only on the portion of the input that corresponds to it, but also 
+on everything that preceeds.
+}
 \label{fig:mid}
 \end{figure}
 
@@ -146,7 +149,7 @@ costly for a big file. Fortunately we can again exploit the linear behaviour of
 parsing algorithms to our advantage. Indeed, if we have stored the parser state
 for the input point where the user made the modification, we can \emph{resume}
 parsing from that point. If we make sure to store partial results for every
-other point of the input, we can ensure that we will never parse more than a
+point of the input, we can ensure that we will never parse more than a
 screenful at a time. Thereby, we achieve incremental parsing, in the sense that
 the amount of parsing work needed after each user interaction is constant. 
 
@@ -159,18 +162,12 @@ Our main goals can be formulated as constraints on the parsing library:
 \begin{itemize}
 \item it must be programmable through a combinator interface;
 \item it should make maximal usage of laziness;
+\item it will not update the previous parsing results;
 \item it must be efficient enough for interactive usage.
 \end{itemize}
 
-This has a number of consequences:
-\begin{itemize}
-
-\item We will not attempt to update the previous parsing results;
-
-\item Returning the result lazily requires our parsing function to be total,
+Additionally, returning the result lazily requires our parsing function to be total,
 hence we will have to provide error correction.
-
-\end{itemize}
 
 
 \subsection{Contributions}
@@ -275,7 +272,7 @@ useless. For example, if one wishes to apply a sorting algorithm before
 displaying an output, this will force the whole input to be parsed before
 displaying the first element of the input. In particular, the arguments to the
 |Pure| constructor must not perform such operations on its arguments. Ideally,
-they should be a simple constructors. This leaves many opportunites for the user of
+they should be simple constructors. This leaves many risks for the user of
 the library to destroy its incremental properties.
 \end{enumerate}
 
@@ -468,7 +465,7 @@ replaced by an other one without invalidating the approach.
 Also, while functional data structures are often presented in a way that
 ignores their lazy constructions (and thus are not always as good as plain
 lists), we have shown that this need not be the case. The simple structure
-presented here has tree applications in our system only, and is virtually always
+presented here has three applications in our system only, and is virtually always
 an improvement over plain lists.
 
 

@@ -20,7 +20,7 @@ This is indeed a very common case: if the
 output we construct is a list, then the spine of the list can only
 be constructed once we get hold of the very tail of it. 
 
-For example, our parser for s-expressions would produce such lists for for flat
+For example, our parser for s-expressions would produce such lists for flat
 expressions, because the applications of |(:)| can be computed only when the end of the
 input is reached.
 
@@ -176,7 +176,7 @@ parseFullTree p 0 = pure Leaf
 \subsection{Quick access}
 
 Another benefit of using the tree structure as above is that
-finding the parts part of the tree corresponding to the edition window
+finding the part of the tree corresponding to the edit window
 takes also logarithmic time. 
 Indeed,the size of each subtree depends only on its
 relative position to the root. Therefore, one can access an element by its index

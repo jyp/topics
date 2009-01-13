@@ -2,8 +2,8 @@
 	firefox $<
 
 %.pdf: %.svg
-	inkscape --export-pdf=$@ $<
-# convert $< $@
+#	inkscape --export-pdf=$@ $<
+	convert $< $@
 
 Paper.pdf: begin.pdf mid.pdf progress.tex pgf-tree.tex
 Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs Sublinear.lhs
