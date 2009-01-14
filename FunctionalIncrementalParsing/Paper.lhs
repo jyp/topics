@@ -16,6 +16,7 @@
 \usepackage{enumerate}
 % \usepackage[sort&compress,numbers]{natbib}
 \usepackage[sort&compress]{natbib}
+\usepackage{url}
 \newcommand{\ignore}[1]{}
 \providecommand{\TODO}[1]{\footnote{#1}}
 \providecommand{\annot}[1]{\marginpar{\footnotesize \raggedright #1}}
@@ -50,7 +51,6 @@
 
 \textmeta{API section? Full example?}
 \textmeta{Make sure online and incremental parsing are well defined.}
-
 
 \begin{abstract}
 
@@ -88,9 +88,10 @@ Dynamic Programming, Polish representation, Editor, Haskell
 
 Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is a text editor written
 in Haskell. It provides features such as syntax highlighting and indentation
-hints for a number of programming languages. In order to implement all syntax-dependent
+hints for a number of programming languages. 
+In order to implement all syntax-dependent
 functions in a consistent way, the abstract syntax tree (AST) of the source code is available at
-all times, and kept up to date as the user types. But, in order to maintain acceptable
+all times, and kept up to date as the user types. But, to maintain acceptable
 performance, the editor must not parse the whole file at each keystroke.
 
 \subsection{Example}
@@ -476,8 +477,9 @@ an improvement over plain lists.
 We thank Koen Claessen for persuading us to write this paper, and for his
 unfading support throughout the writing process. This paper was greatly improved
 by his comments on early and late drafts. Krasimir Angelov helped sorting out
-the notions of incremental parsing.
+the notions of incremental parsing. Patrick Jansson
 \textmeta{!!!Your name here!!!}
+gave helpful comments on drafts.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}

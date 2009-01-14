@@ -1,3 +1,4 @@
+% -*- latex -*-
 \ignore{
 
 \begin{code}
@@ -29,11 +30,11 @@ transform it into an incremental algorithm.
 \subsection{Disjunction}
 \label{sec:disjunction}
 
-However, the most common way to produce such structured values is
-by \emph{parsing} the input string. To support convenient parsing,
-we can introduce a disjunction operator, exactly as \citet{hughes_polish_2003}
-do: the addition of the |Susp| operator does not
-undermine their treatment of disjunction in any way.
+However, parsing the input string with the interface
+presented so far is highly insatisfactory. To support convenient parsing, we can
+introduce a disjunction operator, exactly as \citet{hughes_polish_2003} do: the
+addition of the |Susp| operator does not undermine their treatment of
+disjunction in any way.
 
 \begin{meta}
 The zipper cannot go beyond an unresolved disjunction. That is OK
@@ -73,9 +74,9 @@ However, most interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting the parser with
 error correction is therefore desirable.
 
-We can do so by introducing an other constructor in the |Parser| type to denote
-less desirable parses. The intent is to extend the grammar with more permissive rules
-to deal with incorrect input, tagging those as less desirable. The parsing algorithm
+We can do so by introducing an other constructor (|Yuck|) in the |Parser| type
+to denote less desirable parses. Parsers will accept any input, but some will be
+less desirable than other and reflect this in the output. The parsing algorithm
 can then maximize the desirability of the set of rules used for parsing a given
 fragment of input.
 
@@ -88,39 +89,95 @@ data Parser s a where
     Yuck   :: Parser s a                         -> Parser s a
 \end{code}
 
-\textmeta{explain better}
+\textmeta{Insert example}
 
-At each disjunction point, the evaluation function will have to choose between
-two alternatives. Since we want online behavior, we cannot afford to look
+
+\subsection{The algorithm}
+
+Now that we have defined our definitive interface for parsers, we can describe
+the parsing algorithm itself.
+
+As before, we can linearize the applications by transforming the |Parser| into a polish-like 
+representation. In addition to the the |Dislike| and |Best| constructors correponding to |Yuck| and
+|Disj|, |Shift| records where symbols have been processed, once |Susp| is removed.
+
+
+\begin{code}
+data Polish s a where
+    Push     ::  a -> Polish s r                      ->  Polish s (a :< r)
+    App      ::  Polish s ((b -> a) :< b :< r)
+                                                      ->  Polish s (a :< r)
+    Done     ::                                           Polish s Nil
+    Shift    ::  Polish s a                           ->  Polish s a
+    Sus      ::  Polish s a -> (s -> Polish s a) 
+                                                      ->  Polish s a
+    Best     ::  Polish s a -> Polish s a             ->  Polish s a
+    Dislike  ::  Polish s a                           ->  Polish s a
+
+toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
+toP (Pure x)    = Push x
+toP (f :*: x)   = App . toP f . toP x
+toP (Symb a f)  = \fut -> Sus  (toP a fut)
+                               (\s -> toP (f s) fut)
+toP (Disj a b)  = \fut -> Best (toP a fut) (toP b fut)
+toP (Yuck p)    = Dislike . toP p 
+\end{code}
+
+The remaining challenge is to amend our evaluation functions to deal with disjunction points (|Best|).
+It offers two alternatives with are \emph{a priori} equivalent. Which one should be chosen?
+
+Since we want online behavior, we cannot afford to look
 further than a few symbols ahead to decide which parse might be the best.
 (Additionally the number of potential recovery paths grows exponentially with
 the amount of lookahead). We use the widespread technique \citep[chapter
 8]{bird_algebra_1997} to \emph{thin out} the search after some constant, small amount of
-lookahead.
+lookahead. 
 
 While \citet{hughes_polish_2003} compute the best path by direct manipulation
-of the polish representation, we want to clearly separate this concern by
-introducing a new datatype which represents the ``progress'' information only.
+of the polish representation, we introduce a new datatype which represents the
+``progress'' information only. This clear separation of concerns enables to deal
+with error-correction more cleanly: the |Progress| data structure directly records how
+many |Dislike| are encountered after parsing so many symbols.
 
 \begin{code}
-data Progress = PSusp | PRes Int | !Int :> Progress
+data Progress = PSusp | PRes Int | Int :> Progress
 \end{code}
 
-This data structure is an abstraction of the |Polish| type,
-which tells how many |Dislike| are encountered after parsing so many symbols.
 It is similar to a list where the $n^{th}$ element tells how
 much we dislike to take this path after shifting $n$ symbols following it,
 \emph{assuming we take the best choice at each disjunction}.
-
-The difference with a simple list is that progress information may end with
+The difference from a simple list is that progress information may end with
 success or suspension, depending on whether the process reaches |Done| or
 |Susp|.
 Figure~\ref{fig:progress} shows a |Polish| structure and the associated
 progress for each of its parts.
 
-If we accept our thinning heuristic, 
-given two (terminated) |Progress| values, it is possible to determine which one
-is best by demanding only a prefix of each.
+If we accept our thinning heuristic, given two |Progress| values corresponding
+to two terminates |Polish| processes, it is possible to determine which one is
+best by demanding only a prefix of each, as follows.
+
+\begin{code}
+better _ PSusp _ = (EQ, PSusp)
+better _ _ PSusp = (EQ, PSusp)
+better _ (PRes x) (PRes y) = 
+   if x <= y then (LT, PRes x) else (GT, PRes y)
+better lk xs@(PRes x) (y:>ys) = 
+   if x == 0 || y-x > dislikeThreshold lk 
+   then (LT, xs) 
+   else min x y +> better (lk+1) xs ys
+better lk (y:>ys) xs@(PRes x) = 
+   if x == 0 || y-x > dislikeThreshold lk 
+   then (GT, xs) 
+   else min x y +> better (lk+1) ys xs
+better lk (x:>xs) (y:>ys)
+    | x == 0 && y == 0 = rec
+    | y - x > threshold = (LT, x:>xs)
+    | x - y > threshold = (GT, y:>ys)
+    | otherwise = rec
+    where  threshold = dislikeThreshold lk
+           rec = min x y +> better (lk + 1) xs ys
+x +> ~(ordering, xs) = (ordering, x :> xs)
+\end{code}
 
 We can now use this information to determine which path to take when facing a
 disjunction. In turn, this allows to compute the progress information on the
@@ -140,15 +197,6 @@ data Polish s a where
                  Polish s a -> Polish s a           ->  Polish s a
     Dislike  ::  Polish s a                           ->  Polish s a
 
-progress :: Polish s r -> Progress
-progress (Push _ p)       = progress p                          
-progress (App p)          = progress p                          
-progress (Shift p)        = 0 :> progress p                     
-progress (Done)           = PRes 0
-progress (Dislike p)      = mapSucc (progress p)                
-progress (Sus _ _)        = PSusp                               
-progress (Best _ pr _ _)  = pr                                  
-
 toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
 toP (Symb a f)  = \fut -> Sus  (toP a fut)
                                (\s -> toP (f s) fut)
@@ -157,26 +205,37 @@ toP (Pure x)    = Push x
 toP (Disj a b)  = \fut -> mkBest (toP a fut) (toP b fut)
 toP (Yuck p)    = Dislike . toP p 
 
+progress :: Polish s r -> Progress
+progress (Push _ p)       = progress p                          
+progress (App p)          = progress p                          
+progress (Shift p)        = 0 :> progress p
+progress (Done)           = PRes 0
+progress (Dislike p)      = mapSucc (progress p)                
+progress (Sus _ _)        = PSusp                               
+progress (Best _ pr _ _)  = pr                                  
+
 mkBest :: Polish s a -> Polish s a -> Polish s a
 mkBest p q = 
    let  (choice, pr) = better 0 (progress p) (progress q) 
    in   Best choice pr p q
-
-better :: Int -> Progress -> Progress
-                                 -> (Ordering, Progress)
--- compute which progress is the better one 
--- (with a given lookahead), and return it.
 \end{code}
-\caption{Handling disjunction}
+\caption{The final |Polish| datatype and its construction procedure.}
+\label{fig:finalpolish}
 \end{figure}
 
-Proceeding exactly as such is horribly inefficient. We can use the well known technique
-\cite{swierstra} to cache the progress information by tupling it with the |Polish|
-representation. For simplicity, we cache the information only at disjunction
-nodes where we also remember which path is best to take.
+Proceeding exactly as such is very inefficient, because which path is best is
+recomputed every time the disjunction is encountered. If the result of a
+disjunction depends on the result of further disjunction, the result of the
+further disjunction will be needlessly discarded.
+Therefore, we use
+the well known technique to cache the progress information by tupling it with
+the |Polish| representation, as shown in figure~\ref{fig:finalpolish}. For
+simplicity, we cache the information only at disjunction nodes where we also
+remember which path is best to take.
 
-We can adapt our evaluation functions accordingly. We write the 
-the online evalution only: partial result computation is modified similarly.
+We can finally write our evaluation functions. We write the the online evalution only: partial
+result computation is modified similarly.
+
 \begin{code}
 -- Right-eval a fully defined process
 evalR :: Polish s r -> r
@@ -192,11 +251,10 @@ evalR (Best choice _ p q) = case choice of
     EQ -> error $ "evalR: Ambiguous parse!"
 \end{code}
 
-We finally see why the |Polish| representation is so important:
-the progress information cannot be associated to a |Parser|, because
-it may depend on whatever parser \emph{follows} it. This is not
-an issue in the |Polish| representation, because it is unfolded until
-the end of the parsing.
+We finally see why the |Polish| representation is important: the progress
+information cannot be associated to a |Parser|, because it may depend on
+whatever parser \emph{follows} it. This is not an issue in the |Polish|
+representation, because application are unfolded until the end of the parsing.
 
 
 Our technique can be re-formulated as lazy dynamic programming, in the style of
@@ -223,30 +281,9 @@ lead to errors while processing the rest of the output, while another prefix
 would match the rest of the input and yield no error. In the present version of
 the library we avoid the problem by keeping all valid prefixes.
 The user of the parsing library has to be aware of this issue when designing
-grammars: it can affect the performance of the algorithm to a great extent.
+grammars: it can affect the performance of the algorithm to a great extent,
+by triggering an exponential explosion of possible paths.
 
-\begin{code}
-better _ PSusp _ = (EQ, PSusp)
-better _ _ PSusp = (EQ, PSusp)
-better _ (PRes x) (PRes y) = 
-   if x <= y then (LT, PRes x) else (GT, PRes y)
-better lk xs@(PRes x) (y:>ys) = 
-   if x == 0 || y-x > dislikeThreshold lk 
-   then (LT, xs) 
-   else min x y +> better (lk+1) xs ys
-better lk (y:>ys) xs@(PRes x) = 
-   if x == 0 || y-x > dislikeThreshold lk 
-   then (GT, xs) 
-   else min x y +> better (lk+1) ys xs
-better lk (x:>xs) (y:>ys)
-    | x == 0 && y == 0 = rec
-    | y - x > threshold = (LT, x:>xs)
-    | x - y > threshold = (GT, y:>ys)
-    | otherwise = rec
-    where  threshold = dislikeThreshold lk
-           rec = min x y +> better (lk + 1) xs ys
-x +> ~(ordering, xs) = (ordering, x :> xs)
-\end{code}
 
 
 
