@@ -1,8 +1,10 @@
 \ignore{
 
->module SExpr where
->import Control.Applicative
->import Data.Tree
+\begin{code}
+module SExpr where
+import Control.Applicative
+import Data.Tree
+\end{code}
 
 }
 
@@ -11,6 +13,7 @@ data SExpr = S [SExpr] | Atom Char
 \end{code}
 
 \ignore{
+
 data SExpr = S [SExpr] (Maybe Char) | Atom Char | Quoted [SExpr] (Maybe Char) | Inserted Char | Deleted Char
 
 showS _ (Atom c) = [c]

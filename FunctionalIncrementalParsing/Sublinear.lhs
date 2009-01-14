@@ -5,7 +5,7 @@
 module Sublinear where
 import SExpr
 import Stack
-import Choice
+import Parser
 
 \end{code}
 

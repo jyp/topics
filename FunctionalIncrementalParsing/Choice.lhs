@@ -6,12 +6,8 @@
 module Choice where
 import SExpr
 import Stack
-
-mapSucc PSusp = PSusp
-mapSucc (PRes x) = PRes (succ x) 
-mapSucc (x :> xs) = succ x :> mapSucc xs
-
-dislikeThreshold _ = 0
+import Parser
+import Progress
 
 \end{code}
 
@@ -80,14 +76,7 @@ less desirable than other and reflect this in the output. The parsing algorithm
 can then maximize the desirability of the set of rules used for parsing a given
 fragment of input.
 
-\begin{code}
-data Parser s a where
-    Pure   :: a                                  -> Parser s a
-    (:*:)  :: Parser s (b -> a) -> Parser s b    -> Parser s a
-    Symb   :: Parser s a -> (s -> Parser s a)    -> Parser s a
-    Disj   :: Parser s a -> Parser s a           -> Parser s a
-    Yuck   :: Parser s a                         -> Parser s a
-\end{code}
+%include Parser.lhs
 
 \textmeta{Insert example}
 
@@ -101,27 +90,7 @@ As before, we can linearize the applications by transforming the |Parser| into a
 representation. In addition to the the |Dislike| and |Best| constructors correponding to |Yuck| and
 |Disj|, |Shift| records where symbols have been processed, once |Susp| is removed.
 
-
-\begin{code}
-data Polish s a where
-    Push     ::  a -> Polish s r                      ->  Polish s (a :< r)
-    App      ::  Polish s ((b -> a) :< b :< r)
-                                                      ->  Polish s (a :< r)
-    Done     ::                                           Polish s Nil
-    Shift    ::  Polish s a                           ->  Polish s a
-    Sus      ::  Polish s a -> (s -> Polish s a) 
-                                                      ->  Polish s a
-    Best     ::  Polish s a -> Polish s a             ->  Polish s a
-    Dislike  ::  Polish s a                           ->  Polish s a
-
-toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
-toP (Pure x)    = Push x
-toP (f :*: x)   = App . toP f . toP x
-toP (Symb a f)  = \fut -> Sus  (toP a fut)
-                               (\s -> toP (f s) fut)
-toP (Disj a b)  = \fut -> Best (toP a fut) (toP b fut)
-toP (Yuck p)    = Dislike . toP p 
-\end{code}
+%include Polish2.lhs
 
 The remaining challenge is to amend our evaluation functions to deal with disjunction points (|Best|).
 It offers two alternatives with are \emph{a priori} equivalent. Which one should be chosen?
@@ -139,9 +108,7 @@ of the polish representation, we introduce a new datatype which represents the
 with error-correction more cleanly: the |Progress| data structure directly records how
 many |Dislike| are encountered after parsing so many symbols.
 
-\begin{code}
-data Progress = PSusp | PRes Int | Int :> Progress
-\end{code}
+%include Progress.lhs
 
 It is similar to a list where the $n^{th}$ element tells how
 much we dislike to take this path after shifting $n$ symbols following it,
@@ -242,6 +209,7 @@ evalR :: Polish s r -> r
 evalR Done = Nil
 evalR (Push a r) = a :< evalR r
 evalR (App s) = apply (evalR s)
+  where apply ~(f:< ~(a:<r)) = f a :< r
 evalR (Shift v) = evalR v
 evalR (Dislike v) = (evalR v)
 evalR (Sus _ _) = error "evalR: Not fully evaluated!"
