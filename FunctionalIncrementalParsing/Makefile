@@ -12,9 +12,12 @@ checks:
 	ghc -c SExpr.lhs
 	ghc -c Stack.lhs
 	ghc -c Applicative.lhs
+	ghc -c Parser.lhs
+	ghc -c Progress.lhs
 	ghc -c Input.lhs
 	ghc -c Choice.lhs
 	ghc -c Sublinear.lhs
+	ghc -c Polish2.lhs
 
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<

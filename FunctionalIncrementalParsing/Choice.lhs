@@ -204,16 +204,15 @@ We can finally write our evaluation functions. We write the the online evalution
 result computation is modified similarly.
 
 \begin{code}
--- Right-eval a fully defined process
 evalR :: Polish s r -> r
-evalR Done = Nil
-evalR (Push a r) = a :< evalR r
-evalR (App s) = apply (evalR s)
-  where apply ~(f:< ~(a:<r)) = f a :< r
-evalR (Shift v) = evalR v
-evalR (Dislike v) = (evalR v)
-evalR (Sus _ _) = error "evalR: Not fully evaluated!"
-evalR (Best choice _ p q) = case choice of
+evalR Done                   = Nil                                
+evalR (Push a r)             = a :< evalR r                       
+evalR (App s)                = apply (evalR s)                    
+  where apply ~(f:< ~(a:<r)) = f a :< r                           
+evalR (Shift v)              = evalR v                            
+evalR (Dislike v)            = (evalR v)                          
+evalR (Sus _ _)              = error "input pending"
+evalR (Best choice _ p q)    = case choice of                     
     LT -> evalR p
     GT -> evalR q
     EQ -> error $ "evalR: Ambiguous parse!"

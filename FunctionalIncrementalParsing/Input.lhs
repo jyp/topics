@@ -151,7 +151,7 @@ information).
 
 Thus we have to use a better strategy to simplify intermediate results. We want
 to avoid the cost of traversing the structure up to the suspension at each step.
-This suggests to use a zipper structure (\citep{huet_zipper_1997}) with the
+This suggests to use a zipper structure \citep{huet_zipper_1997} with the
 focus at the suspension point.
 
 
