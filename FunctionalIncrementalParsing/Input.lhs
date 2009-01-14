@@ -72,11 +72,11 @@ on the input, and choose the corresponding branch in the result.
 
 \begin{code}
 feed :: Polish s r -> [s] -> Polish s r
-feed  (Susp nil cons)  []      = feed   []   nil         
-feed  (Susp nil cons)  (s:ss)  = feed   ss'  (cons s)  
-feed  (Push x p')      ss      = Push x  (feed ss p')
-feed  (App p')         ss      = App     (feed ss p')
-feed  Done             ss      = Done                
+feed  (Susp nil cons)  []      = feed   nil         []
+feed  (Susp nil cons)  (s:ss)  = feed   (cons s)    ss
+feed  (Push x p)       ss      = Push x  (feed p ss)  
+feed  (App p)          ss      = App     (feed p ss)  
+feed  Done             ss      = Done                 
 \end{code} 
 
 For example, |feed "(a)" (toPolish parseList)| yields back our example expression: |S [Atom 'a']|.
@@ -86,7 +86,7 @@ We can also obtain intermediate parsing results by feeding symbols one at a
 time. The list of all intermediate results is constructed lazily using |scanl|.
 
 \begin{code}
-feedOne :: Polish s a -> s -> Polish s a
+feedOne :: Polish s a -> [s] -> Polish s a
 feedOne (Susp nil cons)    (s:ss)   = cons s
 feedOne (Push x p)         ss       = Push x (feedOne p ss)
 feedOne (App p)            ss       = App (feedOne p ss)
