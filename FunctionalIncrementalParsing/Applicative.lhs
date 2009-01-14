@@ -1,3 +1,4 @@
+% -*- latex -*-
 \ignore{
 
 \begin{code}
@@ -21,9 +22,9 @@ Our goal is to provide a combinator library with a standard interface, similar t
 presented by \citet{swierstra_combinator_2000}, with sequencing, disjunction,
 production of results and reading of symbols. 
 
-Such an interface can be captured
-in a GADT as follows. (Throughout this paper we will make extensive use of GADT
-for modeling purposes.)
+Such an interface can be captured in a generalized algebraic data type (GADT)
+as follows. (Throughout this paper we will make extensive use of GADTs for
+modeling purposes.)
 
 \begin{spec}
 data Parser s a where
@@ -38,7 +39,7 @@ data Parser s a where
 \citet{hughes_polish_2003} show that the sequencing operator must be applicative
 (\citet{mcbride_applicative_2007}) to allow for online production of results.
 
-Since this is the cornerstone to our approach of incremental parsing, we review
+Since this is the cornerstone of our approach to incremental parsing, we review
 the result in this section. We will focus on the first two constructors of the
 above datatype, corresponding to the applicative sublanguage. While doing so we
 also introduce the concepts necessary for the computation of intermediate
@@ -47,7 +48,7 @@ results.
 \subsection{The applicative sublanguage}
 
 A requirement for online result production is that the top-level constructors
-are available before their arguments are computed. This can be done only if the
+are available before their arguments are computed. This can only be done if the
 parser can observe the structure of the result. Hence, we make function
 applications explicit in the expression describing the results.
 
@@ -66,7 +67,7 @@ of Haskell values. It is indexed by the type of values it represents.
 data Applic a where
     (:*:) :: Applic (b -> a) -> Applic b    -> Applic a
     Pure :: a                               -> Applic a
-infixl :*:
+infixl 4 :*:
 \end{code}
 
 The application annotations can then be written using Haskell syntax as follows:
@@ -179,7 +180,7 @@ evalR (Done)      = Nil
 %                       (x, s'') = evalR s'
 %                  in (f x, s'')
 
-We have the equality |top (evalR (toPolish x)) == evalA x|.
+We have the equality |evalR (toPolish x) == evalA x :< Nil|.
 
 Additionally, we note that this evaluation procedure still possesses the ``online''
 property: parts of the polish expression are demanded only if the corresponding

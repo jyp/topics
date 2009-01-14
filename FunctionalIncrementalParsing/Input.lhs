@@ -24,8 +24,8 @@ at least one symbol available, and it can depend on it.
 
 \begin{code}
 data Parser s a where
-    (:*:) :: Parser s (b -> a) -> Parser s b   -> Parser s a
     Pure :: a                                  -> Parser s a
+    (:*:) :: Parser s (b -> a) -> Parser s b   -> Parser s a
     Symb :: Parser s a -> (s -> Parser s a)    -> Parser s a
 \end{code}
 
@@ -38,8 +38,9 @@ parseList = Symb
    (\c -> case c of
        ')'  -> Pure []
        ' '  -> parseList -- ignore spaces
-       '('  -> Pure (\h t -> S h : t) :*: parseList :*: parseList
-       c    -> Pure (Atom c :) :*: parseList)
+       '('  -> Pure (\h t -> S h : t) :*: parseList 
+                   :*: parseList
+       c    -> Pure ((Atom c) :) :*: parseList)
 \end{code}
 
 
@@ -70,16 +71,15 @@ be resolved by feeding input into it. When facing a suspension, we pattern match
 on the input, and choose the corresponding branch in the result.
 
 \begin{code}
-feed :: [s] -> Polish s r -> Polish s r
-feed ss p = case p of
-                  (Susp nil cons)   -> case ss of
-                      []            -> feed  []  nil
-                      (s:ss')       -> feed  ss' (cons s)
-                  (Push x p')      -> Push x  (feed ss p')
-                  (App p')         -> App     (feed ss p')
-\end{code}
+feed :: Polish s r -> [s] -> Polish s r
+feed  (Susp nil cons)  []      = feed   []   nil         
+feed  (Susp nil cons)  (s:ss)  = feed   ss'  (cons s)  
+feed  (Push x p')      ss      = Push x  (feed ss p')
+feed  (App p')         ss      = App     (feed ss p')
+feed  Done             ss      = Done                
+\end{code} 
 
-For example, |feed "(a)" (toPolish parseList)| yields back our example expression.
+For example, |feed "(a)" (toPolish parseList)| yields back our example expression: |S [Atom 'a']|.
 
 
 We can also obtain intermediate parsing results by feeding symbols one at a
@@ -87,9 +87,10 @@ time. The list of all intermediate results is constructed lazily using |scanl|.
 
 \begin{code}
 feedOne :: Polish s a -> s -> Polish s a
-feedOne (Push x s)         ss  = Push x (feedOne s ss)
-feedOne (App f)            ss  = App (feedOne f ss)
-feedOne (Susp nil cons)    s   = cons s
+feedOne (Susp nil cons)    (s:ss)   = cons s
+feedOne (Push x p)         ss       = Push x (feedOne p ss)
+feedOne (App p)            ss       = App (feedOne p ss)
+feedOne Done               ss       = Done 
 \end{code}
 
 \begin{spec}
@@ -114,7 +115,7 @@ the way.
 evalL :: Polish s a -> Polish s a
 evalL (Push x r) = Push x (evalL r)
 evalL (App f) = case evalL f of
-                  (Push a (Push b r)) -> Push (a b) r
+                  (Push g (Push b r)) -> Push (g b) r
                   r -> App r
 partialParses = scanl (\c -> evalL . feedOne c)
 \end{code}
@@ -200,7 +201,7 @@ In our zipper type, the direct polish expression yet-to-visit
 automation (``on the left''): the output of the latter has to match
 the input of the former.
 
-Capture all these properties in the types by using GADTs
+Capturing all these properties in the types by using GADTs
 allows to write a properly typed traversal of polish expressions.
 
 \begin{code}
@@ -223,7 +224,7 @@ simplify x = x
 
 We see that simplifying a complete reverse polish expression requires $O(n)$
 steps, where $n$ is the length of the expression. This means that the
-\emph{amortized} complexity of parsing one token (i.e. computing an partial
+\emph{amortized} complexity of parsing one token (i.e. computing a partial
 result based on the previous partial result) is $O(1)$, if the size of the
 result expression is proportional to the size of the input. We discuss the worst
 case complexity in section~\ref{sec:sublinear}.

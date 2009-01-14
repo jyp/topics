@@ -12,5 +12,5 @@ module Stack where
 \begin{code}
 data top :< rest = (:<) {top :: top, rest :: rest}
 data Nil = Nil
-infixr :<
+infixr 4 :<
 \end{code}
