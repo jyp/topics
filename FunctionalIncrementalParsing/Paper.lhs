@@ -484,6 +484,8 @@ gave helpful comments on drafts.
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
 \section {Appendix: The complete code}
-The complete code of the library described in this paper can be found here: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.hs}
+The complete code of the library described in this paper can be found here: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.lhs}
+
+%include Code.lhs
 
 \end{document}

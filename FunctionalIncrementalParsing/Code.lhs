@@ -1,53 +1,3 @@
-% -*- latex -*-
-\documentclass[preprint]{sigplanconf}
-%include lhs2TeX.fmt
-%format :*: = " \applbind"
-%format :|: = " \disjunct"
-%format +> = " \secondPush"
-\usepackage{amsmath}
-\usepackage[mathletters]{ucs}
-\usepackage[utf8x]{inputenc}
-\usepackage{graphicx}
-\usepackage{pgf}
-\usepackage{tikz}
-% \usetikzlibrary{trees,positioning,arrows}
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{3pt}
-\usepackage{enumerate}
-% \usepackage[sort&compress,numbers]{natbib}
-\usepackage[sort&compress]{natbib}
-\usepackage{url}
-\newcommand{\ignore}[1]{}
-\providecommand{\TODO}[1]{\footnote{#1}}
-\providecommand{\annot}[1]{\marginpar{\footnotesize \raggedright #1}}
-\newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
-\newcommand{\disjunct}{\mathbin{:\!\!||\!\!:}}
-\newcommand{\secondPush}{\mathbin{+\!\!>}}
-\newcommand{\prog}{\ensuremath{\mathbin{:>}}}
-
-\newenvironment{meta}{%
-\begin{quote}
-\sf
-}{%
-\end{quote}
-}
-
-\providecommand{\textmeta}[1]{\begin{quote}\textsf{{#1}}\end{quote}}
-
-\begin{document}
-
-\titlebanner{Draft}        % These are ignored unless
-\preprintfooter{In preparation for ICFP09}   % 'preprint' option specified.
-
-\title{Lazy Functional Incremental Parsing}
-
-\authorinfo{Jean-Philippe Bernardy}
-           {Computer Science and Engineering, 
-            Chalmers University of Technology and University of Gothenburg}
-           {bernardy@@chalmers.se}
-
-
-\maketitle
 
 \begin{code}
 
@@ -59,24 +9,17 @@ module Code(
             mkProcess,
             evalZR,
             evalZL,
-            feedSyms,
-            -- * Debug
-            runParser
-           ) where
-
--- * Parser Interface
+            feedSyms) where
 
 -- Parser specification
 data Parser s a where
-    Pure   :: a                               ->  Parser s a
-    (:*:)  :: Parser s (b -> a) -> Parser s b ->  Parser s a
-    Symb   :: Parser s a -> (s -> Parser s a) ->  Parser s a
-    (:^:)  :: Parser s a -> Parser s a        ->  Parser s a
-    Yuck   :: Parser s a                      ->  Parser s a
+    Pure   :: a                                ->  Parser s a
+    (:*:)  :: Parser s (b -> a) -> Parser s b  ->  Parser s a
+    Symb   :: Parser s a -> (s -> Parser s a)  ->  Parser s a
+    Disj   :: Parser s a -> Parser s a         ->  Parser s a
+    Yuck   :: Parser s a                       ->  Parser s a
 
--- Running interface
---- interface 
-
+-- Working with parsing processes
 mkProcess :: Parser s a -> Zip s (a :< Nil)
 mkProcess p = Zip RStop (toP p $ Done)
 
@@ -91,26 +34,32 @@ data top :< rest = (:<) {top :: top, rest :: rest}
 infixr :<
 data Nil = Nil
 
+
 -- Polish + Progress
 data Polish s a where
-    Push    :: a -> Polish s r                      -> Polish s (a :< r)
-    App     :: Polish s ((b -> a) :< (b :< r))      -> Polish s (a :< r)
-    Done    ::                               Polish s Nil
-    Shift   ::           Polish s a        -> Polish s a
-    Sus     :: Polish s a -> (s -> Polish s a) -> Polish s a
-    Best    :: Ordering -> Progress -> Polish s a -> Polish s a -> Polish s a
-    Dislike :: Polish s a -> Polish s a
+    Push     ::  a -> Polish s r                      ->  Polish s (a :< r)
+    App      ::  Polish s ((b -> a) :< b :< r)
+                                                      ->  Polish s (a :< r)
+    Done     ::                                           Polish s Nil
+    Shift    ::  Polish s a                           ->  Polish s a
+    Sus      ::  Polish s a -> (s -> Polish s a) 
+                                                      ->  Polish s a
+    Best     ::  Ordering -> Progress -> 
+                 Polish s a -> Polish s a             ->  Polish s a
+    Dislike  ::  Polish s a                           ->  Polish s a
 
--- From Parsers to Polish
-type P s a = forall r. (Polish s r) -> (Polish s (a :< r))
-toP :: Parser s a -> P s a 
-toP (Symb a f) = \fut -> Sus (toP a fut) (\s -> toP (f s) fut)
-toP (f :*: x) = App . toP f . toP x
-toP (Pure x)   = Push x
-toP ((:^:) a b)  = \fut -> mkBest (toP a fut) (toP b fut)
-toP (Yuck p) = Dislike . toP p 
+toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
+toP (Symb a f)  = \fut -> Sus  (toP a fut)
+                               (\s -> toP (f s) fut)
+toP (f :*: x)   = App . toP f . toP x
+toP (Pure x)    = Push x
+toP (Disj a b)  = \fut -> mkBest (toP a fut) (toP b fut)
+toP (Yuck p)    = Dislike . toP p 
 
 -- Working with polish representation
+
+-- feed some symbols into the process. 
+-- |Nothing| represents the end of file.
 feed :: Maybe [s] -> Polish s r -> Polish s r
 feed (Just []) p = p  -- nothing more left to feed
 feed ss p = case p of
@@ -127,7 +76,7 @@ feed ss p = case p of
 
 
 -- Handling disjunction and errors.
-data Progress = PSusp | PRes Int | !Int :> Progress
+data Progress = PSusp | PRes Int | Int :> Progress
     deriving Show
 
 mapSucc PSusp = PSusp
@@ -136,52 +85,59 @@ mapSucc (x :> xs) = succ x :> mapSucc xs
 
 dislikeThreshold _ = 0
 
--- Compute the combination of two profiles, as well as which one is the best.
-better :: Int -> Progress -> Progress -> (Ordering, Progress)
-better _ PSusp _ = (EQ, PSusp) -- could not decide before suspension => leave undecided.
+-- Compute the combination of two profiles, 
+-- as well as which one is the best.
+better _ PSusp _ = (EQ, PSusp)
 better _ _ PSusp = (EQ, PSusp)
-better _ (PRes x) (PRes y) = if x <= y then (LT, PRes x) else (GT, PRes y)  -- two results, just pick the best.
-better lk xs@(PRes x) (y:>ys) = if x == 0 || y-x > dislikeThreshold lk then (LT, xs) else min x y +> better (lk+1) xs ys
-better lk (y:>ys) xs@(PRes x) = if x == 0 || y-x > dislikeThreshold lk then (GT, xs) else min x y +> better (lk+1) ys xs
+better _ (PRes x) (PRes y) = 
+   if x <= y then (LT, PRes x) else (GT, PRes y)
+better lk xs@(PRes x) (y:>ys) = 
+   if x == 0 || y-x > dislikeThreshold lk 
+   then (LT, xs) 
+   else min x y +> better (lk+1) xs ys
+better lk (y:>ys) xs@(PRes x) = 
+   if x == 0 || y-x > dislikeThreshold lk 
+   then (GT, xs) 
+   else min x y +> better (lk+1) ys xs
 better lk (x:>xs) (y:>ys)
-    | x == 0 && y == 0 = rec -- never drop things with no error: this ensures to find a correct parse if it exists.
-    | y - x > threshold = (LT, x:>xs) -- if at any point something is too disliked, drop it.
+    | x == 0 && y == 0 = rec
+    | y - x > threshold = (LT, x:>xs)
     | x - y > threshold = (GT, y:>ys)
     | otherwise = rec
-    where threshold = dislikeThreshold lk
-          rec = min x y +> better (lk + 1) xs ys
-
+    where  threshold = dislikeThreshold lk
+           rec = min x y +> better (lk + 1) xs ys
 x +> ~(ordering, xs) = (ordering, x :> xs)
 
 progress :: Polish s r -> Progress
-progress (Push _ p) = progress p
-progress (App p) = progress p
-progress (Shift p) = 0 :> progress p
-progress (Done) = PRes 0 -- success with zero dislikes
-progress (Dislike p) = mapSucc (progress p)
-progress (Sus _ _) = PSusp
-progress (Best _ pr _ _) = pr
+progress (Push _ p)       = progress p                          
+progress (App p)          = progress p                          
+progress (Shift p)        = 0 :> progress p
+progress (Done)           = PRes 0
+progress (Dislike p)      = mapSucc (progress p)                
+progress (Sus _ _)        = PSusp                               
+progress (Best _ pr _ _)  = pr                                  
 
 mkBest :: Polish s a -> Polish s a -> Polish s a
-mkBest p q = let ~(choice, pr) = better 0 (progress p) (progress q) in Best choice pr p q
+mkBest p q = 
+   let  (choice, pr) = better 0 (progress p) (progress q) 
+   in   Best choice pr p q
 
-------------------------------------
--- Feeding symbols into the process
 
------------------------
--- By-value evaluation
-data RPolish input output where
-  RPush :: a -> RPolish (a :< rest) output -> RPolish rest output
-  RApp :: RPolish (b :< rest) output -> RPolish ((a -> b) :< a :< rest) output 
-  RStop :: RPolish rest rest
 
+-- Reverse polish
+data RPolish inp out where
+  RPush  :: a -> RPolish (a :< r) out ->
+               RPolish r out
+  RApp   :: RPolish (b :< r) out ->
+               RPolish ((a -> b) :< a :< r) out 
+  RStop  ::    RPolish r r
 
 -- Evaluate the output of an RPolish automaton, given an input stack
-evalRP :: RPolish input output -> input -> output
-evalRP RStop  acc = acc
-evalRP (RPush v r) acc = evalRP r (v :< acc)
-evalRP (RApp r) ~(f :< ~(a :< rest)) = evalRP r (f a :< rest)
-
+evalRP :: RPolish inp out -> inp -> out
+evalRP RStop acc          = acc 
+evalRP (RPush v r) acc    = evalRP r (v :< acc)
+evalRP (RApp r) ~(f :< ~(a :< acc)) 
+                          = evalRP r (f a :< acc)
 
 -- Gluing a Polish expression and an RP automaton.
 -- This can also be seen as a zipper of Polish expressions.
@@ -190,41 +146,35 @@ data Zip s output where
    -- note that the Stack produced by the Polish expression matches
    -- the stack consumed by the RP automaton.
 
--- Move the zipper to the right, if possible.  The type gives evidence
--- that this function does not change the (type of) output produced.
-right :: Zip s output -> Zip s output
-right (Zip l (Push a r)) = Zip (RPush a l) r
-right (Zip l (App r)) = Zip (RApp l) r
-right (Zip l s) = (Zip l s)
+evalZL :: Zip s output -> Zip s output
+evalZL (Zip l (Push a r))            =  evalZL (Zip (simplify (RPush a l)) r)
+evalZL (Zip l (App r))               =  evalZL (Zip (RApp l) r)              
+evalZL (Zip l (Shift p))             =  evalZL (Zip l p)                     
+evalZL (Zip l (Dislike p))           =  evalZL (Zip l p)                     
+evalZL (Zip l r@(Best choice _ p q)) =  case choice of                       
+              LT ->  evalZL (Zip l p) 
+              GT ->  evalZL (Zip l q) 
+              EQ ->  Zip l r  
+evalZL (Zip l r)                     =  Zip l r
 
-onLeft :: (forall i o. RPolish i o -> RPolish i o) -> Zip s a -> Zip s a
-onLeft f (Zip x y) = (Zip (f x) y)
-
+-- execute the automaton as far as possible
+simplify :: RPolish s output -> RPolish s output
+simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
+simplify x = x
 
 
 evalR :: Polish s r -> r
-evalR Done = Nil
-evalR (Push a r) = a :< evalR r
-evalR (App s) = apply (evalR s)
-  where apply ~(f:< ~(a:<r)) = f a :< r
-evalR (Shift v) = evalR v
-evalR (Dislike v) = (evalR v)
-evalR (Sus _ _) = error "evalR: Not fully evaluated!"
-evalR (Best choice _ p q) = case choice of
+evalR Done                   = Nil                                
+evalR (Push a r)             = a :< evalR r                       
+evalR (App s)                = apply (evalR s)                    
+  where apply ~(f:< ~(a:<r)) = f a :< r                           
+evalR (Shift v)              = evalR v                            
+evalR (Dislike v)            = (evalR v)                          
+evalR (Sus _ _)              = error "input pending"
+evalR (Best choice _ p q)    = case choice of                     
     LT -> evalR p
     GT -> evalR q
-    EQ -> error $ "evalR: Ambiguous parse: " ++ show p ++ " ~~~ " ++ show q
-
-evalZL :: Zip s output -> Zip s output
-evalZL (Zip l (Push a r)) = evalZL (Zip (simplify (RPush a l)) r)
-evalZL (Zip l (App r)) = evalZL (Zip (RApp l) r)
-evalZL (Zip l (Shift p)) = evalZL (Zip l p)
-evalZL (Zip l (Dislike p)) = evalZL (Zip l p)
-evalZL (Zip l r@(Best choice _ p q)) = case choice of
-              LT -> evalZL (Zip l p)
-              GT -> evalZL (Zip l q)
-              EQ -> Zip l r -- don't know where to go: don't speculate on evaluating either branch.
-evalZL (Zip l r) = Zip l r -- done or susp
+    EQ -> error $ "evalR: Ambiguous parse!"
 
 \end{code}
 
@@ -232,6 +182,14 @@ evalZL (Zip l r) = Zip l r -- done or susp
 
 ----------------------------------------
 -- Extra functions for explanation
+
+
+-- Move the zipper to the right, if possible.  The type gives evidence
+-- that this function does not change the (type of) output produced.
+right :: Zip s output -> Zip s output
+right (Zip l (Push a r)) = Zip (RPush a l) r
+right (Zip l (App r)) = Zip (RApp l) r
+right (Zip l s) = (Zip l s)
 
 -------------
 evalA :: Parser s a -> a
@@ -247,10 +205,6 @@ evalA (Pure x) = x
 -- 
 -- suff = Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done
 
--- execute the automaton as far as possible
-simplify :: RPolish s output -> RPolish s output
-simplify (RPush a (RPush f (RApp r))) = simplify (RPush (f a) r)
-simplify x = x
 
 -- Eval in both directions
 evalX :: Zip s output -> Polish s r -> (r, [Zip s output])
@@ -261,6 +215,12 @@ evalX z s0 = case s0 of
          m f ~(s, zz) = z' `seq` (f s, z':zz) -- tie the evaluation of the intermediate stuffs
 
 apply ~(f:< ~(a:<r)) = f a :< r
+
+
+onLeft :: (forall i o. RPolish i o -> RPolish i o) -> Zip s a -> Zip s a
+onLeft f (Zip x y) = (Zip (f x) y)
+
+
 
 ---------------
 -- Debug
@@ -282,13 +242,13 @@ instance Show (RPolish i o) where
     show (RApp p) = show p ++ "a"
     show (RStop) = "!"
 
-
+⟩
 
 runParser :: Parser s a -> [s] -> a
 runParser p i = top $ evalR $ feed Nothing $ feed (Just i)  $ toP p $ Done
 
 }
 
-\end{document}
+
 
 

@@ -6,7 +6,7 @@
 	convert $< $@
 
 Paper.pdf: begin.pdf mid.pdf progress.tex pgf-tree.tex
-Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs Sublinear.lhs
+Paper.tex: SExpr.lhs Stack.lhs Applicative.lhs Input.lhs Choice.lhs Sublinear.lhs Code.lhs
 
 checks:
 	ghc -c SExpr.lhs
@@ -18,6 +18,8 @@ checks:
 	ghc -c Choice.lhs
 	ghc -c Sublinear.lhs
 	ghc -c Polish2.lhs
+	ghc -c Example.lhs
+	ghc -c Code.lhs
 
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<

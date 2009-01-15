@@ -3,14 +3,14 @@
 {-# LANGUAGE TypeOperators, GADTs #-}
 module Example where
 import Choice
-
+import Parser
 \end{code}
 }
 
 First, we can define repetition and sequence in the traditional way:
 
 \begin{code}
-many v = some v `Disj` pure []
+many v = some v `Disj` Pure []
 some v = Pure (:) :*: v :*: many v
 \end{code}
 
@@ -19,14 +19,14 @@ the end of file is not encountered, we keep parsing the input, but
 complain while doing so.
 
 \begin{code}
-eof = symb (pure ()) (\_ -> Yuck eof)
+eof = Symb (Pure ()) (\_ -> Yuck eof)
 \end{code}
 
 Checking for a specific symbol can be done in a similar way: we
 accept anything but be reluctant to get anything unexpected.
 
 \begin{code}
-pleaseSymbol s = symb
+pleaseSymbol s = Symb
      (Yuck $ Pure Nothing)
      (\s' ->if s == s' then Pure (Just ')')
                        else Yuck $ Pure (Just s'))
@@ -43,12 +43,12 @@ data SExpr
     | Missing 
     | Deleted Char
 
-parseExpr = symb
-     (oops "no input" $ pure Missing) 
+parseExpr = Symb
+     (Yuck $ Pure Missing) 
      (\c ->case c of 
-         '(' -> S <$> many parseExpr <*> pleaseSymbol ')'
+         '(' -> Pure S :*: many parseExpr :*: pleaseSymbol ')'
          ')' -> Yuck $ Pure $ Deleted ')'
-         c   -> pure $ Atom c)
+         c   -> Pure $ Atom c)
 
 parseTopLevel 
     = Pure const :*: parseExpr :*: eof
