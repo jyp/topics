@@ -14,7 +14,8 @@ import Progress
 }
 \section{Parsing}
 \label{sec:parsing}
-\textmeta{Termination if there is no recursive call before parsing one token}
+
+\comment{Characterize termination of the algorithm}
 
 We kept the details of actual parsing out of the discussion so far.
 This is for good reason: the machinery for incremental computation
@@ -32,10 +33,10 @@ introduce a disjunction operator, exactly as \citet{hughes_polish_2003} do: the
 addition of the |Susp| operator does not undermine their treatment of
 disjunction in any way.
 
-\begin{meta}
+\comment{
 The zipper cannot go beyond an unresolved disjunction. That is OK
 if we assume that the parser has not much look-ahead.
-\end{meta}
+}
 
 \subsection{Error correction}
 

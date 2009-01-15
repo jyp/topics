@@ -33,6 +33,7 @@
 }
 
 \providecommand{\textmeta}[1]{\begin{quote}\textsf{{#1}}\end{quote}}
+\newcommand{\comment}[1]{}
 
 \begin{document}
 
@@ -49,7 +50,6 @@
 
 \maketitle
 
-\textmeta{API section?}
 \textmeta{Make sure online and incremental parsing are well defined.}
 
 \begin{abstract}
@@ -63,7 +63,7 @@ size of the change, and (ideally) independent of the total size of the document.
 
 We show that combining
 lazy evaluation and caching of intermediate (partial) results
-enables to parse the input incrementally. 
+enables incremental parsing. % to parse the input incrementally. 
 % This is crap!
 % We also introduce a simple general purpose data structure, to eliminate the linear complexity caused by lazy lists traversals while retaining their lazy properties.
 We complete our exposition of incremental parsing in an
@@ -328,7 +328,7 @@ widespread application.
 % 
 % We note that there is no notion of AST update in this definition.
 % 
-% \textmeta{Does this correspond to the online property or the other?}
+% \comment{Does this correspond to the online property or the other?}
 
 \subsection{Incremental computation}
 
@@ -411,14 +411,14 @@ invalidate all the parsing work that follows it, since we take in account \emph{
 possible prefixes ahead of time.
 
 
-\begin{meta}
+\comment{
 Plugging an attribute evaluator on top of this?
 This does not really work since we do not reuse the result. 
 \citet{saraiva_functional_2000}
 
 We could put a semantic layer by replacing the constructors with arbitrary
 semantic functions. Incrementality is not guaranteed then.
-\end{meta}
+}
 
 
 
@@ -451,7 +451,8 @@ achieve the goal of incremental parsing.
 \item In a lazy setting, the combination of online production of results and
 saving intermediate results provide incrementality;
 
-\item \textmeta {not sure what to write about error-correction}
+\item Online parsers can be extended with an error correction scheme for
+modularity.
 
 \item Provided that they are carefully constructed to preserve laziness, tree
 structures can always replace lists in functional programs. Doing so can improve
