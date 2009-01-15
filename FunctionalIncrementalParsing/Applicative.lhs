@@ -41,11 +41,11 @@ data Parser s a where
 
 Since this is the cornerstone of our approach to incremental parsing, we review
 the result in this section. We will focus on the first two constructors of the
-above datatype, corresponding to the applicative sublanguage. While doing so we
+above datatype, corresponding to the applicative sub-language. While doing so we
 also introduce the concepts necessary for the computation of intermediate
 results.
 
-\subsection{The applicative sublanguage}
+\subsection{The applicative sub-language}
 
 A requirement for online result production is that the top-level constructors
 are available before their arguments are computed. This can only be done if the
@@ -102,7 +102,7 @@ becomes
 |@ S (@ (@ (:) (@ Atom 'a') []))|
 
 Since |@| is always followed by exactly two arguments, grouping information can
-be inferred from the applications, and the parenthesises can be dropped. The final
+be inferred from the applications, and the parentheses can be dropped. The final
 polish expression is therefore
 
 \begin{spec}

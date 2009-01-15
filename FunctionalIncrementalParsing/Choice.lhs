@@ -27,14 +27,14 @@ transform it into an incremental algorithm.
 \label{sec:disjunction}
 
 However, parsing the input string with the interface
-presented so far is highly insatisfactory. To support convenient parsing, we can
+presented so far is highly unsatisfactory. To support convenient parsing, we can
 introduce a disjunction operator, exactly as \citet{hughes_polish_2003} do: the
 addition of the |Susp| operator does not undermine their treatment of
 disjunction in any way.
 
 \begin{meta}
 The zipper cannot go beyond an unresolved disjunction. That is OK
-if we assume that the parser has not much lookahead.
+if we assume that the parser has not much look-ahead.
 \end{meta}
 
 \subsection{Error correction}
@@ -48,16 +48,16 @@ constructors.
 It is also stripped of result information (|Push|, |App|) for conciseness, since it is irrelevant to the
 computation of progress information. Each constructor is represented by a circle, and their arguments
 are indicated by arrows.
-The progress information accociated with the process is written in the rectangle
+The progress information associated with the process is written in the rectangle
 beside the node that starts the process. To decide which path to take at the
 disjunction (|Best|), only the gray nodes will be forced, if the desirability difference
-is 1 for lookahead 1.
+is 1 for look-ahead 1.
 }
 \label{fig:progress}
 \end{figure*}
 
 
-Disjuction is not very useful unless coupled with \emph{failure} (otherwise all
+Disjunction is not very useful unless coupled with \emph{failure} (otherwise all
 branches would be equivalent). Still, the (unrestricted) usage of failure is
 problematic for our application: the online property requires at least one
 branch to yield a successful outcome. Indeed, since the |evalR| function
@@ -87,7 +87,7 @@ Now that we have defined our definitive interface for parsers, we can describe
 the parsing algorithm itself.
 
 As before, we can linearize the applications by transforming the |Parser| into a polish-like 
-representation. In addition to the the |Dislike| and |Best| constructors correponding to |Yuck| and
+representation. In addition to the the |Dislike| and |Best| constructors corresponding to |Yuck| and
 |Disj|, |Shift| records where symbols have been processed, once |Susp| is removed.
 
 %include Polish2.lhs
@@ -98,9 +98,9 @@ It offers two alternatives with are \emph{a priori} equivalent. Which one should
 Since we want online behavior, we cannot afford to look
 further than a few symbols ahead to decide which parse might be the best.
 (Additionally the number of potential recovery paths grows exponentially with
-the amount of lookahead). We use the widespread technique \citep[chapter
+the amount of look-ahead). We use the widespread technique \citep[chapter
 8]{bird_algebra_1997} to \emph{thin out} the search after some constant, small amount of
-lookahead. 
+look-ahead. 
 
 While \citet{hughes_polish_2003} compute the best path by direct manipulation
 of the polish representation, we introduce a new datatype which represents the
@@ -200,7 +200,7 @@ the |Polish| representation, as shown in figure~\ref{fig:finalpolish}. For
 simplicity, we cache the information only at disjunction nodes where we also
 remember which path is best to take.
 
-We can finally write our evaluation functions. We write the the online evalution only: partial
+We can finally write our evaluation functions. We write the the online evaluation only: partial
 result computation is modified similarly.
 
 \begin{code}
@@ -238,11 +238,11 @@ that small will be actually constructed.
 \textmeta{example}
 
 A sound basis for thinning out less desirable paths is to discard those which
-are less preferrable by some amount. In order to pick one path after a constant
-amount of lookahead $l$, we must set this difference to 0 when comparing the
+are less preferable by some amount. In order to pick one path after a constant
+amount of look-ahead $l$, we must set this difference to 0 when comparing the
 $l^{th}$ element of the progress information, so that the parser can pick a
 particular path, and return results. Unfortunately, applying this rule strictly
-is dangerous in if the grammar requires a large lookahead, and in particular if
+is dangerous in if the grammar requires a large look-ahead, and in particular if
 it is ambiguous. In that case, the algorithm can possibly commit to a prefix which will
 lead to errors while processing the rest of the output, while another prefix
 would match the rest of the input and yield no error. In the present version of

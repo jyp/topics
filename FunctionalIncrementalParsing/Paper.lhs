@@ -58,7 +58,7 @@ A free-form editor for structured documents may want to maintain a structured
 representation of the edited document. This has a number of applications:
 structural navigation (and optional structural edition), highlighting of source
 code, etc. The construction of the structure must be done incrementally to be
-efficient: the time to process an edit operation should be propotinal to the
+efficient: the time to process an edit operation should be proportional to the
 size of the change, and (ideally) independent of the total size of the document.
 
 We show that combining
@@ -126,7 +126,7 @@ beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
 pre-order). This in turn forces parsing the corresponding part of
 the input, but \emph{only so far} (or maybe a few tokens ahead,
-depending on the amount of lookahead required). If the user modifies
+depending on the amount of look-ahead required). If the user modifies
 the input at this point, it invalidates the AST, but discarding it and
 re-parsing is not too costly: only a screenful of parsing needs to be
 re-done.
@@ -138,7 +138,7 @@ Viewing the middle of a file.
 Parsing proceeds in linear fashion:  
 although only a small amount of the
 parse tree may be demanded, it will depend not only on the portion of the input that corresponds to it, but also 
-on everything that preceeds.
+on everything that precedes.
 }
 \label{fig:mid}
 \end{figure}
@@ -146,7 +146,7 @@ on everything that preceeds.
 As the user scrolls down in the file, more and more of the AST is demanded, and
 the parsing proceeds in lockstep (figure~\ref{fig:mid}). At this stage, a user
 modification is more serious: re-parsing naively from the beginning can be too
-costly for a big file. Fortunately we can again exploit the linear behaviour of
+costly for a big file. Fortunately we can again exploit the linear behavior of
 parsing algorithms to our advantage. Indeed, if we have stored the parser state
 for the input point where the user made the modification, we can \emph{resume}
 parsing from that point. If we make sure to store partial results for every
@@ -156,7 +156,7 @@ the amount of parsing work needed after each user interaction is constant.
 
 Another feature of Yi is that it is configurable in Haskell. Therefore, we
 prefer to use the Haskell language for every aspect of the application, so that
-the user can configure it. In particular, syntaxes should be described using a
+the user can configure it. In particular, syntax should be described using a
 combinator library.
 
 Our main goals can be formulated as constraints on the parsing library:
@@ -179,7 +179,7 @@ Our contributions can be summarized as follows.
 \item
   We describe a novel, purely functional approach to incremental parsing, which
   makes essential use of lazy evaluation. This is achieved by
-  combinining online parsers with caching of intermediate
+  combining online parsers with caching of intermediate
   results.
 
 \item
@@ -232,7 +232,7 @@ section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
 \section{Related work}
 \label{sec:relatedWork}
 
-The litterature on analysis of programs, incremental or not, is so abundant
+The literature on analysis of programs, incremental or not, is so abundant
 that a complete survey would deserve its own treatment. Here we will compare our
 approach to some of the closest alternatives.
 
@@ -260,9 +260,9 @@ still apply when compared to our solution.
 
 \begin{enumerate} 
 \item If the user jumps back and forth between the beginning and the end of the
-file, every forward jump will force reparsing the whole file. Note that we
-mitigate this drawback in our system by cacheing the (lazily constructed)
-whole parse tree: a full reparse is required only when the user makes a change
+file, every forward jump will force re-parsing the whole file. Note that we
+mitigate this drawback in our system by caching the (lazily constructed)
+whole parse tree: a full re-parse is required only when the user makes a change
 while viewing the beginning of the file.
 
 \item Another advantage is that the AST is fully constructed at all times.
@@ -280,7 +280,7 @@ the library to destroy its incremental properties.
 While our approach is much more modest, it is better in some respects.
 
 \begin{enumerate}
-\item One benefit of not analysing the part of the input to the right of the cursor
+\item One benefit of not analyzing the part of the input to the right of the cursor
 is that there is no start-up cost: only a screenful of text needs to be parsed
 to start displaying it.
 
@@ -291,7 +291,7 @@ while editing an Haskell source file, typing \verb!{-! implies that the rest of
 the file becomes a comment up to the next \verb!-}!.)
 
 It is therefore questionable that reusing right-bound parts of the parse
-tree offers any reasonable benefit in practise: it seems to be optimizing for a
+tree offers any reasonable benefit in practice: it seems to be optimizing for a
 special case. This is not very suitable in an interactive system where users
 expect consistent response times.
 
@@ -344,7 +344,7 @@ symbols. This means that, not only their contents will change from one run to
 another, but their numbers will as well. One then might want to rely on laziness,
 as we do, to avoid depending unnecessarily on the tail of the input, but then we
 hit the problem that the algorithm must be described imperatively.
-Therefore, we think that such an approch would be awkward, if at all applicable.
+Therefore, we think that such an approach would be awkward, if at all applicable.
 
 \subsection{Parser combinators}
 
@@ -356,7 +356,7 @@ The introduction of the |Susp| operator is directly inspired by the parallel
 parsing processes of \citet{claessen_parallel_2004}, which features a very similar
 construct to access the first symbol of the input and make it accessible to
 the rest of the computation. This paper presents our implementation as a version of
-polish parsers extended with an evaluation precedure ``by-value'', but we could
+polish parsers extended with an evaluation procedure ``by-value'', but we could
 equally have started with parallel parsing processes and extended them with
 ``by-name'' evaluation. The combination of both evaluation techniques is unique
 to our library.
@@ -383,14 +383,14 @@ Big advantage: the users of the tree are decoupled from their producers.
 
 \section{Future work}
 
-Athough it is trivial to add a \emph{failure} combinator to the library
+Although it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
-parsers. However, in practise this can most often be emulated by a repetitive
+parsers. However, in practice this can most often be emulated by a repetitive
 usage of the |Yuck| combinator. This can lead to some performance loss, as
-the ``very disliked'' branck would require more analysis to be discarded than an
+the ``very disliked'' branch would require more analysis to be discarded than an
 immediate failure. Indeed, if one takes this idea to the extreme and tries to
-use the fixpoint (|fix Yuck|) to represent failure, it will lead to
-nontermination. This is due to our use of strict integers in the progress
+use the fix-point (|fix Yuck|) to represent failure, it will lead to
+non-termination. This is due to our use of strict integers in the progress
 information. We have chosen this representation to emphasize the dynamic
 programming aspect of our solution, but in general it might be more efficient to
 represent progress by a mere interleaving of |Shift| and |Dislike| constructors.
@@ -406,7 +406,7 @@ addition to |Shift|s.
 
 Finally, we might want to re-use the right hand side of previous parses. This could
 be done by keeping the parsing results \emph{for all possible prefixes}. Proceeding
-in this fashion would avoid the cahotic situation where a small modification might
+in this fashion would avoid the chaotic situation where a small modification might
 invalidate all the parsing work that follows it, since we take in account \emph{all}
 possible prefixes ahead of time.
 

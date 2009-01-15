@@ -59,7 +59,7 @@ specially and does re-balancing of the tree as needed. We choose a different
 approach: only the result type is changed, not the parsing library.
 We can do so for two reasons:
 \begin{itemize}
- \item Cominators can be parameterized by arbitray values
+ \item Combinators can be parametrized by arbitrary values
  \item Since we do not update a tree, but
  produce a fresh version every time, we need not worry about re-balancing issues.
 \end{itemize}
@@ -92,11 +92,11 @@ a simple binary tree can fulfill these requirements.
 data Tree a  = Node a (Tree a) (Tree a)
              | Leaf
 \end{code}
-The only choice that remains is the size of the subtrees. The
+The only choice that remains is the size of the sub-trees. The
 specific choice we make is not important as long as we make sure
 that each element is reachable in $O(log~n)$ steps. A simple choice
 is a series of complete trees of increasing depth. The $k^{th}$ tree
-will have depth $k$ and contain $2^{k} - 1$ nodes. For simplicity, all these subtrees
+will have depth $k$ and contain $2^{k} - 1$ nodes. For simplicity, all these sub-trees
 are chained using the same data type: they are attached as the left child
 of the spine of a right-leaning linear tree. Such a structure is depicted in
 figure~\ref{fig:online_tree}.
@@ -178,7 +178,7 @@ parseFullTree p 0 = pure Leaf
 Another benefit of using the tree structure as above is that
 finding the part of the tree corresponding to the edit window
 takes also logarithmic time. 
-Indeed,the size of each subtree depends only on its
+Indeed,the size of each sub-tree depends only on its
 relative position to the root. Therefore, one can access an element by its index
 without pattern matching on any node which is not the direct path to it.
 This allows efficient indexed access without loosing any property of laziness. 
