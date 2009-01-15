@@ -78,8 +78,9 @@ fragment of input.
 
 %include Parser.lhs
 
-\textmeta{Insert example}
+\subsection{Example}
 
+%include Example.lhs
 
 \subsection{The algorithm}
 
@@ -234,8 +235,6 @@ exponentially big data structure is demanded. Thanks to lazy evaluation, only
 that small will be actually constructed.
 
 \subsection{Thinning out results and ambiguous grammars}
-
-\textmeta{example}
 
 A sound basis for thinning out less desirable paths is to discard those which
 are less preferable by some amount. In order to pick one path after a constant

@@ -49,7 +49,7 @@
 
 \maketitle
 
-\textmeta{API section? Full example?}
+\textmeta{API section?}
 \textmeta{Make sure online and incremental parsing are well defined.}
 
 \begin{abstract}
