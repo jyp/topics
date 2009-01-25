@@ -2,8 +2,7 @@
 \begin{code}
 {-# LANGUAGE TypeOperators, GADTs #-}
 module Example where
-import Choice
-import Parser
+import Code
 \end{code}
 }
 

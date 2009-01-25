@@ -3,7 +3,11 @@ import Control.Applicative
 ------------------------------------------------------------
 -- Examples
 
-data SExpr = S [SExpr] (Maybe Char) | Atom Char | Quoted [SExpr] (Maybe Char) | Inserted Char | Deleted Char
+data SExpr = S [SExpr] (Maybe Char) 
+           | Atom Char
+           | Quoted [SExpr] (Maybe Char) 
+           | Inserted Char
+           | Deleted Char
     deriving Show
 -- the only place we use disjunction is in many.
 

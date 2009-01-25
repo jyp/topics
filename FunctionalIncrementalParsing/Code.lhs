@@ -6,6 +6,7 @@ module Code(
             -- * Parser construction
             Parser(..),
             -- * Working with parsing processes
+            Process,
             mkProcess,
             evalZR,
             evalZL,
@@ -20,6 +21,8 @@ data Parser s a where
     Yuck   :: Parser s a                       ->  Parser s a
 
 -- Working with parsing processes
+type Process s a = Zip s (a :< Nil)
+
 mkProcess :: Parser s a -> Zip s (a :< Nil)
 mkProcess p = Zip RStop (toP p $ Done)
 
