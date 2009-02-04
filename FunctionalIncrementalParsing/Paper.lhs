@@ -50,14 +50,15 @@
 
 \maketitle
 
-\textmeta{Make sure online and incremental parsing are well defined.}
+\comment{Make sure online and incremental parsing are well defined.}
 
 \begin{abstract}
 
-A free-form editor for structured documents may want to maintain a structured
-representation of the edited document. This has a number of applications:
-structural navigation (and optional structural edition), highlighting of source
-code, etc. The construction of the structure must be done incrementally to be
+It is common to edit structured documents in a free-form editor. In such
+an environment, it makes sense to maintain a structured
+representation of the edited document. The structured representation has a number of uses:
+structural navigation (and optional structural edition), structure highlighting, etc. 
+The construction of the structure must be done incrementally to be
 efficient: the time to process an edit operation should be proportional to the
 size of the change, and (ideally) independent of the total size of the document.
 
@@ -98,7 +99,7 @@ performance, the editor must not parse the whole file at each keystroke.
 
 For the purpose of illustration, we sketch how the  
 technique works on a simple problem: interactive feedback of
-parenthesis matching for a lisp-like language. Given an input such
+parenthesis matching for a LISP-like language. Given an input such
 as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display an annotated version:
 \verb!(+ 1 {* 5 [+ 3 4]} 2)!. The idea is that matching pairs are
 displayed using different parenthetical symbols for each level,
@@ -144,15 +145,16 @@ on everything that precedes.
 \end{figure}
 
 As the user scrolls down in the file, more and more of the AST is demanded, and
-the parsing proceeds in lockstep (figure~\ref{fig:mid}). At this stage, a user
-modification is more serious: re-parsing naively from the beginning can be too
-costly for a big file. Fortunately we can again exploit the linear behavior of
-parsing algorithms to our advantage. Indeed, if we have stored the parser state
-for the input point where the user made the modification, we can \emph{resume}
-parsing from that point. If we make sure to store partial results for every
-point of the input, we can ensure that we will never parse more than a
-screenful at a time. Thereby, we achieve incremental parsing, in the sense that
-the amount of parsing work needed after each user interaction is constant. 
+the parsing proceeds in lockstep (figure~\ref{fig:mid}). (We say that the parser
+has \emph {online} behaviour.) At this stage, a user modification is more
+serious: re-parsing naively from the beginning can be too costly for a big file.
+Fortunately we can again exploit the linear behavior of parsing algorithms to
+our advantage. Indeed, if we have stored the parser state for the input point
+where the user made the modification, we can \emph{resume} parsing from that
+point. If we make sure to store partial results for every point of the input, we
+can ensure that we will never parse more than a screenful at a time. Thereby, we
+achieve incremental parsing, in the sense that the amount of parsing work needed
+after each user interaction is constant.
 
 Another feature of Yi is that it is configurable in Haskell. Therefore, we
 prefer to use the Haskell language for every aspect of the application, so that
@@ -226,8 +228,11 @@ section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
     
 %include Applicative.lhs
 %include Input.lhs
+%include Full.lhs
 %include Choice.lhs
-%include Sublinear.lhs
+
+% This is crap :/
+% %include Sublinear.lhs
 
 \section{Related work}
 \label{sec:relatedWork}
@@ -378,6 +383,7 @@ is implemented in a combinator library.
 
 \textmeta{pro and con of using laziness. where do we use laziness? where are we forced to be careful because of that?
 Big advantage: the users of the tree are decoupled from their producers.
+Big disadvantage: the users should be careful not to break laziness.
 }
 
 
@@ -484,7 +490,7 @@ gave helpful comments on drafts.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
-\section {Appendix: The complete code}
+\section*{Appendix: The complete code}
 The complete code of the library described in this paper can be found here: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.lhs}
 
 %include Code.lhs

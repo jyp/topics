@@ -235,3 +235,9 @@ provides the online property, and corresponds to a call-by-name CPS transformati
 of the direct evaluation of applicative expressions. The second one, presented in
 this section, enables incremental evaluation of intermediate results, and corresponds to
 a call-by-value transformation of the same direct evaluation function.
+
+\textmeta{It is also interesting to note that, apparently, we could have done away
+with the reverse polish automaton entirely, and just have composed partial applications.
+This solution, while a lot simpler, falls short to our purposes: a composition of partially
+applied functions never gets simplified, whereas we are able to do so while traversing the 
+polish expression   }
