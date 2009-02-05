@@ -17,33 +17,17 @@ import Stack
 \section{Producing results} 
 \label{sec:applicative}
 
-
-Our goal is to provide a combinator library with a standard interface, similar to that
-presented by \citet{swierstra_combinator_2000}, with sequencing, disjunction,
-production of results and reading of symbols. 
-
-Such an interface can be captured in a generalized algebraic data type (GADT)
-as follows. (Throughout this paper we will make extensive use of GADTs for
-modeling purposes.)
-
-\begin{spec}
-data Parser s a where
-    Pure   :: a                                  ->  Parser s a
-    (:*:)  :: Parser s (b -> a) -> Parser s b    ->  Parser s a
-    Symb   :: Parser s a -> (s -> Parser s a)    ->  Parser s a
-    Disj   :: Parser s a -> Parser s a           ->  Parser s a
-    Fail   ::                                        Parser s a
-\end{spec}
-
-
 \citet{hughes_polish_2003} show that the sequencing operator must be applicative
 (\citet{mcbride_applicative_2007}) to allow for online production of results.
-
 Since this is the cornerstone of our approach to incremental parsing, we review
-the result in this section. We will focus on the first two constructors of the
-above datatype, corresponding to the applicative sub-language. While doing so we
-also introduce the concepts necessary for the computation of intermediate
-results.
+the result in this section, and focus on the first two constructors of the
+above datatype, corresponding to the applicative sub-language. 
+
+We will also introduce the \emph{polish representation} for applicative
+expressions: it is the essence of our parsing semantics. This
+section culminates with the definition of the pipeline from applicative language
+to results by going through polish expressions. Our final parser will be an
+extension of this machinery with the features mentioned above.
 
 \subsection{The applicative sub-language}
 
@@ -65,8 +49,8 @@ of Haskell values. It is indexed by the type of values it represents.
 
 \begin{code}
 data Applic a where
-    (:*:) :: Applic (b -> a) -> Applic b    -> Applic a
-    Pure :: a                               -> Applic a
+    (:*:)  :: Applic (b -> a) -> Applic b    -> Applic a
+    Pure   :: a                              -> Applic a
 infixl 4 :*:
 \end{code}
 

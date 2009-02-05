@@ -54,8 +54,8 @@
 
 \begin{abstract}
 
-It is common to edit structured documents in a free-form editor. In such
-an environment, it makes sense to maintain a structured
+Structured documents are commonly edited using a free-form editor. 
+In such a context, It makes sense to maintain a structured
 representation of the edited document. The structured representation has a number of uses:
 structural navigation (and optional structural edition), structure highlighting, etc. 
 The construction of the structure must be done incrementally to be
@@ -67,9 +67,8 @@ lazy evaluation and caching of intermediate (partial) results
 enables incremental parsing. % to parse the input incrementally. 
 % This is crap!
 % We also introduce a simple general purpose data structure, to eliminate the linear complexity caused by lazy lists traversals while retaining their lazy properties.
-We complete our exposition of incremental parsing in an
-interactive system by showing how our parsing machinery can be
-improved to support error-correction.
+We build a complete incremental parsing library for
+interactive systems with support for error-correction.
 \end{abstract}
 
 \category{D.3.4}{Programming Languages}{Processors}
@@ -81,36 +80,60 @@ improved to support error-correction.
 Algorithms, Languages, Design, Performance, Theory
 
 \keywords
-Functional Programming, Lazy evaluation, Incremental Computing, Parsing,
+% Functional Programming, 
+Lazy evaluation, Incremental Computing, Parsing,
 Dynamic Programming, Polish representation, Editor, Haskell
 
 
 \section{Introduction}
 
-Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is a text editor written
-in Haskell. It provides features such as syntax highlighting and indentation
-hints for a number of programming languages. 
-In order to implement all syntax-dependent
-functions in a consistent way, the abstract syntax tree (AST) of the source code is available at
-all times, and kept up to date as the user types. But, to maintain acceptable
-performance, the editor must not parse the whole file at each keystroke.
 
-\subsection{Example}
 
-For the purpose of illustration, we sketch how the  
-technique works on a simple problem: interactive feedback of
-parenthesis matching for a LISP-like language. Given an input such
-as \verb!(+ 1 (* 5 (+ 3 4)) 2)!, the program will display an annotated version:
-\verb!(+ 1 {* 5 [+ 3 4]} 2)!. The idea is that matching pairs are
-displayed using different parenthetical symbols for each level,
-making the extent of each sub-expression more apparent.
+\begin{figure}
+\includegraphics[width=\columnwidth]{yi-ghc-simplifier}
+\caption{Screenshot. The user has opened a very big Haskell file. Yi
+  gives feedback on matching parenthesis by changing the background
+  color. 
+%   Some parenthesis do not match because of the layout rule: the
+%   closing ones should be indented. Yi understands that and shows them
+%   in a different color.
+  Despite the file being very big, the feedback can be given
+  as the user types, because parsing is performed incrementally.
+}
+\label{fig:screenshot}
+\end{figure}
 
-The production of the output is a two-phase process. First, the AST
-is produced, by parsing the input. A value of the |SExpr| type
-is constructed. Second, it is linearized back and
-printed to the user.
 
-%include SExpr.lhs
+Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is a text editor
+written in Haskell. It provides features such as syntax highlighting and
+indentation hints for a number of programming languages (figure
+\ref{fig:screenshot}). In order to implement all syntax-dependent functions in a
+consistent way, the abstract syntax tree (AST) of the source code is available
+at all times. The feedback given by the editor is always consistent with the
+text: the AST is kept up to date after each modification. But, to maintain
+acceptable performance, the editor must not parse the whole file at each
+keystroke: we have to implement a form of incremental parsing.
+
+Another feature of Yi is that it is configurable in Haskell. Therefore, we
+prefer to use the Haskell language for every aspect of the application, so that
+the user can configure it. In particular, syntax should be described using a
+combinator library.
+
+Our main goals can be formulated as constraints on the parsing library:
+\begin{itemize}
+\item it must be programmable through a combinator interface;
+\item it must cope with all inputs provided by the user, and thus provide error correction.
+\item it must be efficient enough for interactive usage: parsing must be done incrementally.
+\end{itemize}
+
+To implement this last point, one could choose a stateful approach and update the parse tree as the user
+modifies the input structure. Instead, in this paper we explore the possibility to use a
+more ``functional'' approach: we minimize the amount of state that has to be updated,
+and rely on laziness to implement incrementality as much as possible.
+
+\subsection{Approach}
+
+In this section we sketch how laziness can help achieving incremental parsing.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
@@ -122,11 +145,11 @@ depicted as a rectangle.
 \label{fig:begin}
 \end{figure}
 
-The initial situation is depicted in figure~\ref{fig:begin}. The user views the
-beginning of the file. To display the decorated output, the program
+The situation right after opening a file is depicted in figure~\ref{fig:begin}. The window is positioned
+at the beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
 pre-order). This in turn forces parsing the corresponding part of
-the input, but \emph{only so far} (or maybe a few tokens ahead,
+the input, but, thanks to lazy evaluation, \emph{only so far} (or maybe a few tokens ahead,
 depending on the amount of look-ahead required). If the user modifies
 the input at this point, it invalidates the AST, but discarding it and
 re-parsing is not too costly: only a screenful of parsing needs to be
@@ -156,21 +179,6 @@ can ensure that we will never parse more than a screenful at a time. Thereby, we
 achieve incremental parsing, in the sense that the amount of parsing work needed
 after each user interaction is constant.
 
-Another feature of Yi is that it is configurable in Haskell. Therefore, we
-prefer to use the Haskell language for every aspect of the application, so that
-the user can configure it. In particular, syntax should be described using a
-combinator library.
-
-Our main goals can be formulated as constraints on the parsing library:
-\begin{itemize}
-\item it must be programmable through a combinator interface;
-\item it should make maximal usage of laziness;
-\item it will not update the previous parsing results;
-\item it must be efficient enough for interactive usage.
-\end{itemize}
-
-Additionally, returning the result lazily requires our parsing function to be total,
-hence we will have to provide error correction.
 
 
 \subsection{Contributions}
@@ -189,9 +197,11 @@ Our contributions can be summarized as follows.
   error correction. This is essential, since online parsers
   need to be \emph{total}: they cannot fail on any input;
 
+\ignore{
 \item
   We craft a data structure to be used in place of lists, which is
   more efficient but has the same properties for laziness;
+}
 
 \item
   We have implemented such a system in a parser-combinator library;
@@ -201,38 +211,57 @@ Our contributions can be summarized as follows.
 
 \end{itemize}
 
-\subsection{Summary and outlook}
+\subsection{Outlook}
 
-In an interactive system, a lazy evaluation strategy provides a
-special form of incremental computation: the amount of output that
-is demanded drives the computation to be performed. In other words,
-the system responds to incremental movements of the portion of the
-output being viewed by the user (window) by incremental computation
-of the intermediate structures.
 
-The above observation suggests that we can take advantage of lazy evaluation to
-implement incremental parsing for a text editor.
-Indeed, if we suppose that the user makes changes in the part of the input that
-``corresponds to'' the window being viewed, it suffices to cache
-partially computed results for each point in the input, to obtain a
-system that responds to changes in the input independently of the
-total size of that input.
-
-The rest of the paper describes how to build the parsing library step by
-step: production of results in a online way (section~\ref{sec:applicative}), map the
-input to these results and manage the incremental computation of intermediate
-state (section~\ref{sec:input}) and treat disjunction and error correction (section~\ref{sec:parsing}).
-In section~\ref{sec:sublinear} we will tackle the problem of incremental parsing of
-repetition. We discuss and compare our approach to alternatives in
+We detail our approach in section \ref{sec:mainloop}. Sections \ref{sec:applicative} through
+\ref{sec:parsing} describe our parsing machinery is built, step by step.
+In section~\ref{sec:sublinear} we discuss the problem of incremental parsing of
+the repetition construct. We discuss and compare our approach to alternatives in
 section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
     
+
+%include Full.lhs
+
+
+\section{Outlook}
+
+Our goal is to provide a combinator library with a standard interface, similar to that
+presented by \citet{swierstra_combinator_2000}.
+
+Such an interface can be captured in a generalized algebraic data type (GADT)
+as follows. 
+
+\begin{spec}
+data Parser s a where
+    Pure   :: a                                  ->  Parser s a
+    (:*:)  :: Parser s (b -> a) -> Parser s b    ->  Parser s a
+    Symb   :: Parser s a -> (s -> Parser s a)    ->  Parser s a
+    Disj   :: Parser s a -> Parser s a           ->  Parser s a
+    Fail   ::                                        Parser s a
+\end{spec}
+
+This interface supports production of results (|Pure|), sequencing (|:*:|)
+reading of input symbols (|Symb|), and disjunction (|Disj|, |Fail|).
+
+These combinators are traditionally given as functions instead of constructors but since
+we make extensive use of GADTs for modeling purposes at various levels, we
+prefer to use this presentation style everywhere for consistency.
+
+Most of this paper is devoted to uncover an appropriate representation for our
+parsing process type, and the implementation of the functions manipulating it.
+The core of this representation is introduced in section~\ref{sec:applicative},
+where we merely hadle the |Pure| and |:*:| constructors. As soon as we introduce
+dependence on input in section~\ref{sec:input}, and constructor |Symb|, we can
+define the functions working on the parsing processes: |mkProcess|, |precompute|
+and |finish|. Disjunction and error correction will be implemented as a
+refinement of these concepts in section~\ref{sec:parsing}.
+
 %include Applicative.lhs
 %include Input.lhs
-%include Full.lhs
 %include Choice.lhs
 
-% This is crap :/
-% %include Sublinear.lhs
+%include Sublinear.lhs
 
 \section{Related work}
 \label{sec:relatedWork}
@@ -449,6 +478,8 @@ This paper and accompanying source code have been edited in this environment.
 \section{Conclusion}
 \label{sec:conclusion}
 
+\textmeta{Review}
+
 We have shown that the combination of three techniques
 achieve the goal of incremental parsing.
 
@@ -467,7 +498,7 @@ the complexity class of algorithms.
 \end{enumerate}
 
 While these techniques work together here, we believe that they are valuable
-independent on each other. In particular, our error correction scheme can be
+independently of each other. In particular, our error correction scheme can be
 replaced by an other one without invalidating the approach. 
 
 Also, while functional data structures are often presented in a way that
@@ -484,7 +515,7 @@ an improvement over plain lists.
 We thank Koen Claessen for persuading us to write this paper, and for his
 unfading support throughout the writing process. This paper was greatly improved
 by his comments on early and late drafts. Krasimir Angelov helped sorting out
-the notions of incremental parsing. Patrick Jansson
+the notions of incremental parsing. Patrick Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski
 \textmeta{!!!Your name here!!!}
 gave helpful comments on drafts.
 

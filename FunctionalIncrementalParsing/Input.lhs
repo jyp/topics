@@ -1,3 +1,4 @@
+% -*- latex -*-
 \ignore{
 
 \begin{code}
@@ -18,7 +19,7 @@ to represent parsers: it lacks dependency on the input.
 
 We introduce an extra type argument (the type of symbols), as well as a new
 constructor: |Symb|. It expresses that the rest of the expression depends on the
-next of the input (if any): its first argument is the parser to be used if the
+next symbol of the input (if any): its first argument is the parser to be used if the
 end of input has been reached, while its second argument is used when there is
 at least one symbol available, and it can depend on it.
 
@@ -71,30 +72,34 @@ be resolved by feeding input into it. When facing a suspension, we pattern match
 on the input, and choose the corresponding branch in the result.
 
 \begin{code}
-feed :: Polish s r -> [s] -> Polish s r
-feed  (Susp nil cons)  []      = feed   nil         []
-feed  (Susp nil cons)  (s:ss)  = feed   (cons s)    ss
-feed  (Push x p)       ss      = Push x  (feed p ss)  
-feed  (App p)          ss      = App     (feed p ss)  
-feed  Done             ss      = Done                 
+feed :: [s] -> Polish s r -> Polish s r
+feed  []      p                = p
+feed  (s:ss)  (Susp nil cons)  = feed (cons s) ss
+feed  ss      (Push x p)       = Push x  (feed p ss)  
+feed  ss      (App p)          = App     (feed p ss)  
+feed  ss      Done             = Done                 
 \end{code} 
 
-For example, |feed "(a)" (toPolish parseList)| yields back our example expression: |S [Atom 'a']|.
+The |feed| function below performs this duty for a number of symbols, and stops
+when it has no more symbols to feed. The dual function, |feedEof|, removes all
+suspensions by consistently chosing the end-of-input alternative.
+
+\begin{code}
+feedEof :: Polish s r -> Polish s r
+feedEof  (Susp nil cons)  = feedEof nil
+feedEof  (Push x p)       = Push x  (feedEof p)  
+feedEof  (App p)          = App     (feedEof p)  
+feedEof  Done             = Done                 
+\end{code} 
+
+For example, |evalR $ feedEof $ feed "(a)" $ toPolish $ parseList| yields back our example expression: |S [Atom 'a']|.
 
 
 We can also obtain intermediate parsing results by feeding symbols one at a
-time. The list of all intermediate results is constructed lazily using |scanl|.
-
-\begin{code}
-feedOne :: Polish s a -> [s] -> Polish s a
-feedOne (Susp nil cons)    (s:ss)   = cons s
-feedOne (Push x p)         ss       = Push x (feedOne p ss)
-feedOne (App p)            ss       = App (feedOne p ss)
-feedOne Done               ss       = Done 
-\end{code}
+time. 
 
 \begin{spec}
-partialParses = scanl feedOne
+allPartialParses = scanl (feed . (:[]))
 \end{spec}
 
 Now, if the $(n+1)^{th}$ element of the input is changed, one can reuse
@@ -203,7 +208,7 @@ the input of the former.
 
 Capturing all these properties in the types by using GADTs
 allows to write a properly typed traversal of polish expressions.
-
+The |right| function move the focus by one step to the right.
 \begin{code}
 right :: Zip s out -> Zip s out
 right (Zip l (Push a r))  = Zip (RPush a l) r
@@ -221,6 +226,8 @@ simplify (RPush a (RPush f (RApp r))) =
              simplify (RPush (f a) r)
 simplify x = x
 \end{code}
+
+
 
 We see that simplifying a complete reverse polish expression requires $O(n)$
 steps, where $n$ is the length of the expression. This means that the

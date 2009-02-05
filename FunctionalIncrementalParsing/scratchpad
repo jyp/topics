@@ -1,0 +1,44 @@
+\subsection{Example}
+
+\textmeta{The example here is not properly used: we do not do anything with it!}
+
+For the purpose of illustration, we sketch how the technique works on a simple
+problem: interactive feedback of parenthesis matching for a LISP-like language.
+This example is developped throughout the paper. Given an input such as \verb!(+
+1 (* 5 (+ 3 4)) 2)!, the program will display an annotated version: \verb!(+ 1
+{* 5 [+ 3 4]} 2)!. The idea is that matching pairs are displayed using different
+parenthetical symbols for each level, making the extent of each sub-expression
+more apparent.
+
+The production of the output is a two-phase process. First, the AST
+is produced, by parsing the input. A value of the |SExpr| type
+is constructed. Second, it is linearized back and
+printed to the user.
+
+% %include SExpr.lhs
+
+
+In an interactive system, a lazy evaluation strategy provides a
+special form of incremental computation: the amount of output that
+is demanded drives the computation to be performed. In other words,
+the system responds to incremental movements of the portion of the
+output being viewed by the user (window) by incremental computation
+of the intermediate structures.
+
+The above observation suggests that we can take advantage of lazy evaluation to
+implement incremental parsing for a text editor.
+Indeed, if we suppose that the user makes changes in the part of the input that
+``corresponds to'' the window being viewed, it suffices to cache
+partially computed results for each point in the input, to obtain a
+system that responds to changes in the input independently of the
+total size of that input.
+
+
+
+
+These combinators are traditionally given as functions instead of constructors,
+but we prefer to keep the translation between the syntax and semantics of our
+parsers in a single function. Also, we will make extensive use of GADTs for
+modeling purposes at various level, and using a datatype here improves
+consistency.
+
