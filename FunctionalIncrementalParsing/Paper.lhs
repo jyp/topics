@@ -219,21 +219,18 @@ Our contributions can be summarized as follows.
 
 \end{itemize}
 
-\subsection{Outlook}
+\subsection{Interface and Outlook}
 
-
-    
-
-
-
-\section{Interface and Outlook}
-\ref{sec:interface}
+\label{sec:interface}
 
 Our goal is to provide a combinator library with a standard interface, similar to that
 presented by \citet{swierstra_combinator_2000}.
 
 Such an interface can be captured in a generalized algebraic data type (GADT)
-as follows. 
+as follows. These combinators are traditionally given as functions instead of
+constructors but since we make extensive use of GADTs for modeling purposes at
+various levels, we prefer to use this presentation style everywhere for
+consistency.
 
 \begin{spec}
 data Parser s a where
@@ -247,28 +244,28 @@ data Parser s a where
 This interface supports production of results (|Pure|), sequencing (|:*:|)
 reading of input symbols (|Symb|), and disjunction (|Disj|, |Fail|).
 
-These combinators are traditionally given as functions instead of constructors but since
-we make extensive use of GADTs for modeling purposes at various levels, we
-prefer to use this presentation style everywhere for consistency.
 
+Most of this paper is devoted to uncover an appropriate representation for our
+parsing process type, and the implementation of the functions manipulating it.
 The core of this representation is introduced in section~\ref{sec:applicative},
-where we merely hadle the |Pure| and |:*:| constructors. As soon as we introduce
-dependence on input in section~\ref{sec:input}, and constructor |Symb|, we can
-define the functions working on the parsing processes: |mkProcess|, |precompute|
-and |finish|. Disjunction and error correction will be implemented as a
-refinement of these concepts in section~\ref{sec:parsing}.
+where we merely handle the |Pure| and |:*:| constructors. Dependence on input
+and the constructor |Symb| are treated in section~\ref{sec:input}. Disjunction
+and error correction will be implemented as a refinement of these concepts in
+section~\ref{sec:parsing}.
 
-Parsing combinator libraries are usually composed of a |Parser| type, and a
+Parsing combinator libraries usually propose a mere
 |run| function that executes the parser on a given input: |run :: Parser s a ->
-[s] -> [a]|. Our system requires finer control over the execution of the parser.
-
+[s] -> [a]|. 
+Incremental systems requires finer control over the execution of the parser.
 Therefore, we have to split the |run| function into pieces and reify the parser
-state. We propose the following types:
+state in values of type |Process|.
 
-\begin{itemize}
- \item |Parser :: * -> * -> *|: The type of parser descriptions. Is is parametrized by token type and parsing result.
- \item |Process :: * -> * -> *|: The type of parser states, parametrized as |Parser|.
-\end{itemize}
+% We propose the following types:
+% 
+% \begin{itemize}
+%  \item |Parser :: * -> * -> *|: The type of parser descriptions. Is is parametrized by token type and parsing result.
+%  \item |Process :: * -> * -> *|: The type of parser states, parametrized as |Parser|.
+% \end{itemize}
 
 We also need a few functions to create and manipulate the parsing processes:
 
@@ -282,15 +279,16 @@ We also need a few functions to create and manipulate the parsing processes:
 \end{itemize}
 
 Section \ref{sec:mainloop} details our approach to incrementality by sketching
-the main loop of an editor using the above running interface.
+the main loop of an editor using the above interface.
+The implementation for these functions can be given 
+as soon as we introduce
+dependence on input in section~\ref{sec:input}.
 
-Most of this paper is devoted to uncover an appropriate representation for our
-parsing process type, and the implementation of the functions manipulating it.
 Sections \ref{sec:applicative} through
 \ref{sec:parsing} describe our parsing machinery is built, step by step.
 In section~\ref{sec:sublinear} we discuss the problem of incremental parsing of
 the repetition construct. We discuss and compare our approach to alternatives in
-section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude (section \ref{sec:conclusion}).
+section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude in section \ref{sec:conclusion}.
 
 %include Full.lhs
 %include Applicative.lhs
@@ -493,7 +491,7 @@ semantic functions. Incrementality is not guaranteed then.
 
 
 \section{Results}
-
+\label{sec:results}
 
 We carried out development of a parser combinator library for incremental
 parsing with support for error correction. We argumented that, using suitable
@@ -559,6 +557,6 @@ gave helpful comments on drafts.
 \section*{Appendix: The complete code}
 The complete code of the library described in this paper can be found here: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.lhs}
 
-%include Code.lhs
+% %include Code.lhs
 
 \end{document}
