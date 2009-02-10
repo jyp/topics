@@ -137,8 +137,8 @@ and rely on laziness to implement incrementality as much as possible.
 
 In this section we sketch how laziness can help achieving incremental parsing.
 
-An \emph{online} parser exhibits lazy behaviour: it does not proceed further 
-than necessary to returns the nodes of the AST that are demanded.
+An \emph{online} parser exhibits lazy behavior: it does not proceed further 
+than necessary to return the nodes of the AST that are demanded.
 
 
 \begin{figure}
@@ -152,7 +152,7 @@ depicted as a rectangle.
 \end{figure}
 
 Assume that, in addition to using an online parser to produce the AST, it is traversed
-in preorder to display the decorated text presented to the user.
+in pre-order to display the decorated text presented to the user.
 Then, the situation right after opening a file is depicted in figure~\ref{fig:begin}. The window is positioned
 at the beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
@@ -450,6 +450,12 @@ Big disadvantage: the users should be careful not to break laziness.
 
 
 \section{Future work}
+
+Our treatment of repetition is stull lacking: we would like to retrieve any
+node by its position in the input while preserving all properties of laziness
+intact. While this might be very difficult to do in the general case, we expect
+that our zipper structure can be used to guide the retrieval of the element at
+the current point of focus, so that it can be done efficiently.
 
 Although it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing

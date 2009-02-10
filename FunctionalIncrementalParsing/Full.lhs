@@ -52,14 +52,14 @@ run the online parser. The display is then trimmed to show only a window around 
 display s =
   putStrLn ""
   let windowBegin = length (lt s) - windowSize
-  putStrLn $ take windowSize
-           $ drop windowBegin
-           $ show 
-           $ finish
-           $ feedEof
-           $ feed (rt s)
-           $ pst 
-  where windowSize = 10
+  putStrLn   $ take windowSize
+             $ drop windowBegin
+             $ show 
+             $ finish
+             $ feedEof
+             $ feed (rt s)
+             $ pst 
+  where windowSize = 10 -- arbitrary value
 \end{code}
 
 
