@@ -51,11 +51,12 @@
 \maketitle
 
 \comment{Make sure online and incremental parsing are well defined.}
+\textmeta{Use arithmetic expressions as an example}
 
 \begin{abstract}
 
 Structured documents are commonly edited using a free-form editor. 
-In such a context, It makes sense to maintain a structured
+Despite the editor accepting all inputs, It makes sense to maintain a structured
 representation of the edited document. The structured representation has a number of uses:
 structural navigation (and optional structural edition), structure highlighting, etc. 
 The construction of the structure must be done incrementally to be
@@ -122,7 +123,7 @@ combinator library.
 Our main goals can be formulated as constraints on the parsing library:
 \begin{itemize}
 \item it must be programmable through a combinator interface;
-\item it must cope with all inputs provided by the user, and thus provide error correction.
+\item it must cope with all inputs provided by the user, and thus provide error correction;
 \item it must be efficient enough for interactive usage: parsing must be done incrementally.
 \end{itemize}
 
@@ -218,7 +219,7 @@ We detail our approach in section \ref{sec:mainloop}. Sections \ref{sec:applicat
 \ref{sec:parsing} describe our parsing machinery is built, step by step.
 In section~\ref{sec:sublinear} we discuss the problem of incremental parsing of
 the repetition construct. We discuss and compare our approach to alternatives in
-section~\ref{sec:relatedWork} and conclude (section \ref{sec:conclusion}).
+section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude (section \ref{sec:conclusion}).
     
 
 %include Full.lhs

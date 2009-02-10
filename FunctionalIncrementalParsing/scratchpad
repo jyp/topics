@@ -36,9 +36,3 @@ total size of that input.
 
 
 
-These combinators are traditionally given as functions instead of constructors,
-but we prefer to keep the translation between the syntax and semantics of our
-parsers in a single function. Also, we will make extensive use of GADTs for
-modeling purposes at various level, and using a datatype here improves
-consistency.
-
