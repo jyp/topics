@@ -138,8 +138,14 @@ toFullTree d (x:xs)   = (Node x l r, xs'')
 
 In other words, we must use a special construction function to guarantee the online production of results: we want
 the argument of |Pure| to be in a simple value (not an abstraction), as explained in
-section~\ref{sec:applicative}. In fact, we will have to construct the list directly in the parser,
-as follows.
+section~\ref{sec:applicative}. In fact, we will have to construct the list directly in the parser.
+
+The following function implements such a parser where repeated elements are mere symbols. 
+
+The function can be adapted for arbitrary non-terminals. One has to take care to avoid interference between the
+construction of the shape and error recovery. For example, the position of non-terminals can be forced in the tree,
+as to be in the node corresponding to the position of their first symbol. In that case the structure has to be 
+accomodated for nodes not containing any information.
 
 
 \begin{code}
@@ -157,8 +163,7 @@ parseFullTree d = Symb
            parseTree (d-1))
 \end{code}
 
-\textmeta{What if we parse something else than symbols? Left out.}
-
+\ignore{
 \begin{spec}
 parseTree d p = (pure Leaf) 
    :|: (  Pure Node 
@@ -171,18 +176,25 @@ parseFullTree p 0 = pure Leaf
           :*: parseFullTree (d-1) 
           :*: parseTree (d-1))
 \end{spec}
-
+}
 
 \subsection{Quick access}
 
-Another benefit of using the tree structure as above is that
+Another possible benefit of using the tree structure as above is that
 finding the part of the tree corresponding to the edit window
 takes also logarithmic time. 
-Indeed,the size of each sub-tree depends only on its
+Indeed, the size of each sub-tree depends only on its
 relative position to the root. Therefore, one can access an element by its index
 without pattern matching on any node which is not the direct path to it.
 This allows efficient indexed access without loosing any property of laziness. 
+Again, the technique can be adapted for arbitrary non-terminals. However, it
+will only work if each node in the tree is ``small'' enough. Finding the first
+node of interest might force an extra node, and force parsing the corresponding
+part of the file.
 
+
+\ignore{
+% This is inconsistent with the example we give in an early section.
 
 In our application, there is yet another structure that can benefit from the
 usage of this lazily constructed tree: the list of intermediate results. Indeed, while we
@@ -191,4 +203,4 @@ search for the previous partial result that we can reuse can take linear time,
 if we store partial results for every point of the input in a list. Again, since
 the length the length of the input cannot be forced, we have to use the lazy
 construction procedure.
-
+}

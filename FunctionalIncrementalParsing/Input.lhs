@@ -74,9 +74,9 @@ on the input, and choose the corresponding branch in the result.
 \begin{code}
 feed :: [s] -> Polish s r -> Polish s r
 feed  []      p                = p
-feed  (s:ss)  (Susp nil cons)  = feed (cons s) ss
-feed  ss      (Push x p)       = Push x  (feed p ss)  
-feed  ss      (App p)          = App     (feed p ss)  
+feed  (s:ss)  (Susp nil cons)  = feed ss (cons s)
+feed  ss      (Push x p)       = Push x  (feed ss p)  
+feed  ss      (App p)          = App     (feed ss p)  
 feed  ss      Done             = Done                 
 \end{code} 
 
@@ -99,7 +99,7 @@ We can also obtain intermediate parsing results by feeding symbols one at a
 time. 
 
 \begin{spec}
-allPartialParses = scanl (feed . (:[]))
+allPartialParses = scanl (\p c -> feed [c] p)
 \end{spec}
 
 Now, if the $(n+1)^{th}$ element of the input is changed, one can reuse
@@ -122,7 +122,7 @@ evalL (Push x r) = Push x (evalL r)
 evalL (App f) = case evalL f of
                   (Push g (Push b r)) -> Push (g b) r
                   r -> App r
-partialParses = scanl (\c -> evalL . feedOne c)
+partialParses = scanl (\p c -> evalL . feed [c] $ p)
 \end{code}
 This still suffers from a major drawback: as long as a function
 application is not saturated, the polish expression will start with

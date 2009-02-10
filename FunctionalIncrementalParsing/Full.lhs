@@ -13,35 +13,12 @@ import Control.Monad (when)
 }
 
 \section{Main loop}
-\ref{sec:mainloop}
-This section identifies the elements of forming the interface of our final
+\label{sec:mainloop}
+This section shows how to build identifies the elements of forming the interface of our final
 parsing library, and shows how a toy application can be written using it.
 
-Section \ref{sec:input} describes all the techniques needed to build these elements.
 
-Parsing combinator libraries are usually composed of a |Parser| type, and a |run| function
-that executes the parser on a given input: |run :: Parser s a -> [s] -> [a]|.
-Our system requires finer control over the execution of the parser. Therefore, we have to split the
-|run| function into pieces and reify the parser state.
-We propose the following types:
-
-\begin{itemize}
- \item |Parser :: * -> * -> *|: The type of parser descriptions. Is is parametrized by token type and parsing result.
- \item |Process :: * -> * -> *|: The type of parser states, parametrized as |Parser|.
-\end{itemize}
-
-We also need a few functions to create and manipulate the parsing processes:
-
-\begin{itemize}
- 
- \item |mkProcess :: Parser s a -> Process s a|: given a parser description, create the corresponding initial parsing process.
- \item |feed :: [s] -> Process s a -> Process s a|: feed the parsing process with a number of symbols.
- \item |feedEof :: Process s a -> Process s a|: feed the parsing process with the end of the input.
- \item |precompute :: Process s a -> Process s a|: transform a parsing process by pre-computing all the intermediate parsing results available.
- \item |finish :: Process s a -> a|: compute the final result of the parsing, in an online way. This assumes that the end of input has been fed into the process.
-\end{itemize}
-
-On top of this interface, we can write a toy editor with incremental parsing.
+On top of the interface decribed in section \ref{sec:interface}, we can write a toy editor with incremental parsing.
 
 The main loop alternates beween displaying the contents of the file being
 edited and updating its internal state in response to user input.
@@ -86,8 +63,8 @@ display s =
 \end{code}
 
 
-There are three type of user input to take care of: movement, deletion and insertion of text are possible.
-The main difficulty here is to keep the list of intermediate state synchronized with the
+There are three types of user input to take care of: movement, deletion and insertion of text.
+The main difficulty here is to keep the list of intermediate states synchronized with the
 text. For example, every time a character is typed, a new parser state is
 computed and stored. The other edition operations proceed in similar fashion.
 
@@ -96,17 +73,17 @@ update s@State{ls = pst:psts} = do
   c <- getChar
   return $ case c of
     -- cursor movements
-    '<'  -> case lt s of
+    '<'  -> case lt s of -- left
               [] -> s
               (x:xs) -> s {lt = xs, rt = x : rt s, ls = psts}
-    '>'  -> case rt s of
+    '>'  -> case rt s of -- right
               [] -> s
               (x:xs) -> s {lt = x : lt s, rt = xs, ls = addState x}
     -- deletions
-    ','  -> case lt s of
+    ','  -> case lt s of -- backspace
               [] -> s
               (x:xs) -> s {lt = xs, ls = psts}
-    '.'  -> case rt s of
+    '.'  -> case rt s of -- delete
               [] -> s
               (x:xs) -> s {rt = xs}
     -- insertion of text
@@ -119,9 +96,10 @@ Thus we can instanciate it, with any parser description, as follows:
 
 \begin{code}
 main = do  hSetBuffering stdin NoBuffering
-           loop State {lt = "", 
-                       rt = "", 
-                       ls = [mkProcess parseTopLevel]}
+           loop State {
+               lt = "", 
+               rt = "", 
+               ls = [mkProcess parseTopLevel]}
 \end{code}
 
 This code illustrates the skeleton of any program using our library. A number
@@ -130,7 +108,7 @@ moving in the file even if no modification is made. Also, the displayed output
 will be computed from its start, and then trimmed. Instead we would like to directly
 print the portion corresponding to the current window. This issue can be tricky
 to fix, but for the time being we will assume that displaying is much faster than
-parsing and therefore can its running time be neglected.
+parsing and therefore the running time of the former can be neglected.
 
 
 \ignore{

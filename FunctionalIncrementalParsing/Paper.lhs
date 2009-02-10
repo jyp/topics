@@ -108,12 +108,13 @@ Dynamic Programming, Polish representation, Editor, Haskell
 Yi \citep{bernardy_yi:editor_2008,stewart_dynamic_2005} is a text editor
 written in Haskell. It provides features such as syntax highlighting and
 indentation hints for a number of programming languages (figure
-\ref{fig:screenshot}). In order to implement all syntax-dependent functions in a
-consistent way, the abstract syntax tree (AST) of the source code is available
-at all times. The feedback given by the editor is always consistent with the
-text: the AST is kept up to date after each modification. But, to maintain
-acceptable performance, the editor must not parse the whole file at each
-keystroke: we have to implement a form of incremental parsing.
+\ref{fig:screenshot}). 
+All syntax-dependent functions rely on the abstract syntax tree (AST) of the
+source code being available at all times. The feedback given by the editor is
+always consistent with the text: the AST is kept up to date after each
+modification. But, to maintain acceptable performance, the editor must not parse
+the whole file at each keystroke: we have to implement a form of incremental
+parsing.
 
 Another feature of Yi is that it is configurable in Haskell. Therefore, we
 prefer to use the Haskell language for every aspect of the application, so that
@@ -136,6 +137,10 @@ and rely on laziness to implement incrementality as much as possible.
 
 In this section we sketch how laziness can help achieving incremental parsing.
 
+An \emph{online} parser exhibits lazy behaviour: it does not proceed further 
+than necessary to returns the nodes of the AST that are demanded.
+
+
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
 \caption{Viewing the beginning of a file. 
@@ -146,7 +151,9 @@ depicted as a rectangle.
 \label{fig:begin}
 \end{figure}
 
-The situation right after opening a file is depicted in figure~\ref{fig:begin}. The window is positioned
+Assume that, in addition to using an online parser to produce the AST, it is traversed
+in preorder to display the decorated text presented to the user.
+Then, the situation right after opening a file is depicted in figure~\ref{fig:begin}. The window is positioned
 at the beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
 pre-order). This in turn forces parsing the corresponding part of
@@ -169,8 +176,8 @@ on everything that precedes.
 \end{figure}
 
 As the user scrolls down in the file, more and more of the AST is demanded, and
-the parsing proceeds in lockstep (figure~\ref{fig:mid}). (We say that the parser
-has \emph {online} behaviour.) At this stage, a user modification is more
+the parsing proceeds in lockstep (figure~\ref{fig:mid}). 
+At this stage, a user modification is more
 serious: re-parsing naively from the beginning can be too costly for a big file.
 Fortunately we can again exploit the linear behavior of parsing algorithms to
 our advantage. Indeed, if we have stored the parser state for the input point
@@ -215,17 +222,12 @@ Our contributions can be summarized as follows.
 \subsection{Outlook}
 
 
-We detail our approach in section \ref{sec:mainloop}. Sections \ref{sec:applicative} through
-\ref{sec:parsing} describe our parsing machinery is built, step by step.
-In section~\ref{sec:sublinear} we discuss the problem of incremental parsing of
-the repetition construct. We discuss and compare our approach to alternatives in
-section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude (section \ref{sec:conclusion}).
     
 
-%include Full.lhs
 
 
-\section{Outlook}
+\section{Interface and Outlook}
+\ref{sec:interface}
 
 Our goal is to provide a combinator library with a standard interface, similar to that
 presented by \citet{swierstra_combinator_2000}.
@@ -249,8 +251,6 @@ These combinators are traditionally given as functions instead of constructors b
 we make extensive use of GADTs for modeling purposes at various levels, we
 prefer to use this presentation style everywhere for consistency.
 
-Most of this paper is devoted to uncover an appropriate representation for our
-parsing process type, and the implementation of the functions manipulating it.
 The core of this representation is introduced in section~\ref{sec:applicative},
 where we merely hadle the |Pure| and |:*:| constructors. As soon as we introduce
 dependence on input in section~\ref{sec:input}, and constructor |Symb|, we can
@@ -258,10 +258,44 @@ define the functions working on the parsing processes: |mkProcess|, |precompute|
 and |finish|. Disjunction and error correction will be implemented as a
 refinement of these concepts in section~\ref{sec:parsing}.
 
+Parsing combinator libraries are usually composed of a |Parser| type, and a
+|run| function that executes the parser on a given input: |run :: Parser s a ->
+[s] -> [a]|. Our system requires finer control over the execution of the parser.
+
+Therefore, we have to split the |run| function into pieces and reify the parser
+state. We propose the following types:
+
+\begin{itemize}
+ \item |Parser :: * -> * -> *|: The type of parser descriptions. Is is parametrized by token type and parsing result.
+ \item |Process :: * -> * -> *|: The type of parser states, parametrized as |Parser|.
+\end{itemize}
+
+We also need a few functions to create and manipulate the parsing processes:
+
+\begin{itemize}
+ 
+ \item |mkProcess :: Parser s a -> Process s a|: given a parser description, create the corresponding initial parsing process.
+ \item |feed :: [s] -> Process s a -> Process s a|: feed the parsing process with a number of symbols.
+ \item |feedEof :: Process s a -> Process s a|: feed the parsing process with the end of the input.
+ \item |precompute :: Process s a -> Process s a|: transform a parsing process by pre-computing all the intermediate parsing results available.
+ \item |finish :: Process s a -> a|: compute the final result of the parsing, in an online way. This assumes that the end of input has been fed into the process.
+\end{itemize}
+
+Section \ref{sec:mainloop} details our approach to incrementality by sketching
+the main loop of an editor using the above running interface.
+
+Most of this paper is devoted to uncover an appropriate representation for our
+parsing process type, and the implementation of the functions manipulating it.
+Sections \ref{sec:applicative} through
+\ref{sec:parsing} describe our parsing machinery is built, step by step.
+In section~\ref{sec:sublinear} we discuss the problem of incremental parsing of
+the repetition construct. We discuss and compare our approach to alternatives in
+section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude (section \ref{sec:conclusion}).
+
+%include Full.lhs
 %include Applicative.lhs
 %include Input.lhs
 %include Choice.lhs
-
 %include Sublinear.lhs
 
 \section{Related work}
