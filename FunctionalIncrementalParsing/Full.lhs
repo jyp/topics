@@ -14,19 +14,26 @@ import Control.Monad (when)
 
 \section{Main loop}
 \label{sec:mainloop}
-This section shows how to build identifies the elements of forming the interface of our final
-parsing library, and shows how a toy application can be written using it.
 
-
-On top of the interface decribed in section \ref{sec:interface}, we can write a toy editor with incremental parsing.
+In this section we write a toy editor written using the interface decribed in
+section \ref{sec:interface}. This editor lacks most features you would expect
+from a real application, and is therefore just a toy. It is however a complete
+implementation which tackles the issues related to incremental parsing.
 
 The main loop alternates beween displaying the contents of the file being
-edited and updating its internal state in response to user input.
+edited and updating its internal state in response to user input. Notice
+that we make our code polymorphic over the type of the AST we process (|a|),
+merely requiring it to be |Show|-able.
 
 \begin{code}
 loop :: Show a => State a -> IO ()
 loop s = display s >> update s >>= loop
 \end{code}
+
+The |State| structure stores the ``current state'' of our toy editor. 
+The fields |lt| and |rt| contain the text respectively to the left and to the right of the edit point.
+The |ls| field is our main interest: it contains the parsing processes corresponding to each symbol to the left of the edit point.
+Note that there is always ore more element in |ls| than |lt|, because we also have a parser state for the empty input.
 
 \begin{code}
 data State a = State
@@ -36,12 +43,6 @@ data State a = State
     }
 
 \end{code}
-
-The |State| structure stores the ``current state'' of our toy editor. 
-The fields |lt| and |rt| contain the text respectively to the left and to the right of the edit point.
-The |ls| field is our main interest: it contains the parsing processes corresponding to each symbol to the left of the edit point.
-Note that there is always ore more element in |ls| than |lt|, because we also have a parser state for the empty input.
-
 
 We do not display the input document as typed by the user, but an annotated version.
 Therefore, we have to parse the input and then serialize the result.
@@ -91,8 +92,11 @@ update s@State{ls = pst:psts} = do
  where addState c = feed [c] pst : ls s
 \end{code}
 
-Note that the main loop is entirely independent of the type of the AST being produced.
-Thus we can instanciate it, with any parser description, as follows:
+Desides disabling buffering of the input for real-time responsivity,
+the top-level program has to instanciate the main loop with an initial state, 
+and pick a specific parser to use: |parseTopLevel|. As we have seen before, this can
+be any parser of type |Parser s a|. In sections \ref{sec:input} and \ref{sec:choice}
+we give an examples of such parsers written using our library. 
 
 \begin{code}
 main = do  hSetBuffering stdin NoBuffering
@@ -102,12 +106,12 @@ main = do  hSetBuffering stdin NoBuffering
                ls = [mkProcess parseTopLevel]}
 \end{code}
 
-This code illustrates the skeleton of any program using our library. A number
+This code forms the skeleton of any program using our library. A number
 of issues are glossed over though. Notably, we would like to avoid re-parsing when
 moving in the file even if no modification is made. Also, the displayed output
-will be computed from its start, and then trimmed. Instead we would like to directly
+is computed from its start, and then trimmed. Instead we would like to directly
 print the portion corresponding to the current window. This issue can be tricky
-to fix, but for the time being we will assume that displaying is much faster than
+to fix, but for the time being we assume that displaying is much faster than
 parsing and therefore the running time of the former can be neglected.
 
 

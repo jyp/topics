@@ -12,7 +12,7 @@ import Progress
 \end{code}
 
 }
-\section{Parsing}
+\section{Adding Choice}
 \label{sec:parsing}
 
 \comment{Characterize termination of the algorithm}

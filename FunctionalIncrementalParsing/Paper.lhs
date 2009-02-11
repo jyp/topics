@@ -317,7 +317,7 @@ provide error correction nor analysis to the right of the cursor.
 
 \citet{ghezzi_incremental_1979} 
 % and \citet{ghezzi_augmenting_1980}
-improved the concept by also reused parsing results to the right of the cursor:
+improved the concept by also reusing parsing results to the right of the cursor:
 after parsing every symbol they check if the new state of the LR automaton
 matches that of the previous run. If it does they know they can reuse the
 results from that point on. 
@@ -362,7 +362,7 @@ tree offers any reasonable benefit in practice: it seems to be optimizing for a
 special case. This is not very suitable in an interactive system where users
 expect consistent response times.
 
-\item Finally, comparing parser states is very tricky to do accomplish the
+\item Finally, comparing parser states is very tricky to accomplish in the
 context of a combinator library: since parsing states normally contain
 abstractions, it is not clear how they can be compared to one another.
 \end{enumerate}
