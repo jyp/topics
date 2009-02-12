@@ -16,7 +16,7 @@ import Parser
 As we noted in a section~\ref{sec:input}, partial computations sometimes
 cannot be performed. 
 
-This is indeed a very common case: if the
+This is indeed a common case: if the
 output we construct is a list, then the spine of the list can only
 be constructed once we get hold of the very tail of it. 
 
@@ -43,9 +43,9 @@ Therefore, in the worst case, the construction of the result has a cost
 proportional to the length of the input. 
 
 While the above example might seem trivial, the same result applies to all
-repetition constructs, which are very common in language descriptions. For
+repetition constructs, which are common in language descriptions. For
 example, a very long Haskell file is typically constituted of a very long list
-of declarations, for which a very high cost must be paid every time the result
+of declarations, for which a proportional cost must be paid every time the result
 is constructed.
 
 The culprit for linear complexity is 
@@ -118,9 +118,12 @@ $\sum_{k=1}^d 2^{k}-1$ elements, fulfilling the second
 requirement.
 
 This structure is very similar to binary random access lists as presented by
-\citet[section~6.2.1]{okasaki_purely_1999}, but differ in purpose. In our case
-we want to construct the list in one go, without pattern matching on our
-arguments. Indeed, the construction procedure is the only
+\citet[section~6.2.1]{okasaki_purely_1999}, but differ in purpose. 
+The only construction primitive presented by Okasaki is the appending of
+an element. This is of no use to us, because the function has to 
+analyse the structure it is appending to, and is therefore strict.
+We want avoid this, and thus must construct the structure in one go.
+Indeed, the construction procedure is the only
 novel idea we introduce:
 
 
@@ -142,11 +145,6 @@ section~\ref{sec:applicative}. In fact, we will have to construct the list direc
 
 The following function implements such a parser where repeated elements are mere symbols. 
 
-The function can be adapted for arbitrary non-terminals. One has to take care to avoid interference between the
-construction of the shape and error recovery. For example, the position of non-terminals can be forced in the tree,
-as to be in the node corresponding to the position of their first symbol. In that case the structure has to be 
-accomodated for nodes not containing any information.
-
 
 \begin{code}
 parseTree d = Symb
@@ -163,26 +161,17 @@ parseFullTree d = Symb
            parseTree (d-1))
 \end{code}
 
-\ignore{
-\begin{spec}
-parseTree d p = (pure Leaf) 
-   :|: (  Pure Node 
-          :*: p 
-          :*: parseFullTree d 
-          :*: parseTree (d+1))
-parseFullTree p 0 = pure Leaf
-   :|: (  Pure Node 
-          :*: p 
-          :*: parseFullTree (d-1) 
-          :*: parseTree (d-1))
-\end{spec}
-}
+The function can be adapted for arbitrary non-terminals. One has to take care to avoid interference between the
+construction of the shape and error recovery. For example, the position of non-terminals can be forced in the tree,
+as to be in the node corresponding to the position of their first symbol. In that case the structure has to be 
+accomodated for nodes not containing any information.
+
 
 \subsection{Quick access}
 
-Another possible benefit of using the tree structure as above is that
-finding the part of the tree corresponding to the edit window
-takes also logarithmic time. 
+Another benefit of using the tree structure as above is that
+finding the part of the tree of symbols corresponding to the edit window
+also takes logarithmic time. 
 Indeed, the size of each sub-tree depends only on its
 relative position to the root. Therefore, one can access an element by its index
 without pattern matching on any node which is not the direct path to it.

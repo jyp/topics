@@ -431,11 +431,16 @@ similarities with that presented by \citet{swierstra_fast_1999}: they also
 associate some variant of progress information to parsers and rely on thinning
 and laziness to explore the tree of all possible parses.
 
-\citet{wallace_partial_2008} presents another approach to online parsing, based
-on the notion of \emph{commitment}. We believe that much of our work could use
-this basis instead of the work of \citet{hughes_polish_2003}.
-
-
+\citet{wallace_partial_2008} presents another, simpler approach to online
+parsing, based on the notion of \emph{commitment}. His library features two
+sequencing operators: the classic monadic bind, and a special application with
+commitment. The former supports backtracking in the classic way, but the latter
+decouples errors occuring on its left hand side from errors occuring on its
+right hand side. This design has the advantage that no prior linearization of
+applications are needed. The drawback is that the user of the library has to
+decide where errors can be recovered or not. We believe that we could have based
+our library on a similar scheme, with some care: Wallace's parser throws an exception
+in case of error, but we require more precise reporting.
 
 \section{Discussion}
 

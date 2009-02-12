@@ -25,6 +25,7 @@ input of symbols, one can use the procedure described above to
 transform it into an incremental algorithm.
 
 \label{sec:disjunction}
+\label{sec:choice}
 
 However, parsing the input string with the interface
 presented so far is highly unsatisfactory. To support convenient parsing, we can
