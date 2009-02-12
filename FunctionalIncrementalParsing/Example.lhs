@@ -36,7 +36,7 @@ pleaseSymbol s = Symb
 \end{code}
 
 All of the above can be combined to write the parser for s-expressions.
-Note that we need to amend the result type to accomotate for erroneous inputs.
+Note that we need to amend the result type to accommodate for erroneous inputs.
 
 \begin{code}
 

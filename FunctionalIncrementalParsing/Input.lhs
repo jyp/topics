@@ -73,7 +73,7 @@ on the input, and choose the corresponding branch in the result.
 
 The |feed| function below performs this duty for a number of symbols, and stops
 when it has no more symbols to feed. The dual function, |feedEof|, removes all
-suspensions by consistently chosing the end-of-input alternative.
+suspensions by consistently choosing the end-of-input alternative.
 
 \begin{code}
 feed :: [s] -> Polish s r -> Polish s r
@@ -156,7 +156,7 @@ information).
 \subsection{Zipping into Polish}
 \label{sec:zipper}
 
-In this section we develp an efficient strategy to compute intermediate results.
+In this section we develop an efficient strategy to compute intermediate results.
 As seen in the above section, we want
 to avoid the cost of traversing the structure up to the suspension at each step.
 This suggests to use a zipper structure \citep{huet_zipper_1997} with the

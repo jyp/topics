@@ -435,7 +435,7 @@ and laziness to explore the tree of all possible parses.
 parsing, based on the notion of \emph{commitment}. His library features two
 sequencing operators: the classic monadic bind, and a special application with
 commitment. The former supports backtracking in the classic way, but the latter
-decouples errors occuring on its left hand side from errors occuring on its
+decouples errors occurring on its left hand side from errors occurring on its
 right hand side. This design has the advantage that no prior linearization of
 applications are needed. The drawback is that the user of the library has to
 decide where errors can be recovered or not. We believe that we could have based
@@ -463,7 +463,7 @@ advance how much of the AST is consumed, we could make the system to work as suc
 We see that laziness liberates essentially us from any such guesswork: the
 parser can be fully decoupled from the functions using the AST.
 On the flip side, the efficiency of the system crucially depends on the lazy
-behaviour of consumers of the AST. One has to take lots of care in writing
+behavior of consumers of the AST. One has to take lots of care in writing
 them.
 
 \textmeta{Is there a tool that does laziness analysis? note: deforestation possible implies laziness.}
@@ -480,7 +480,7 @@ Although it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
 parsers. 
 Of course, one can use our our |Yuck| combinator in place of failure, but one
-has to take in account that the parser continues running after the |Yuck| occurence.
+has to take in account that the parser continues running after the |Yuck| occurrence.
 In particular, if many |Yuck|s follow each other, this can lead to some performance loss, as
 the ``very disliked'' branch would require more analysis to be discarded than an
 immediate failure. Indeed, if one takes this idea to the extreme and tries to

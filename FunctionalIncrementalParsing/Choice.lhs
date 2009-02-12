@@ -169,7 +169,7 @@ x +> ~(ordering, xs) = (ordering, x :> xs)
 
 We can now use this information to determine which path to take when facing a
 disjunction: this is how we can implement the oracle used in the computation of
-progess. 
+progress. 
 
 Calling the |better| function directly would be very inefficient though, because its result is
 needed every time the disjunction is encountered. If the result of a

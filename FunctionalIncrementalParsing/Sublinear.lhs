@@ -121,7 +121,7 @@ This structure is very similar to binary random access lists as presented by
 \citet[section~6.2.1]{okasaki_purely_1999}, but differ in purpose. 
 The only construction primitive presented by Okasaki is the appending of
 an element. This is of no use to us, because the function has to 
-analyse the structure it is appending to, and is therefore strict.
+analyze the structure it is appending to, and is therefore strict.
 We want avoid this, and thus must construct the structure in one go.
 Indeed, the construction procedure is the only
 novel idea we introduce:
@@ -164,7 +164,7 @@ parseFullTree d = Symb
 The function can be adapted for arbitrary non-terminals. One has to take care to avoid interference between the
 construction of the shape and error recovery. For example, the position of non-terminals can be forced in the tree,
 as to be in the node corresponding to the position of their first symbol. In that case the structure has to be 
-accomodated for nodes not containing any information.
+accommodated for nodes not containing any information.
 
 
 \subsection{Quick access}

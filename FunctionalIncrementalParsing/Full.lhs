@@ -15,12 +15,12 @@ import Control.Monad (when)
 \section{Main loop}
 \label{sec:mainloop}
 
-In this section we write a toy editor written using the interface decribed in
+In this section we write a toy editor written using the interface described in
 section \ref{sec:interface}. This editor lacks most features you would expect
 from a real application, and is therefore just a toy. It is however a complete
 implementation which tackles the issues related to incremental parsing.
 
-The main loop alternates beween displaying the contents of the file being
+The main loop alternates between displaying the contents of the file being
 edited and updating its internal state in response to user input. Notice
 that we make our code polymorphic over the type of the AST we process (|a|),
 merely requiring it to be |Show|-able.
@@ -92,8 +92,8 @@ update s@State{ls = pst:psts} = do
  where addState c = feed [c] pst : ls s
 \end{code}
 
-Desides disabling buffering of the input for real-time responsivity,
-the top-level program has to instanciate the main loop with an initial state, 
+Besides disabling buffering of the input for real-time responsivity,
+the top-level program has to instantiate the main loop with an initial state, 
 and pick a specific parser to use: |parseTopLevel|. As we have seen before, this can
 be any parser of type |Parser s a|. In sections \ref{sec:input} and \ref{sec:choice}
 we give an examples of such parsers written using our library. 
