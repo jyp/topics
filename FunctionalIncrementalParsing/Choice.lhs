@@ -4,7 +4,7 @@
 \begin{code}
 {-# LANGUAGE TypeOperators, GADTs #-}
 module Choice where
-import SExpr
+import SExpr hiding (S)
 import Stack
 import Parser
 import Progress
@@ -135,7 +135,7 @@ progress (App p)          = progress p
 progress (Shift p)        = 0 :> progress p
 progress (Done)           = D 0
 progress (Dislike p)      = mapSucc (progress p)                
-progress (Sus _ _)        = PSusp                               
+progress (Sus _ _)        = S                               
 progress (Best _ pr _ _)  = pr                                  
 \end{code}
 
@@ -145,15 +145,15 @@ to two terminated |Polish| processes, it is possible to determine which one is
 best by demanding only a prefix of each, as follows.
 
 \begin{code}
-better _ PSusp _ = (EQ, PSusp)
-better _ _ PSusp = (EQ, PSusp)
-better _ (PRes x) (PRes y) = 
-   if x <= y then (LT, PRes x) else (GT, PRes y)
-better lk xs@(PRes x) (y:>ys) = 
+better _ S _ = (EQ, S)
+better _ _ S = (EQ, S)
+better _ (D x) (D y) = 
+   if x <= y then (LT, D x) else (GT, D y)
+better lk xs@(D x) (y:>ys) = 
    if x == 0 || y-x > dislikeThreshold lk 
    then (LT, xs) 
    else min x y +> better (lk+1) xs ys
-better lk (y:>ys) xs@(PRes x) = 
+better lk (y:>ys) xs@(D x) = 
    if x == 0 || y-x > dislikeThreshold lk 
    then (GT, xs) 
    else min x y +> better (lk+1) ys xs

@@ -2,12 +2,11 @@
 \begin{code}
 {-# LANGUAGE TypeOperators, GADTs #-}
 module Progress where
-import SExpr
 import Stack
 import Parser
 
-mapSucc PSusp = PSusp
-mapSucc (PRes x) = PRes (succ x) 
+mapSucc S = S
+mapSucc (D x) = D (succ x) 
 mapSucc (x :> xs) = succ x :> mapSucc xs
 
 dislikeThreshold _ = 0
@@ -17,5 +16,5 @@ dislikeThreshold _ = 0
 
 
 \begin{code}
-data Progress = PSusp | PRes Int | Int :> Progress
+data Progress = S | D Int | Int :> Progress
 \end{code}
