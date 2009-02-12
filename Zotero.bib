@@ -673,6 +673,11 @@
 	pages = {27--38}
 },
 
+@misc{_scram.pdf_????,
+	title = {scram.pdf},
+	url = {http://www.cs.umd.edu/~mwh/papers/scram.pdf}
+},
+
 @misc{glynn_type_2000,
 	title = {Type classes and constraint handling rules},
 	url = {http://citeseer.ist.psu.edu/334241.html},
@@ -984,6 +989,42 @@
 	keywords = {points-to}
 },
 
+@techreport{doaitse_swierstra_combinator_????,
+	type = {technical report},
+	title = {Combinator Parsing: A Short Tutorial},
+	url = {http://www.cs.uu.nl/research/techreps/repo/CS-2008/2008-044.pdf},
+	number = {{UU-CS-2008-044}},
+	institution = {Department of Information and Computing Sciences, Utrecht University},
+	author = {Doaitse Swierstra}
+},
+
+@inbook{wallace_partial_2008,
+	title = {Partial Parsing: Combining Choice with Commitment},
+	url = {http://dx.doi.org/10.1007/978-3-540-85373-2_6},
+	abstract = {Parser combinators, often monadic, are a venerable and widely-used solution to read data from some external format. However,
+the capability to return a partial parse has, until now, been largely missing. When only a small portion of the entire data
+is desired, it has been necessary either to parse the entire input in any case, or to break up the grammar into smaller pieces
+and move some work outside the world of combinators.
+
+This paper presents a technique for mixing lazy, demand-driven, parsing with strict parsing, all within the same set of combinators.
+The grammar specification remains complete and unbroken, yet only sufficient input is consumed to satisfy the result demanded.
+It is built on a combination of applicative and monadic parsers. Monadic parsing alone is insufficient to allow a choice operator to coexist with the early commitment needed for
+lazy results. Applicative parsing alone can give partial results, but does not permit context-sensitive grammars. But used
+together, we gain both partiality and a flexible ease of use.
+
+
+
+Performance results demonstrate that partial parsing is often faster and more space-efficient than strict parsing, but never
+worse. The trade-off is that partiality has consequences when dealing with ill-formed input.
+
+
+},
+	booktitle = {Implementation and Application of Functional Languages},
+	author = {Malcolm Wallace},
+	year = {2008},
+	pages = {93--110}
+},
+
 @inproceedings{saraiva_functional_2000,
 	title = {Functional Incremental Attribute Evaluation},
 	isbn = {{3-540-67263-X}},
@@ -1266,6 +1307,16 @@
 	author = {Oleg Kiselyov and {Chung-Chieh} Shan},
 	year = {2007},
 	keywords = {programming,typelevel}
+},
+
+@inbook{frandsen_dynamic_1995,
+	title = {Dynamic algorithms for the Dyck languages},
+	url = {http://dx.doi.org/10.1007/3-540-60220-8_54},
+	abstract = {We study Dynamic Membership problems for the Dyck languages, the class of strings of properly balanced parentheses. We also study the Dynamic Word problem for the free group. We present deterministic algorithms and data structures which maintain a string under replacements of symbols, insertions, and deletions of symbols, and language membership queries. Updates and queries are handled in polylogarithmic time. We also give both Las Vegas- and Monte Carlo-type randomised algorithms to achieve better running times, and present lower bounds on the complexity for variants of the problems.},
+	booktitle = {Algorithms and Data Structures},
+	author = {Gudmund Frandsen and Thore Husfeldt and Peter Miltersen and Theis Rauhe and S?ren Skyum},
+	year = {1995},
+	pages = {98--108}
 },
 
 @techreport{gregor_proposed_2007-1,

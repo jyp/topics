@@ -17,23 +17,24 @@ import Stack
 \section{Producing results} 
 \label{sec:applicative}
 
-\citet{hughes_polish_2003} show that the sequencing operator must be applicative
-(\citet{mcbride_applicative_2007}) to allow for online production of results.
-Since this is the cornerstone of our approach to incremental parsing, we review
-the result in this section, and focus on the first two constructors of the
-above datatype, corresponding to the applicative sub-language. 
+\citet{hughes_polish_2003} show that the sequencing operator must be
+applicative (\citet{mcbride_applicative_2007}) to allow for online production of
+results. This result is the cornerstone of our approach to incremental parsing,
+so we review it in this section, justifying the use of the combinators |Pure|
+and |:*:|, which form the applicative sub-language.
 
-We will also introduce the \emph{polish representation} for applicative
+We also introduce the \emph{polish representation} for applicative
 expressions: it is the essence of our parsing semantics. This
 section culminates with the definition of the pipeline from applicative language
-to results by going through polish expressions. Our final parser will be an
-extension of this machinery with the features mentioned above.
+to results by going through polish expressions. Our final parser (section \ref{sec:choice}) is an
+extension of this machinery with the all the features mentioned in the introduction.
 
 \subsection{The applicative sub-language}
 
-A requirement for online result production is that the top-level constructors
-are available before their arguments are computed. This can only be done if the
-parser can observe the structure of the result. Hence, we make function
+A requirement for online production of the result is that nodes are
+available before their children are computed. In terms of datatypes, this means that
+constructors must be available before their arguments are computed. This can only be done if the
+parser can observe (pattern match on) the structure of the result. Hence, we make function
 applications explicit in the expression describing the results.
 
 For example, the Haskell expression |S [Atom 'a']|, which stands for |S ((:)
@@ -93,8 +94,9 @@ polish expression is therefore
 @ S @ @ (:) @ Atom 'a' []
 \end{spec}
 
-The Haskell datatype can also be linearized in the same way, yielding the following
-representation for the above expression.
+The Haskell datatype can also be linearized in the same way. Using |App| for
+|@|, |Push| to wrap values and |Done| to finish the expression, we obtain the
+following representation.
 
 \begin{code}
 x = App $ Push S $ App $ App $ Push (:) $ 

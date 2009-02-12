@@ -6,6 +6,10 @@ import Code
 \end{code}
 }
 
+In this section we rewrite our parser for s-expr of section \ref{sec:input} 
+using disjunction. The goal is to obtain a more modular description.
+
+
 First, we can define repetition and sequence in the traditional way:
 
 \begin{code}
@@ -52,4 +56,9 @@ parseExpr = Symb
 parseTopLevel 
     = Pure const :*: parseExpr :*: eof
 \end{code}
+
+
+We have seen that the constructs introduced in this section (|Disj|, |Yuck|) 
+permit to write general purpose derived combinators, such as |many|, in a
+traditional style.
 

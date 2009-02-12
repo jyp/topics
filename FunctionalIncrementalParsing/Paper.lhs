@@ -56,7 +56,7 @@
 \begin{abstract}
 
 Structured documents are commonly edited using a free-form editor. 
-Despite the editor accepting all inputs, It makes sense to maintain a structured
+Despite the editor accepting all inputs, it makes sense to maintain a structured
 representation of the edited document. The structured representation has a number of uses:
 structural navigation (and optional structural edition), structure highlighting, etc. 
 The construction of the structure must be done incrementally to be
@@ -137,10 +137,6 @@ and rely on laziness to implement incrementality as much as possible.
 
 In this section we sketch how laziness can help achieving incremental parsing.
 
-An \emph{online} parser exhibits lazy behavior: it does not proceed further 
-than necessary to return the nodes of the AST that are demanded.
-
-
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
 \caption{Viewing the beginning of a file. 
@@ -151,9 +147,11 @@ depicted as a rectangle.
 \label{fig:begin}
 \end{figure}
 
-Assume that, in addition to using an online parser to produce the AST, it is traversed
-in pre-order to display the decorated text presented to the user.
-Then, the situation right after opening a file is depicted in figure~\ref{fig:begin}. The window is positioned
+An \emph{online} parser exhibits lazy behavior: it does not proceed further 
+than necessary to return the nodes of the AST that are demanded.
+Assuming that, in addition to using an online parser to produce the AST, it is traversed
+in pre-order to display the decorated text presented to the user,
+the situation right after opening a file is depicted in figure~\ref{fig:begin}. The window is positioned
 at the beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
 pre-order). This in turn forces parsing the corresponding part of
@@ -180,12 +178,12 @@ the parsing proceeds in lockstep (figure~\ref{fig:mid}).
 At this stage, a user modification is more
 serious: re-parsing naively from the beginning can be too costly for a big file.
 Fortunately we can again exploit the linear behavior of parsing algorithms to
-our advantage. Indeed, if we have stored the parser state for the input point
+our advantage. Indeed, if the editor stores the parser state for the input point
 where the user made the modification, we can \emph{resume} parsing from that
-point. If we make sure to store partial results for every point of the input, we
+point. Further, if it stores partial results for every point of the input, we
 can ensure that we will never parse more than a screenful at a time. Thereby, we
 achieve incremental parsing, in the sense that the amount of parsing work needed
-after each user interaction is constant.
+after each user interaction depends only on the size of the change or the length of the move.
 
 
 
@@ -228,7 +226,7 @@ presented by \citet{swierstra_combinator_2000}.
 
 Such an interface can be captured in a generalized algebraic data type (GADT)
 as follows. These combinators are traditionally given as functions instead of
-constructors but since we make extensive use of GADTs for modeling purposes at
+constructors, but since we make extensive use of GADTs for modeling purposes at
 various levels, we prefer to use this presentation style everywhere for
 consistency.
 
@@ -256,7 +254,7 @@ section~\ref{sec:parsing}.
 Parsing combinator libraries usually propose a mere
 |run| function that executes the parser on a given input: |run :: Parser s a ->
 [s] -> [a]|. 
-Incremental systems requires finer control over the execution of the parser.
+Incremental systems require finer control over the execution of the parser.
 Therefore, we have to split the |run| function into pieces and reify the parser
 state in values of type |Process|.
 
@@ -285,7 +283,7 @@ as soon as we introduce
 dependence on input in section~\ref{sec:input}.
 
 Sections \ref{sec:applicative} through
-\ref{sec:parsing} describe our parsing machinery is built, step by step.
+\ref{sec:parsing} describe how our parsing machinery is built, step by step.
 In section~\ref{sec:sublinear} we discuss the problem of incremental parsing of
 the repetition construct. We discuss and compare our approach to alternatives in
 section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude in section \ref{sec:conclusion}.
@@ -299,15 +297,15 @@ section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude in 
 \section{Related work}
 \label{sec:relatedWork}
 
-The literature on analysis of programs, incremental or not, is so abundant
-that a complete survey would deserve its own treatment. Here we will compare our
+The literature on parsing, incremental or not, is so abundant
+that a comprehensive survey would deserve its own treatment. Here we will compare our
 approach to some of the closest alternatives.
 
 \subsection{Development environments} 
 
 
 The idea of incremental analysis of programs is not new.
-\citet{wilcox_design_1976} already implemented such a system. The program would
+\citet{wilcox_design_1976} already implemented such a system. Their program would
 work very similarly to ours: parsing states to the left of the cursor were saved
 so that changes to the program would not force a complete re-parse. A big
 difference is that it would not rely on built-in lazy evaluation: the online production
@@ -319,16 +317,16 @@ provide error correction nor analysis to the right of the cursor.
 % and \citet{ghezzi_augmenting_1980}
 improved the concept by also reusing parsing results to the right of the cursor:
 after parsing every symbol they check if the new state of the LR automaton
-matches that of the previous run. If it does they know they can reuse the
+matches that of the previous run. If it does they know that they can reuse the
 results from that point on. 
 
 This improvement offers some advantages over \citet{wilcox_design_1976} which
 still apply when compared to our solution.
 
 \begin{enumerate} 
-\item If the user jumps back and forth between the beginning and the end of the
+\item In our system, if the user jumps back and forth between the beginning and the end of the
 file, every forward jump will force re-parsing the whole file. Note that we
-mitigate this drawback in our system by caching the (lazily constructed)
+can mitigate this drawback by caching the (lazily constructed)
 whole parse tree: a full re-parse is required only when the user makes a change
 while viewing the beginning of the file.
 
@@ -340,11 +338,11 @@ useless. For example, if one wishes to apply a sorting algorithm before
 displaying an output, this will force the whole input to be parsed before
 displaying the first element of the input. In particular, the arguments to the
 |Pure| constructor must not perform such operations on its arguments. Ideally,
-they should be simple constructors. This leaves many risks for the user of
+they should be simple constructors. This leaves much risk for the user of
 the library to destroy its incremental properties.
 \end{enumerate}
 
-While our approach is much more modest, it is better in some respects.
+While our approach is much more modest, it can be considered better in some respects.
 
 \begin{enumerate}
 \item One benefit of not analyzing the part of the input to the right of the cursor
@@ -367,7 +365,7 @@ context of a combinator library: since parsing states normally contain
 abstractions, it is not clear how they can be compared to one another.
 \end{enumerate}
 
-Later, \citet{wagner_efficient_1998} improved on the state-matching technique.
+\citet{wagner_efficient_1998} improved on the state-matching technique.
 They contributed the first incremental parser that took in account the
 inefficiency of linear repetition. We compared our approach to theirs in
 section~\ref{sec:sublinear}.
@@ -428,10 +426,15 @@ equally have started with parallel parsing processes and extended them with
 ``by-name'' evaluation. The combination of both evaluation techniques is unique
 to our library.
 
-While error correction mechanism was developed independently, it bears many
+While our error correction mechanism was developed independently, it bears many
 similarities with that presented by \citet{swierstra_fast_1999}: they also
 associate some variant of progress information to parsers and rely on thinning
 and laziness to explore the tree of all possible parses.
+
+\citet{wallace_partial_2008} presents another approach to online parsing, based
+on the notion of \emph{commitment}. We believe that much of our work could use
+this basis instead of the work of \citet{hughes_polish_2003}.
+
 
 
 \section{Discussion}
@@ -446,12 +449,13 @@ is implemented in a combinator library.
 \textmeta{pro and con of using laziness. where do we use laziness? where are we forced to be careful because of that?
 Big advantage: the users of the tree are decoupled from their producers.
 Big disadvantage: the users should be careful not to break laziness.
+Single constructor business.
 }
 
 
 \section{Future work}
 
-Our treatment of repetition is stull lacking: we would like to retrieve any
+Our treatment of repetition is still lacking: we would like to retrieve any
 node by its position in the input while preserving all properties of laziness
 intact. While this might be very difficult to do in the general case, we expect
 that our zipper structure can be used to guide the retrieval of the element at
@@ -459,8 +463,10 @@ the current point of focus, so that it can be done efficiently.
 
 Although it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
-parsers. However, in practice this can most often be emulated by a repetitive
-usage of the |Yuck| combinator. This can lead to some performance loss, as
+parsers. 
+Of course, one can use our our |Yuck| combinator in place of failure, but one
+has to take in account that the parser continues running after the |Yuck| occurence.
+In particular, if many |Yuck|s follow each other, this can lead to some performance loss, as
 the ``very disliked'' branch would require more analysis to be discarded than an
 immediate failure. Indeed, if one takes this idea to the extreme and tries to
 use the fix-point (|fix Yuck|) to represent failure, it will lead to
@@ -504,7 +510,8 @@ parsing with support for error correction. We argumented that, using suitable
 data structures for the output, the complexity of parsing (without error
 correction) is $O(log~m + n)$ where $m$ is the number of tokens in the state we
 resume from and $n$ is the number of tokens to parse. Parsing an increment of
-constant size has an amortized complexity of $O(1)$.
+constant size has an amortized complexity of $O(1)$. These complexity results
+ignore the time to search for the nodes corresponding to the display window.
 
 The parsing library presented in this paper is 
 used in the Yi editor to help matching parenthesis and layout the Haskell
@@ -519,7 +526,7 @@ This paper and accompanying source code have been edited in this environment.
 
 \textmeta{Review}
 
-We have shown that the combination of three techniques
+We have shown that the combination of a few simple techniques
 achieve the goal of incremental parsing.
 
 \begin{enumerate}

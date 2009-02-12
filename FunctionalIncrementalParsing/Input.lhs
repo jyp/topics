@@ -17,7 +17,7 @@ While the study of the pure applicative language is interesting in its
 own right (we come back to it in section~\ref{sec:zipper}), it is not enough
 to represent parsers: it lacks dependency on the input.
 
-We introduce an extra type argument (the type of symbols), as well as a new
+We introduce an extra type argument (the type of symbols, |s|), as well as a new
 constructor: |Symb|. It expresses that the rest of the expression depends on the
 next symbol of the input (if any): its first argument is the parser to be used if the
 end of input has been reached, while its second argument is used when there is
@@ -71,6 +71,10 @@ therefore will stop at the first |Susp|. Suspensions in a polish expression can
 be resolved by feeding input into it. When facing a suspension, we pattern match
 on the input, and choose the corresponding branch in the result.
 
+The |feed| function below performs this duty for a number of symbols, and stops
+when it has no more symbols to feed. The dual function, |feedEof|, removes all
+suspensions by consistently chosing the end-of-input alternative.
+
 \begin{code}
 feed :: [s] -> Polish s r -> Polish s r
 feed  []      p                = p
@@ -80,9 +84,6 @@ feed  ss      (App p)          = App     (feed ss p)
 feed  ss      Done             = Done                 
 \end{code} 
 
-The |feed| function below performs this duty for a number of symbols, and stops
-when it has no more symbols to feed. The dual function, |feedEof|, removes all
-suspensions by consistently chosing the end-of-input alternative.
 
 \begin{code}
 feedEof :: Polish s r -> Polish s r
@@ -108,12 +109,13 @@ new input's tail (from that position).
 
 This suffers from a major issue: partial results remain in their ``polish
 expression form'', and reusing offers little benefit, because no part of the
-result value (computation of evalR) is shared beyond construction of the
-expression in polish form. Fortunately, it is possible to partially evaluate
+result value is shared between the partial results: the function |evalR| has to perform
+the the full computation for each of them.
+Fortunately, it is possible to partially evaluate
 prefixes of polish expressions.
 
-The following definition performs this task by performing
-applications by traversing the result and applying functions along
+The following function performs this task
+by traversing a polish expression and applying functions along
 the way.
 
 \begin{code}
@@ -127,7 +129,7 @@ partialParses = scanl (\p c -> evalL . feed [c] $ p)
 This still suffers from a major drawback: as long as a function
 application is not saturated, the polish expression will start with
 a long prefix of partial applications, which has to be traversed again
-by following calls to |evalL| step.
+in forthcoming partial results.
 
 For example, after applying the s-expr parser to the string \verb!(abcdefg!, 
 |evalL| is unable to perform any simplification of the list prefix:
@@ -154,7 +156,8 @@ information).
 \subsection{Zipping into Polish}
 \label{sec:zipper}
 
-Thus we have to use a better strategy to simplify intermediate results. We want
+In this section we develp an efficient strategy to compute intermediate results.
+As seen in the above section, we want
 to avoid the cost of traversing the structure up to the suspension at each step.
 This suggests to use a zipper structure \citep{huet_zipper_1997} with the
 focus at the suspension point.
@@ -189,7 +192,7 @@ an output stack, reverse expressions can be understood as automata
 which transform a stack to another. This is captured in the type
 indices |inp| and |out|, which stand respectively for the input and the output stack.
 
-Running this automaton on an input stack requires some care:
+Running this automaton on requires some care:
 matching on the input stack must be done lazily.
 Otherwise, the evaluation procedure will force the spine of the input,
 effectively forcing to parse the whole input file.
@@ -201,7 +204,7 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
                           = evalRP r (f a :< acc)
 \end{code}
 
-In our zipper type, the direct polish expression yet-to-visit
+In our zipper type, the polish expression yet-to-visit
 (``on the right'') has to correspond to the reverse polish
 automation (``on the left''): the output of the latter has to match
 the input of the former.
@@ -213,7 +216,7 @@ The |right| function move the focus by one step to the right.
 right :: Zip s out -> Zip s out
 right (Zip l (Push a r))  = Zip (RPush a l) r
 right (Zip l (App r))     = Zip (RApp l) r   
-right (Zip l s)           = (Zip l s)        
+right (Zip l s)           = Zip l s
 \end{code}
 
 As the input is traversed, we also simplify the prefix that we went past,
@@ -238,13 +241,13 @@ case complexity in section~\ref{sec:sublinear}.
 
 In summary, it is essential for our purposes to have two evaluation procedures 
 for our parsing results. The first one, presented in section~\ref{sec:applicative}
-provides the online property, and corresponds to a call-by-name CPS transformation
+provides the online property, and corresponds to call-by-name CPS transformation
 of the direct evaluation of applicative expressions. The second one, presented in
 this section, enables incremental evaluation of intermediate results, and corresponds to
 a call-by-value transformation of the same direct evaluation function.
 
-\textmeta{It is also interesting to note that, apparently, we could have done away
+It is also interesting to note that, apparently, we could have done away
 with the reverse polish automaton entirely, and just have composed partial applications.
 This solution, while a lot simpler, falls short to our purposes: a composition of partially
 applied functions never gets simplified, whereas we are able to do so while traversing the 
-polish expression   }
+polish expression.
