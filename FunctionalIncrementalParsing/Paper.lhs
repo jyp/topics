@@ -451,12 +451,22 @@ incremental parsing library occupies a unique point in the design space.
 More specifically, it is the first time an incremental parsing system
 is implemented in a combinator library.
 
-\textmeta{pro and con of using laziness. where do we use laziness? where are we forced to be careful because of that?
-Big advantage: the users of the tree are decoupled from their producers.
-Big disadvantage: the users should be careful not to break laziness.
-Single constructor business.
-}
+What is the advantages of using the laziness properties of the online parser?
+% A way to answer this question is to see how the system could be modify to do away with laziness.
+Our system could be modified to avoid relying on laziness at all. In section
+\ref{sec:zipper} we propose to apply the reverse polish automaton (on the left)
+to the stack produced --- lazily --- by the polish expression (on the right).
+Instead of that stack, we could feed the automaton with a stack of dummy values,
+or |undefined|s. Everything would work as before, except that we would get
+exceptions when trying to access unevaluated parts of the tree. If we know in
+advance how much of the AST is consumed, we could make the system to work as such.
+We see that laziness liberates essentially us from any such guesswork: the
+parser can be fully decoupled from the functions using the AST.
+On the flip side, the efficiency of the system crucially depends on the lazy
+behaviour of consumers of the AST. One has to take lots of care in writing
+them.
 
+\textmeta{Is there a tool that does laziness analysis? note: deforestation possible implies laziness.}
 
 \section{Future work}
 
