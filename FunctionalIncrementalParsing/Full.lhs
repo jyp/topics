@@ -16,17 +16,17 @@ import Control.Monad (when)
 \label{sec:mainloop}
 
 In this section we write a toy editor written using the interface described in
-section \ref{sec:interface}. This editor lacks most features you would expect
-from a real application, and is therefore just a toy. It is however a complete
+section \ref{sec:interface}. This editor lacks most features one would expect
+from a real application, and is therefore just a toy. It is however a self-contained
 implementation which tackles the issues related to incremental parsing.
 
 The main loop alternates between displaying the contents of the file being
 edited and updating its internal state in response to user input. Notice
-that we make our code polymorphic over the type of the AST we process (|a|),
+that we make our code polymorphic over the type of the AST we process,
 merely requiring it to be |Show|-able.
 
 \begin{code}
-loop :: Show a => State a -> IO ()
+loop :: Show ast => State ast -> IO ()
 loop s = display s >> update s >>= loop
 \end{code}
 
@@ -79,7 +79,8 @@ update s@State{ls = pst:psts} = do
               (x:xs) -> s {lt = xs, rt = x : rt s, ls = psts}
     '>'  -> case rt s of -- right
               [] -> s
-              (x:xs) -> s {lt = x : lt s, rt = xs, ls = addState x}
+              (x:xs) -> s  {lt = x : lt s, rt = xs
+                           ,ls = addState x}
     -- deletions
     ','  -> case lt s of -- backspace
               [] -> s
@@ -111,7 +112,7 @@ of issues are glossed over though. Notably, we would like to avoid re-parsing wh
 moving in the file even if no modification is made. Also, the displayed output
 is computed from its start, and then trimmed. Instead we would like to directly
 print the portion corresponding to the current window. This issue can be tricky
-to fix, but for the time being we assume that displaying is much faster than
+to fix, as we see in section \ref{sec:sublinear}, but for the time being we assume that displaying is much faster than
 parsing and therefore the running time of the former can be neglected.
 
 

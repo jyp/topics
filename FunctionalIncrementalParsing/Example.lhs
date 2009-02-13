@@ -7,7 +7,8 @@ import Code
 }
 
 In this section we rewrite our parser for s-expr of section \ref{sec:input} 
-using disjunction. The goal is to obtain a more modular description.
+using disjunction and error-correction. 
+The goal is to illustrate how these new constructs can help in writing more modular parser descriptions.
 
 
 First, we can define repetition and sequence in the traditional way:

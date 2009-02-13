@@ -144,7 +144,7 @@ evalL $ feed "(abcdefg" (toPolish parseList)
 
 This prefix will persist until the end of the input is reached. A
 possible remedy is to avoid writing expressions that lead to this
-sort of intermediate results, and we will see in section~\ref{sec:sublinear} how
+sort of intermediate result, and we will see in section~\ref{sec:sublinear} how
 to do this in the particularly important case of lists. This however works
 only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the
@@ -192,7 +192,7 @@ an output stack, reverse expressions can be understood as automata
 which transform a stack to another. This is captured in the type
 indices |inp| and |out|, which stand respectively for the input and the output stack.
 
-Running this automaton on requires some care:
+Running this automaton requires some care:
 matching on the input stack must be done lazily.
 Otherwise, the evaluation procedure will force the spine of the input,
 effectively forcing to parse the whole input file.
@@ -209,7 +209,7 @@ In our zipper type, the polish expression yet-to-visit
 automation (``on the left''): the output of the latter has to match
 the input of the former.
 
-Capturing all these properties in the types by using GADTs
+Capturing all these properties in the types (though GADTs)
 allows to write a properly typed traversal of polish expressions.
 The |right| function move the focus by one step to the right.
 \begin{code}
@@ -249,5 +249,5 @@ a call-by-value transformation of the same direct evaluation function.
 It is also interesting to note that, apparently, we could have done away
 with the reverse polish automaton entirely, and just have composed partial applications.
 This solution, while a lot simpler, falls short to our purposes: a composition of partially
-applied functions never gets simplified, whereas we are able to do so while traversing the 
-polish expression.
+applied functions never gets simplified, whereas we are able to do so while traversing
+polish expressions.

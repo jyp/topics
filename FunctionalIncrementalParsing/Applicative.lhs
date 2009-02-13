@@ -72,15 +72,16 @@ evalA (Pure a)   = a
 
 If the arguments to the |Pure| constructor are constructors, then we know that
 demanding a given part of the result will force only the corresponding part of
-the applicative expression. In that case, the |Applic| type effectively allows
-us to define partial computations and reason about them.
+the applicative expression. 
+
+% In that case, the |Applic| type effectively allows us to define partial computations and reason about them.
 
 Because our parsers process the input in a linear fashion, they require a
 linear structure for the output as well. (This is revisited in section~\ref{sec:parsing}). As
-\citet{hughes_polish_2003}, we convert the applicative expressions to polish
+\citet{hughes_polish_2003}, we convert the applicative expressions to their polish
 representation to obtain such a linear structure.
 
-The key idea of the polish representation is to put the application in an
+The key idea of the polish representation is to put the application in a
 prefix position rather than an infix one. Our example expression (in applicative form 
 |S @ ((:) @ (Atom @ 'a') @ [])|)
 becomes
@@ -98,10 +99,10 @@ The Haskell datatype can also be linearized in the same way. Using |App| for
 |@|, |Push| to wrap values and |Done| to finish the expression, we obtain the
 following representation.
 
-\begin{code}
-x = App $ Push S $ App $ App $ Push (:) $ 
+\begin{spec}
+ App $ Push S $ App $ App $ Push (:) $ 
    App $ Push Atom $ Push 'a' $ Push [] $ Done
-\end{code}
+\end{spec}
 
 \begin{code}
 data UPolish where
@@ -112,9 +113,9 @@ data UPolish where
 
 
 Unfortunately, the above datatype does not allow to evaluate expressions in a
-typeful manner. The key insight is to that polish expressions are in fact more
+typeful manner. The key insight is that polish expressions are in fact more
 general than applicative expressions: they produce a stack of values instead of
-just one.
+a single one.
 
 As hinted by the constructor names we chose, we can reinterpret polish
 expressions as follows. |Push| produces a stack with one more value than its
@@ -139,7 +140,7 @@ data Polish r where
     Done  ::                                    Polish Nil
 \end{code}
 
-We can now write a translation from the pure applicative language to
+We can also write a translation from the pure applicative language to
 polish expressions.
 
 \begin{code}
@@ -169,8 +170,8 @@ evalR (Done)      = Nil
 We have the equality |evalR (toPolish x) == evalA x :< Nil|.
 
 Additionally, we note that this evaluation procedure still possesses the ``online''
-property: parts of the polish expression are demanded only if the corresponding
-parts of the input is demanded. This preserves the incremental properties of
+property: prefixes of the polish expression are demanded only if the corresponding
+parts of the result are demanded. This preserves the incremental properties of
 lazy evaluation that we required in the introduction. Furthermore, the equality
 above holds even when |undefined| appears as argument to the |Pure| constructor.
 

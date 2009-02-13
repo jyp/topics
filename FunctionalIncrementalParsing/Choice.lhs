@@ -66,16 +66,16 @@ branch to yield a successful outcome. Indeed, since the |evalR| function
 conjure up a suitable result for \emph{any} input.
 
 If the grammar is sufficiently permissive, no error correction in the parsing
-library itself is necessary. This is the case for our simple s-expression parser.
+library itself is necessary. This is the case for the simple s-expression parser of section \ref{sec:input}.
 However, most interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting the parser with
 error correction is therefore desirable.
 
-We can do so by introducing an other constructor (|Yuck|) in the |Parser| type
-to denote less desirable parses. Parsers will accept any input, but some will be
-less desirable than other and reflect this in the output. The parsing algorithm
-can then maximize the desirability of the set of rules used for parsing a given
-fragment of input.
+Our approach is to add some rules to accept erroneous inputs. These will be
+marked as less desirable by enclosing them with |Yuck| combinators, introduced
+as an other constructor in the |Parser| type. The parsing algorithm can then
+maximize the desirability of the set of rules used for parsing a given fragment
+of input.
 
 %include Parser.lhs
 
@@ -85,10 +85,10 @@ fragment of input.
 
 \subsection{The algorithm}
 
-Now that we have defined our definitive interface for parsers, we can describe
+Having defined our definitive interface for parsers, we can describe
 the parsing algorithm itself.
 
-As before, we can linearize the applications (|:*:|) by transforming the |Parser| into a polish-like 
+As before, we linearize the applications (|:*:|) by transforming the |Parser| into a polish-like 
 representation. In addition to the the |Dislike| and |Best| constructors corresponding to |Yuck| and
 |Disj|, |Shift| records where symbols have been processed, once |Susp| is removed.
 
@@ -120,7 +120,7 @@ much we dislike to take this path after shifting $n$ symbols following it,
 %include Progress.lhs
 
 The difference from a simple list is that progress information may end with
-success or suspension, depending on whether the process reaches |Done| or
+success (|D|) or suspension (|S|), depending on whether the process reaches |Done| or
 |Susp|.
 Figure~\ref{fig:progress} shows a |Polish| structure and the associated
 progress for each of its parts.
@@ -140,9 +140,15 @@ progress (Best _ pr _ _)  = pr
 \end{code}
 
 
-Using our thinning heuristic, given two |Progress| values corresponding
-to two terminated |Polish| processes, it is possible to determine which one is
-best by demanding only a prefix of each, as follows.
+Using our thinning heuristic, given two |Progress| values corresponding to two
+terminated |Polish| processes, it is possible to determine which one is best by
+demanding only a prefix of each. The following function handles this task. It
+returns the best of two processes information, together with an indicator of
+which is to be chosen. |LT| or |GT| respectively indicates that the second or
+third argument is the best, while |EQ| indicates that a suspension is reached.
+The first argument (|lk|) keeps track of how much lookahead has been processed. This
+value is a parameter to our thinning heuristic, |dislikeThreshold|, which indicates
+when a process can be discarded.
 
 \begin{code}
 better _ S _ = (EQ, S)
@@ -167,9 +173,9 @@ better lk (x:>xs) (y:>ys)
 x +> ~(ordering, xs) = (ordering, x :> xs)
 \end{code}
 
-We can now use this information to determine which path to take when facing a
-disjunction: this is how we can implement the oracle used in the computation of
-progress. 
+The oracle used in the computation of progress is implemented using the
+|better| function. The mutual recursion we introduce terminates because each
+call to |better| has one less disjunction to handle.
 
 Calling the |better| function directly would be very inefficient though, because its result is
 needed every time the disjunction is encountered. If the result of a

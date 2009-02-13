@@ -17,7 +17,7 @@ As we noted in a section~\ref{sec:input}, partial computations sometimes
 cannot be performed. 
 
 This is indeed a common case: if the
-output we construct is a list, then the spine of the list can only
+constructed output is a list, then the spine of the list can only
 be constructed once we get hold of the very tail of it. 
 
 For example, our parser for s-expressions would produce such lists for flat

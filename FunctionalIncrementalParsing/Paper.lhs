@@ -131,7 +131,7 @@ Our main goals can be formulated as constraints on the parsing library:
 To implement this last point, one could choose a stateful approach and update the parse tree as the user
 modifies the input structure. Instead, in this paper we explore the possibility to use a
 more ``functional'' approach: we minimize the amount of state that has to be updated,
-and rely on laziness to implement incrementality as much as possible.
+and rely as much as possible on laziness to implement incrementality.
 
 \subsection{Approach}
 
@@ -305,11 +305,11 @@ approach to some of the closest alternatives.
 
 
 The idea of incremental analysis of programs is not new.
-\citet{wilcox_design_1976} already implemented such a system. Their program would
-work very similarly to ours: parsing states to the left of the cursor were saved
+\citet{wilcox_design_1976} already implemented such a system. Their program 
+works very similarly to ours: parsing states to the left of the cursor are saved
 so that changes to the program would not force a complete re-parse. A big
-difference is that it would not rely on built-in lazy evaluation: the online production
-of ``results'' would have to be managed entirely by hand. It also did not
+difference is that it does not rely on built-in lazy evaluation. If they produced an AST, its online production
+would have to be managed entirely by hand. It also did not
 provide error correction nor analysis to the right of the cursor.
 
 
@@ -433,7 +433,7 @@ and laziness to explore the tree of all possible parses.
 
 \citet{wallace_partial_2008} presents another, simpler approach to online
 parsing, based on the notion of \emph{commitment}. His library features two
-sequencing operators: the classic monadic bind, and a special application with
+sequencing combinators: the classic monadic bind, and a special application with
 commitment. The former supports backtracking in the classic way, but the latter
 decouples errors occurring on its left hand side from errors occurring on its
 right hand side. This design has the advantage that no prior linearization of
@@ -451,7 +451,7 @@ incremental parsing library occupies a unique point in the design space.
 More specifically, it is the first time an incremental parsing system
 is implemented in a combinator library.
 
-What is the advantages of using the laziness properties of the online parser?
+What are the advantages of using the laziness properties of the online parser?
 % A way to answer this question is to see how the system could be modify to do away with laziness.
 Our system could be modified to avoid relying on laziness at all. In section
 \ref{sec:zipper} we propose to apply the reverse polish automaton (on the left)
@@ -460,7 +460,7 @@ Instead of that stack, we could feed the automaton with a stack of dummy values,
 or |undefined|s. Everything would work as before, except that we would get
 exceptions when trying to access unevaluated parts of the tree. If we know in
 advance how much of the AST is consumed, we could make the system to work as such.
-We see that laziness liberates essentially us from any such guesswork: the
+We see that laziness essentially liberates us from any such guesswork: the
 parser can be fully decoupled from the functions using the AST.
 On the flip side, the efficiency of the system crucially depends on the lazy
 behavior of consumers of the AST. One has to take lots of care in writing
