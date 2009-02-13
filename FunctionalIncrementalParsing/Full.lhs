@@ -41,7 +41,6 @@ data State a = State
       lt, rt :: String,
       ls :: [Process Char a]
     }
-
 \end{code}
 
 We do not display the input document as typed by the user, but an annotated version.
@@ -50,7 +49,7 @@ First, we feed the remainder of the input to the current state and then
 run the online parser. The display is then trimmed to show only a window around the edition point.
 
 \begin{code}
-display s =
+display s@State{ls = pst:_} = do
   putStrLn ""
   let windowBegin = length (lt s) - windowSize
   putStrLn   $ take windowSize
@@ -75,22 +74,22 @@ update s@State{ls = pst:psts} = do
   return $ case c of
     -- cursor movements
     '<'  -> case lt s of -- left
-              [] -> s
-              (x:xs) -> s {lt = xs, rt = x : rt s, ls = psts}
+              []      -> s
+              (x:xs)  -> s {lt = xs, rt = x : rt s, ls = psts}
     '>'  -> case rt s of -- right
-              [] -> s
-              (x:xs) -> s  {lt = x : lt s, rt = xs
-                           ,ls = addState x}
+              []      -> s
+              (x:xs)  -> s  {lt = x : lt s, rt = xs
+                            ,ls = addState x}
     -- deletions
     ','  -> case lt s of -- backspace
-              [] -> s
-              (x:xs) -> s {lt = xs, ls = psts}
+              []      -> s
+              (x:xs)  -> s {lt = xs, ls = psts}
     '.'  -> case rt s of -- delete
-              [] -> s
-              (x:xs) -> s {rt = xs}
+              []      -> s
+              (x:xs)  -> s {rt = xs}
     -- insertion of text
     c    -> s {lt = c : lt s, ls = addState c}
- where addState c = feed [c] pst : ls s
+ where addState c = precompute (feed [c] pst) : ls s
 \end{code}
 
 Besides disabling buffering of the input for real-time responsivity,
@@ -126,9 +125,9 @@ showS ([open,close]:ps) (S s userClose)  =   open
                                          :   concatMap (showS ps) s 
                                          ++  closing
     where closing = case userClose of 
-             Just ')'  ->[close]
-             Nothing   - "*expected )*"
-             Just c    - "?" ++ [c] ++ "?"
+             Just ')'  -> [close]
+             Nothing   -> "*expected )*"
+             Just c    -> "?" ++ [c] ++ "?"
 
 
 instance Show SExpr where

@@ -24,6 +24,7 @@ checks:
 	ghc -c Polish2.lhs
 	ghc -c Example.lhs
 	ghc -c Code.lhs
+	ghc -c Full.lhs
 
 %.html: %.markdown
 	pandoc --smart --standalone  --css=home.css --from=markdown --to=html --output=$@ $<

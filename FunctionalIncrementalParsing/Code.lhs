@@ -8,9 +8,9 @@ module Code(
             -- * Working with parsing processes
             Process,
             mkProcess,
-            evalZR,
-            evalZL,
-            feedSyms) where
+            finish,
+            precompute,
+            feedEof, feed) where
 
 -- Parser specification
 data Parser s a where
@@ -27,10 +27,13 @@ mkProcess :: Parser s a -> Zip s (a :< Nil)
 mkProcess p = Zip RStop (toP p $ Done)
 
 feedSyms :: Maybe [s] -> Zip s t -> Zip s t
-feedSyms syms (Zip l r) = Zip l (feed syms r)
+feedSyms syms (Zip l r) = Zip l (feed0 syms r)
 
-evalZR :: Zip token (a :< rest) -> a
-evalZR (Zip l r) = top (evalRP l (evalR r))
+feedEof = feedSyms Nothing
+feed = feedSyms . Just
+
+finish :: Zip token (a :< rest) -> a
+finish (Zip l r) = top (evalRP l (evalR r))
 
 -- Stacks
 data top :< rest = (:<) {top :: top, rest :: rest}
@@ -63,19 +66,19 @@ toP (Yuck p)    = Dislike . toP p
 
 -- feed some symbols into the process. 
 -- |Nothing| represents the end of file.
-feed :: Maybe [s] -> Polish s r -> Polish s r
-feed (Just []) p = p  -- nothing more left to feed
-feed ss p = case p of
+feed0 :: Maybe [s] -> Polish s r -> Polish s r
+feed0 (Just []) p = p  -- nothing more left to feed0
+feed0 ss p = case p of
                   (Sus nil cons) ->Shift $ case ss of
-                      Nothing -> feed ss nil
+                      Nothing -> feed0 ss nil
                       Just [] -> p
-                      Just (s:ss') -> feed (Just ss') (cons s)
-                  (Dislike p') -> Dislike (feed ss p')
-                  (Shift p') -> Shift (feed ss p')
-                  (Push x p') -> Push x (feed ss p')
-                  (App p') -> App (feed ss p')
+                      Just (s:ss') -> feed0 (Just ss') (cons s)
+                  (Dislike p') -> Dislike (feed0 ss p')
+                  (Shift p') -> Shift (feed0 ss p')
+                  (Push x p') -> Push x (feed0 ss p')
+                  (App p') -> App (feed0 ss p')
                   Done -> Done
-                  Best _ _ p' q' -> mkBest (feed ss p') (feed ss q')
+                  Best _ _ p' q' -> mkBest (feed0 ss p') (feed0 ss q')
 
 
 -- Handling disjunction and errors.
@@ -149,16 +152,16 @@ data Zip s output where
    -- note that the Stack produced by the Polish expression matches
    -- the stack consumed by the RP automaton.
 
-evalZL :: Zip s output -> Zip s output
-evalZL (Zip l (Push a r))            =  evalZL (Zip (simplify (RPush a l)) r)
-evalZL (Zip l (App r))               =  evalZL (Zip (RApp l) r)              
-evalZL (Zip l (Shift p))             =  evalZL (Zip l p)                     
-evalZL (Zip l (Dislike p))           =  evalZL (Zip l p)                     
-evalZL (Zip l r@(Best choice _ p q)) =  case choice of                       
-              LT ->  evalZL (Zip l p) 
-              GT ->  evalZL (Zip l q) 
+precompute :: Zip s output -> Zip s output
+precompute (Zip l (Push a r))            =  precompute (Zip (simplify (RPush a l)) r)
+precompute (Zip l (App r))               =  precompute (Zip (RApp l) r)              
+precompute (Zip l (Shift p))             =  precompute (Zip l p)                     
+precompute (Zip l (Dislike p))           =  precompute (Zip l p)                     
+precompute (Zip l r@(Best choice _ p q)) =  case choice of                       
+              LT ->  precompute (Zip l p) 
+              GT ->  precompute (Zip l q) 
               EQ ->  Zip l r  
-evalZL (Zip l r)                     =  Zip l r
+precompute (Zip l r)                     =  Zip l r
 
 -- execute the automaton as far as possible
 simplify :: RPolish s output -> RPolish s output
