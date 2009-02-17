@@ -33,7 +33,9 @@ loop s = display s >> update s >>= loop
 The |State| structure stores the ``current state'' of our toy editor. 
 The fields |lt| and |rt| contain the text respectively to the left and to the right of the edit point.
 The |ls| field is our main interest: it contains the parsing processes corresponding to each symbol to the left of the edit point.
-Note that there is always ore more element in |ls| than |lt|, because we also have a parser state for the empty input.
+The left-bound lists, |lt| and |ls|, contain data in reversed order, so that the information next to the cursor corresponds to the
+head of the lists.
+Note that there is always one more element in |ls| than |lt|, because we also have a parser state for the empty input.
 
 \begin{code}
 data State a = State
@@ -47,11 +49,13 @@ We do not display the input document as typed by the user, but an annotated vers
 Therefore, we have to parse the input and then serialize the result.
 First, we feed the remainder of the input to the current state and then
 run the online parser. The display is then trimmed to show only a window around the edition point.
+This takes a time proportional to the position in the file, but for the time being we assume that displaying is much faster than
+parsing and therefore the running time of the former can be neglected.
+
 
 \begin{code}
 display s@State{ls = pst:_} = do
   putStrLn ""
-  let windowBegin = length (lt s) - windowSize
   putStrLn   $ take windowSize
              $ drop windowBegin
              $ show 
@@ -59,7 +63,8 @@ display s@State{ls = pst:_} = do
              $ feedEof
              $ feed (rt s)
              $ pst 
-  where windowSize = 10 -- arbitrary value
+  where  windowSize = 10 -- arbitrary value
+         windowBegin = length (lt s) - windowSize
 \end{code}
 
 
@@ -109,10 +114,10 @@ main = do  hSetBuffering stdin NoBuffering
 This code forms the skeleton of any program using our library. A number
 of issues are glossed over though. Notably, we would like to avoid re-parsing when
 moving in the file even if no modification is made. Also, the displayed output
-is computed from its start, and then trimmed. Instead we would like to directly
-print the portion corresponding to the current window. This issue can be tricky
-to fix, as we see in section \ref{sec:sublinear}, but for the time being we assume that displaying is much faster than
-parsing and therefore the running time of the former can be neglected.
+is computed from its start, and then trimmed. 
+Instead we would like to directly
+print the portion corresponding to the current window. Doing this can be tricky
+to fix, as we see in section \ref{sec:sublinear}.
 
 
 \ignore{
