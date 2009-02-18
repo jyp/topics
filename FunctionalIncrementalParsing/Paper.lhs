@@ -548,8 +548,6 @@ This paper and accompanying source code have been edited in this environment.
 \section{Conclusion}
 \label{sec:conclusion}
 
-\textmeta{Review}
-
 We have shown that the combination of a few simple techniques
 achieve the goal of incremental parsing.
 
@@ -557,6 +555,9 @@ achieve the goal of incremental parsing.
 
 \item In a lazy setting, the combination of online production of results and
 saving intermediate results provide incrementality;
+
+\item The efficient computation of intermediate results require some care:
+a zipper-like structure is necessary to improve performance.
 
 \item Online parsers can be extended with an error correction scheme for
 modularity.
@@ -573,19 +574,17 @@ replaced by an other one without invalidating the approach.
 
 Also, while functional data structures are often presented in a way that
 ignores their lazy constructions (and thus are not always as good as plain
-lists), we have shown that this need not be the case. The simple structure
-presented here has three applications in our system only, and is virtually always
-an improvement over plain lists.
+lists), we have shown that this need not be the case. 
 
 
 \acks
 
 We thank Koen Claessen for persuading us to write this paper, and for his
 unfading support throughout the writing process. This paper was greatly improved
-by his comments on early and late drafts. Krasimir Angelov helped sorting out
-the notions of incremental parsing. Patrick Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski
-\textmeta{!!!Your name here!!!}
-gave helpful comments on drafts.
+by his comments on early and late drafts. Discussions with Krasimir Angelov helped sorting out
+the notions of incremental parsing. 
+Patrick Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski
+gave helpful comments on the presentation of the paper.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
