@@ -7,6 +7,7 @@ module Code(
             Parser(..),
             -- * Working with parsing processes
             Process,
+            runParser, -- direct run
             mkProcess,
             finish,
             precompute,
@@ -22,6 +23,9 @@ data Parser s a where
 
 -- Working with parsing processes
 type Process s a = Zip s (a :< Nil)
+
+runParser :: Parser s a -> [s] -> a
+runParser p i = finish $ feedEof $ feed i $ mkProcess p
 
 mkProcess :: Parser s a -> Zip s (a :< Nil)
 mkProcess p = Zip RStop (toP p $ Done)
@@ -250,8 +254,6 @@ instance Show (RPolish i o) where
 
 ⟩
 
-runParser :: Parser s a -> [s] -> a
-runParser p i = top $ evalR $ feed Nothing $ feed (Just i)  $ toP p $ Done
 
 }
 

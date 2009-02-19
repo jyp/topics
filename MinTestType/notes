@@ -1,0 +1,32 @@
+
+-- Length
+prop1 :: a -> Set a -> Bool
+prop1 x xs = 1 + length xs == length (x:xs)
+
+a ≡ 1
+
+
+-- reverse
+prop1 :: (a -> a -> Bool) -> [a] -> Bool
+prop1 (==) x = and $ zipWith (==) $ (reverse (reverse x)) x
+
+a ≡ 2
+
+'a' appears as 2nd level argument... i.e. something can be observed in it.
+
+-----------
+-- Sort
+
+prop1 :: Ord a => [a] -> Bool
+prop1 x = let y = sort x in i <= j ==> y !! i <= y !! j
+
+ridding of t.c.
+
+sort' cmp [] = []
+sort' cmp (x:xs) = sort l ++ x : sort r
+ where (l,r) = partition (cmp x) xs
+
+prop1 :: (a -> a -> Bool) -> (a -> a -> Bool) -> [a] -> Bool
+prop1 (.<=.) (.==.) x = let y = sort' (.<=.) x in i <= j ==> y !! i .<=. y !! j
+
+
