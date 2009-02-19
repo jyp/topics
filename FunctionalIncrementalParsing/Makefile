@@ -13,6 +13,7 @@ test:
 	./Full
 
 checks:
+	ghc -c Code.lhs
 	ghc -c SExpr.lhs
 	ghc -c Stack.lhs
 	ghc -c Applicative.lhs

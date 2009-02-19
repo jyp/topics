@@ -32,7 +32,7 @@ accept anything but be reluctant to get anything unexpected.
 \begin{code}
 pleaseSymbol s = Symb
      (Yuck $ Pure Nothing)
-     (\s' ->if s == s' then Pure (Just ')')
+     (\s' ->if s == s' then Pure (Just s')
                        else Yuck $ Pure (Just s'))
 \end{code}
 
