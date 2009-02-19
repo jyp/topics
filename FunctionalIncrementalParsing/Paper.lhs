@@ -50,9 +50,6 @@
 
 \maketitle
 
-\comment{Make sure online and incremental parsing are well defined.}
-\textmeta{Use arithmetic expressions as an example}
-
 \begin{abstract}
 
 Structured documents are commonly edited using a free-form editor. 
@@ -590,6 +587,9 @@ gave helpful comments on the presentation of the paper.
 \bibliography{../Zotero.bib}
 \section*{Appendix: The complete code}
 The complete code of the library described in this paper can be found here: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.lhs}
+The Yi source code is constently evolving, but at the time of this writing it
+uses a version of the parsing library which is very close to the descriptions
+given in the paper. It can be found here: \url{http://code.haskell.org/yi/Parser/Incremental.hs}
 
 % %include Code.lhs
 
