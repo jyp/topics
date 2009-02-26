@@ -100,9 +100,7 @@ update s@State{ls = pst:psts} = do
 
 Besides disabling buffering of the input for real-time responsivity,
 the top-level program has to instantiate the main loop with an initial state, 
-and pick a specific parser to use: |parseTopLevel|. As we have seen before, this can
-be any parser of type |Parser s a|. In sections \ref{sec:input} and \ref{sec:choice}
-we give an examples of such parsers written using our library. 
+and pick a specific parser to use: |parseTopLevel|. 
 
 \begin{code}
 main = do  hSetBuffering stdin NoBuffering
@@ -112,14 +110,23 @@ main = do  hSetBuffering stdin NoBuffering
                ls = [mkProcess parseTopLevel]}
 \end{code}
 
-This code forms the skeleton of any program using our library. A number
+As we have seen before, the top-level parser can
+return any type. In sections \ref{sec:input} and \ref{sec:choice}
+we give examples of parsers for S-expressions, written using our library. 
+
+%include SExpr.lhs
+
+We choose S-expressions because they have a recursive structure which can serve
+as prototype for many constructs found in PLs, while being simple enough to be
+treated completely within this paper.
+
+The code presented in this section forms the skeleton of any program using our library. A number
 of issues are glossed over though. Notably, we would like to avoid re-parsing when
 moving in the file if no modification is made. Also, the displayed output
 is computed from its start, and then trimmed. 
 Instead we would like to directly
 print the portion corresponding to the current window. Doing this is tricky
 to fix: the attempt described in section \ref{sec:sublinear} does not tackle the general case.
-
 
 \ignore{
 The only missing piece is the |Show| instance for that type.

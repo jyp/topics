@@ -284,10 +284,6 @@ In section~\ref{sec:sublinear} we discuss the problem of incremental parsing of
 the repetition construct. We discuss and compare our approach to alternatives in
 section~\ref{sec:relatedWork} through section~\ref{sec:results} and conclude in section \ref{sec:conclusion}.
 
-\textmeta{We will use SExpr as an example: they are a recursive structure which
-can serve as prototype for many constructs found in PLs. They are free from the
-problem of precedence which prevents online parsing. datatype?}
-
 %include Full.lhs
 %include Applicative.lhs
 %include Input.lhs

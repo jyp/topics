@@ -178,4 +178,4 @@ In fact, the conversion from applicative to polish expressions can be understood
 a reification of the working stack of the |evalA| function with call-by-name
 semantics.
 
-\textmeta{Now one has to be careful not to break this when adding features.}
+% \textmeta{Now one has to be careful not to break this when adding features.}
