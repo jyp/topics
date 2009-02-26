@@ -7,7 +7,7 @@ import Parser
 
 mapSucc S = S
 mapSucc (D x) = D (succ x) 
-mapSucc (x :> xs) = succ x :> mapSucc xs
+mapSucc (x :# xs) = succ x :# mapSucc xs
 
 dislikeThreshold _ = 0
 

@@ -127,16 +127,29 @@ progress for each of its parts.
 The |progress|
 function below extracts the information from the |Polish| structure. 
 
+\begin{spec}
+progress :: Polish s r -> Progress
+progress (Push _ p)       = progress p                          
+progress (App p)          = progress p                          
+progress (Shift p)        = 0 :# progress p
+progress (Done)           = D 0
+progress (Dislike p)      = mapSucc (progress p)                
+progress (Susp _ _)       = S                               
+progress (Best p q)       = snd $ better (progress p) (progress q)
+\end{spec}
+
+\ignore{
 \begin{code}
 progress :: Polish s r -> Progress
 progress (Push _ p)       = progress p                          
 progress (App p)          = progress p                          
-progress (Shift p)        = 0 :> progress p
+progress (Shift p)        = 0 :# progress p
 progress (Done)           = D 0
 progress (Dislike p)      = mapSucc (progress p)                
 progress (Susp _ _)       = S                               
-progress (Best p q)       = snd $ better (profile p) (profile q)
+progress (Best _ pr _ _)  = pr
 \end{code}
+}
 
 To deal with the last case (|Best|), we need to find out which of two profiles is better.
 Using our thinning heuristic, given two |Progress| values corresponding to two
@@ -154,22 +167,22 @@ better _ S _ = (EQ, S)
 better _ _ S = (EQ, S)
 better _ (D x) (D y) = 
    if x <= y then (LT, D x) else (GT, D y)
-better lk xs@(D x) (y:>ys) = 
+better lk xs@(D x) (y:#ys) = 
    if x == 0 || y-x > dislikeThreshold lk 
    then (LT, xs) 
    else min x y +> better (lk+1) xs ys
-better lk (y:>ys) xs@(D x) = 
+better lk (y:#ys) xs@(D x) = 
    if x == 0 || y-x > dislikeThreshold lk 
    then (GT, xs) 
    else min x y +> better (lk+1) ys xs
-better lk (x:>xs) (y:>ys)
+better lk (x:#xs) (y:#ys)
     | x == 0 && y == 0    = rec
-    | y - x > threshold   = (LT, x:>xs)
-    | x - y > threshold   = (GT, y:>ys)
+    | y - x > threshold   = (LT, x:#xs)
+    | x - y > threshold   = (GT, y:#ys)
     | otherwise = rec
     where  threshold  = dislikeThreshold lk
            rec        = min x y +> better (lk + 1) xs ys
-x +> ~(ordering, xs) = (ordering, x :> xs)
+x +> ~(ordering, xs) = (ordering, x :# xs)
 \end{code}
 
 Calling the |better| function directly is very inefficient though, because its result is

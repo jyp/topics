@@ -73,7 +73,7 @@ toP (Yuck p)    = Dislike . toP p
 feed0 :: Maybe [s] -> Polish s r -> Polish s r
 feed0 (Just []) p = p  -- nothing more left to feed0
 feed0 ss p = case p of
-                  (Sus nil cons) ->Shift $ case ss of
+                  (Susp nil cons) ->Shift $ case ss of
                       Nothing -> feed0 ss nil
                       Just [] -> p
                       Just (s:ss') -> feed0 (Just ss') (cons s)
@@ -124,7 +124,7 @@ progress (App p)          = progress p
 progress (Shift p)        = 0 :> progress p
 progress (Done)           = PRes 0
 progress (Dislike p)      = mapSucc (progress p)                
-progress (Sus _ _)        = PSusp                               
+progress (Susp _ _)        = PSusp                               
 progress (Best _ pr _ _)  = pr                                  
 
 mkBest :: Polish s a -> Polish s a -> Polish s a
@@ -180,7 +180,7 @@ evalR (App s)                = apply (evalR s)
   where apply ~(f:< ~(a:<r)) = f a :< r                           
 evalR (Shift v)              = evalR v                            
 evalR (Dislike v)            = (evalR v)                          
-evalR (Sus _ _)              = error "input pending"
+evalR (Susp _ _)              = error "input pending"
 evalR (Best choice _ p q)    = case choice of                     
     LT -> evalR p
     GT -> evalR q

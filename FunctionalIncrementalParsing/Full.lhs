@@ -61,7 +61,8 @@ display s@State{ls = pst:_} = do
              $ feedEof
              $ feed (rt s)
              $ pst 
-  where  trimToWindow = take windowSize . drop windowBegin
+  where  trimToWindow =  take windowSize . 
+                         drop windowBegin
          windowSize = 10 -- arbitrary number of charaters
          windowBegin = length (lt s) - windowSize
          
