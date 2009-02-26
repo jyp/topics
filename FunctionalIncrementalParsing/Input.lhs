@@ -45,11 +45,12 @@ parseList = Symb
 \end{code}
 
 
-We adapt the |Polish| expressions with the corresponding construct  and amend
+We adapt the |Polish| expressions with the construct corresponding to |Symb|, and amend
 the translation. Intermediate results are represented by a polish expression
 with a |Susp| element. The part before the |Susp| element corresponds to the
 constant part that is fixed by the input already parsed. The arguments of
-|Susp| contain the continuation of the parsing algorithm.
+|Susp| contain the continuations of the parsing algorithm: the first one 
+if there is a symbol to consume, the second one when the end of input is reached.
 
 \begin{code}
 data Polish s r where
@@ -174,7 +175,7 @@ data RPolish inp out where
                RPolish ((a -> b) :< a :< r) out 
   RStop  ::    RPolish r r
 \end{code}
-The data being linear, this zipper is very similar to the zipper
+Since the data is linear, this zipper is very similar to the zipper
 for lists. The part that is already visited (``on the left''), is
 reversed. Note that it contains only values and applications, since
 we never go past a suspension.
@@ -211,7 +212,7 @@ the input of the former.
 
 Capturing all these properties in the types (though GADTs)
 allows to write a properly typed traversal of polish expressions.
-The |right| function move the focus by one step to the right.
+The |right| function moves the focus by one step to the right.
 \begin{code}
 right :: Zip s out -> Zip s out
 right (Zip l (Push a r))  = Zip (RPush a l) r
@@ -248,6 +249,8 @@ a call-by-value transformation of the same direct evaluation function.
 
 It is also interesting to note that, apparently, we could have done away
 with the reverse polish automaton entirely, and just have composed partial applications.
-This solution, while a lot simpler, falls short to our purposes: a composition of partially
+This solution, while a lot simpler, falls short of our purposes: a composition of partially
 applied functions never gets simplified, whereas we are able to do so while traversing
 polish expressions.
+
+\comment{Interesting potential for the runtim system or compiler optimisation}

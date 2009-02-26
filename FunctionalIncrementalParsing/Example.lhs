@@ -6,7 +6,7 @@ import Code
 \end{code}
 }
 
-In this section we rewrite our parser for s-expr of section \ref{sec:input} 
+In this section we rewrite our parser for S-expressions in section \ref{sec:input} 
 using disjunction and error-correction. 
 The goal is to illustrate how these new constructs can help in writing more modular parser descriptions.
 
@@ -14,6 +14,7 @@ The goal is to illustrate how these new constructs can help in writing more modu
 First, we can define repetition and sequence in the traditional way:
 
 \begin{code}
+many,some :: Parser s a -> Parser s [a]
 many v = some v `Disj` Pure []
 some v = Pure (:) :*: v :*: many v
 \end{code}
@@ -27,16 +28,17 @@ eof = Symb (Pure ()) (\_ -> Yuck eof)
 \end{code}
 
 Checking for a specific symbol can be done in a similar way: we
-accept anything but be reluctant to get anything unexpected.
+accept anything but dislike (|Yuck|!) anything unexpected.
 
 \begin{code}
+pleaseSymbol :: Eq s => s -> Parser s (Maybe s)
 pleaseSymbol s = Symb
      (Yuck $ Pure Nothing)
      (\s' ->if s == s' then Pure (Just s')
                        else Yuck $ Pure (Just s'))
 \end{code}
 
-All of the above can be combined to write the parser for s-expressions.
+All of the above can be combined to write the parser for S-expressions.
 Note that we need to amend the result type to accommodate for erroneous inputs.
 
 \begin{code}

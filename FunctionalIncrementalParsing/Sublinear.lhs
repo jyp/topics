@@ -13,14 +13,14 @@ import Parser
 \section{Eliminating linear behavior}
 \label{sec:sublinear}
 
-As we noted in a section~\ref{sec:input}, partial computations sometimes
-cannot be performed. 
+As we noted in section~\ref{sec:input}, the result of some computations
+cannot be pre-computed in intermediate parser states, because constructors are only partially applied. 
 
 This is indeed a common case: if the
 constructed output is a list, then the spine of the list can only
 be constructed once we get hold of the very tail of it. 
 
-For example, our parser for s-expressions would produce such lists for flat
+For example, our parser for S-expressions would produce such lists for flat
 expressions, because the applications of |(:)| can be computed only when the end of the
 input is reached.
 
@@ -35,7 +35,7 @@ evalL $ feed "(abcdefg" (toPolish parseList)
 Section~\ref{sec:zipper} explained how to optimize the creation of intermediate
 results, by skipping this prefix. 
 Unfortunately this does not improve the asymptotic performance of computing the
-final result. The bottom-most partial result contains the long chain of partial
+final result. The partial result corresponding to the end of input contains the long chain of partial
 applications (in reverse polish representation), and to produce the final result the
 whole prefix has to be traversed.
 

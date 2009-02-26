@@ -25,7 +25,7 @@ and |:*:|, which form the applicative sub-language.
 
 We also introduce the \emph{polish representation} for applicative
 expressions: it is the essence of our parsing semantics. This
-section culminates with the definition of the pipeline from applicative language
+section culminates in the definition of the pipeline from applicative language
 to results by going through polish expressions. Our final parser (section \ref{sec:choice}) is an
 extension of this machinery with the all the features mentioned in the introduction.
 
@@ -45,8 +45,8 @@ form by
 S @ ((:) @ (Atom @ 'a') @ [])
 \end{spec}
 
-The following data type captures the pure applicative language with embedding
-of Haskell values. It is indexed by the type of values it represents.
+The following data type captures a pure applicative language embedding
+ Haskell values. It is indexed by the type of values it represents.
 
 \begin{code}
 data Applic a where
@@ -174,7 +174,8 @@ property: prefixes of the polish expression are demanded only if the correspondi
 parts of the result are demanded. This preserves the incremental properties of
 lazy evaluation that we required in the introduction. Furthermore, the equality
 above holds even when |undefined| appears as argument to the |Pure| constructor.
-
 In fact, the conversion from applicative to polish expressions can be understood as 
 a reification of the working stack of the |evalA| function with call-by-name
 semantics.
+
+\textmeta{Now one has to be careful not to break this when adding features.}

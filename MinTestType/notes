@@ -1,10 +1,40 @@
+Notation: 
+  {::t} arbitrary function of type t; typically the function being tested.
+  (::t) given function of type t: typically the specification.
+  (::) given function of matching type; please infer.
+  
+
+Simple form of a property:
+
+prop x = {::t} x == (::t) x
+
+There are two types of args given to a tested function; randomized ones and canonical ones.
+However; we can for the moment imagine that canonical ones (non types) can be randomized once
+we have fixed the type argument.
+
+
+-- Playing with bools.
+t ≡ (a -> Bool) -> a -> Bool
+prop 
+
+
 
 -- Length
+prop0 :: [a] -> Bool
+prop0 xs = {::[a]->Int} xs == (::[a]->Int) xs
+
+
 prop1 :: a -> Set a -> Bool
-prop1 x xs = 1 + length xs == length (x:xs)
+prop1 x xs = 1 + {::Set a -> Int} xs == length (x:xs)
 
 a ≡ 1
 
+
+-- Transitivity
+prop :: (a -> a -> Bool) -> a -> a -> a -> Bool
+prop (==) x y z = {::} (==) x y z == (::) (==) x y z
+a ≡ 2
+(==) = structural eq.
 
 -- reverse
 prop1 :: (a -> a -> Bool) -> [a] -> Bool

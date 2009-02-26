@@ -16,5 +16,5 @@ dislikeThreshold _ = 0
 
 
 \begin{code}
-data Progress = S | D Int | Int :> Progress
+data Progress = S | D Int | Int :# Progress
 \end{code}

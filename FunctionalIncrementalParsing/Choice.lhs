@@ -66,7 +66,7 @@ branch to yield a successful outcome. Indeed, since the |evalR| function
 conjure up a suitable result for \emph{any} input.
 
 If the grammar is sufficiently permissive, no error correction in the parsing
-library itself is necessary. This is the case for the simple s-expression parser of section \ref{sec:input}.
+library itself is necessary. This is the case for the simple S-expression parser of section \ref{sec:input}.
 However, most interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting the parser with
 error correction is therefore desirable.
@@ -95,7 +95,7 @@ representation. In addition to the the |Dislike| and |Best| constructors corresp
 %include Polish2.lhs
 
 The remaining challenge is to amend our evaluation functions to deal with disjunction points (|Best|).
-It offers two alternatives with are \emph{a priori} equivalent. Which one should be chosen?
+It offers two \emph{a priori} equivalent alternatives. Which one should be chosen?
 
 Since we want online behavior, we cannot afford to look
 further than a few symbols ahead to decide which parse might be the best.
@@ -105,10 +105,10 @@ the amount of look-ahead.) We use the widespread technique \citep[chapter
 look-ahead. 
 
 \citet{hughes_polish_2003}'s algorithm searches for the best path by direct manipulation
-of the polish representation, but this forces to constantly transform it between two normal forms:
+of the polish representation, but this direct approach forces to transformation between two normal forms:
 one where the \emph{progress} nodes (|Shift|, |Dislike|) are at the head  and one where the 
 result nodes (|Pure|, |:*:|) are at the head.
-Therefore, we do choose to use an intermediate datatype which represents the
+Therefore, we choose to use an intermediate datatype which represents the
 progress information only. 
 This clear separation of concerns also enables to compile the progress information into a convenient form:
 our |Progress| data structure directly records how
@@ -125,8 +125,7 @@ success (|D|) or suspension (|S|), depending on whether the process reaches |Don
 Figure~\ref{fig:progress} shows a |Polish| structure and the associated
 progress for each of its parts.
 The |progress|
-function below extracts the information from the |Polish| structure. Note that
-it assumes an oracle telling which path to take in the |Best| case.
+function below extracts the information from the |Polish| structure. 
 
 \begin{code}
 progress :: Polish s r -> Progress
@@ -135,16 +134,16 @@ progress (App p)          = progress p
 progress (Shift p)        = 0 :> progress p
 progress (Done)           = D 0
 progress (Dislike p)      = mapSucc (progress p)                
-progress (Sus _ _)        = S                               
-progress (Best _ pr _ _)  = pr                                  
+progress (Susp _ _)       = S                               
+progress (Best p q)       = snd $ better (profile p) (profile q)
 \end{code}
 
-
+To deal with the last case (|Best|), we need to find out which of two profiles is better.
 Using our thinning heuristic, given two |Progress| values corresponding to two
 terminated |Polish| processes, it is possible to determine which one is best by
 demanding only a prefix of each. The following function handles this task. It
 returns the best of two processes information, together with an indicator of
-which is to be chosen. |LT| or |GT| respectively indicates that the second or
+which is to be chosen. Constructors |LT| or |GT| respectively indicates that the second or
 third argument is the best, while |EQ| indicates that a suspension is reached.
 The first argument (|lk|) keeps track of how much lookahead has been processed. This
 value is a parameter to our thinning heuristic, |dislikeThreshold|, which indicates
@@ -164,26 +163,22 @@ better lk (y:>ys) xs@(D x) =
    then (GT, xs) 
    else min x y +> better (lk+1) ys xs
 better lk (x:>xs) (y:>ys)
-    | x == 0 && y == 0 = rec
-    | y - x > threshold = (LT, x:>xs)
-    | x - y > threshold = (GT, y:>ys)
+    | x == 0 && y == 0    = rec
+    | y - x > threshold   = (LT, x:>xs)
+    | x - y > threshold   = (GT, y:>ys)
     | otherwise = rec
-    where  threshold = dislikeThreshold lk
-           rec = min x y +> better (lk + 1) xs ys
+    where  threshold  = dislikeThreshold lk
+           rec        = min x y +> better (lk + 1) xs ys
 x +> ~(ordering, xs) = (ordering, x :> xs)
 \end{code}
 
-The oracle used in the computation of progress is implemented using the
-|better| function. The mutual recursion we introduce terminates because each
-call to |better| has one less disjunction to handle.
-
-Calling the |better| function directly would be very inefficient though, because its result is
-needed every time the disjunction is encountered. If the result of a
+Calling the |better| function directly is very inefficient though, because its result is
+needed every time a given disjunction is encountered. If the result of a
 disjunction depends on the result of further disjunction, the result of the
 further disjunction will be needlessly discarded.
-Therefore, we use cache the result of |better| in the |Polish| representation,
+Therefore, we cache the result of |better| in the |Polish| representation,
 using the well known technique of \emph{tupling}. For
-simplicity, we cache the information only at disjunction nodes where we also
+simplicity, we cache the information only at disjunction nodes, where we also
 remember which path is best to take. 
 We finally see why the |Polish| representation is important: the progress
 information cannot be associated to a |Parser|, because it may depend on
@@ -201,14 +196,14 @@ data Polish s a where
                                                       ->  Polish s (a :< r)
     Done     ::                                           Polish s Nil
     Shift    ::  Polish s a                           ->  Polish s a
-    Sus      ::  Polish s a -> (s -> Polish s a) 
+    Susp     ::  Polish s a -> (s -> Polish s a) 
                                                       ->  Polish s a
     Best     ::  Ordering -> Progress -> 
                  Polish s a -> Polish s a           ->  Polish s a
     Dislike  ::  Polish s a                           ->  Polish s a
 
 toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
-toP (Symb a f)  = \fut -> Sus  (toP a fut)
+toP (Symb a f)  = \fut -> Susp  (toP a fut)
                                (\s -> toP (f s) fut)
 toP (f :*: x)   = App . toP f . toP x
 toP (Pure x)    = Push x
@@ -222,7 +217,7 @@ mkBest p q =
 \end{code}
 
 The evaluation functions can be easily adapted to support disjunction by
-querying the oracle we provide in the |Best| constructor. We write the the
+querying the result of |better|, cached in the |Best| constructor. We write the the
 online evaluation only: partial result computation is modified similarly.
 
 \begin{code}
@@ -233,7 +228,7 @@ evalR (App s)                = apply (evalR s)
   where apply ~(f:< ~(a:<r)) = f a :< r                           
 evalR (Shift v)              = evalR v                            
 evalR (Dislike v)            = (evalR v)                          
-evalR (Sus _ _)              = error "input pending"
+evalR (Susp _ _)             = error "input pending"
 evalR (Best choice _ p q)    = case choice of                     
     LT -> evalR p
     GT -> evalR q

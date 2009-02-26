@@ -35,7 +35,7 @@ The fields |lt| and |rt| contain the text respectively to the left and to the ri
 The |ls| field is our main interest: it contains the parsing processes corresponding to each symbol to the left of the edit point.
 The left-bound lists, |lt| and |ls|, contain data in reversed order, so that the information next to the cursor corresponds to the
 head of the lists.
-Note that there is always one more element in |ls| than |lt|, because we also have a parser state for the empty input.
+Note that there is always one more element in |ls| than in |lt|, because we also have a parser state for the empty input.
 
 \begin{code}
 data State ast = State
@@ -56,22 +56,22 @@ parsing and therefore the running time of the former can be neglected.
 \begin{code}
 display s@State{ls = pst:_} = do
   putStrLn ""
-  putStrLn   $ take windowSize
-             $ drop windowBegin
-             $ show 
+  putStrLn   $ show 
              $ finish
              $ feedEof
              $ feed (rt s)
              $ pst 
-  where  windowSize = 10 -- arbitrary value
+  where  trimToWindow = take windowSize . drop windowBegin
+         windowSize = 10 -- arbitrary number of charaters
          windowBegin = length (lt s) - windowSize
+         
 \end{code}
 
 
 There are three types of user input to take care of: movement, deletion and insertion of text.
 The main difficulty here is to keep the list of intermediate states synchronized with the
 text. For example, every time a character is typed, a new parser state is
-computed and stored. The other editing operations proceed in similar fashion.
+computed and stored. The other editing operations proceed in a similar fashion.
 
 \begin{code}
 update s@State{ls = pst:psts} = do
@@ -113,11 +113,11 @@ main = do  hSetBuffering stdin NoBuffering
 
 This code forms the skeleton of any program using our library. A number
 of issues are glossed over though. Notably, we would like to avoid re-parsing when
-moving in the file even if no modification is made. Also, the displayed output
+moving in the file if no modification is made. Also, the displayed output
 is computed from its start, and then trimmed. 
 Instead we would like to directly
-print the portion corresponding to the current window. Doing this can be tricky
-to fix, as we see in section \ref{sec:sublinear}.
+print the portion corresponding to the current window. Doing this is tricky
+to fix: the attempt described in section \ref{sec:sublinear} does not tackle the general case.
 
 
 \ignore{

@@ -52,14 +52,14 @@ data Polish s a where
                                                       ->  Polish s (a :< r)
     Done     ::                                           Polish s Nil
     Shift    ::  Polish s a                           ->  Polish s a
-    Sus      ::  Polish s a -> (s -> Polish s a) 
+    Susp     ::  Polish s a -> (s -> Polish s a) 
                                                       ->  Polish s a
     Best     ::  Ordering -> Progress -> 
                  Polish s a -> Polish s a             ->  Polish s a
     Dislike  ::  Polish s a                           ->  Polish s a
 
 toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
-toP (Symb a f)  = \fut -> Sus  (toP a fut)
+toP (Symb a f)  = \fut -> Susp (toP a fut)
                                (\s -> toP (f s) fut)
 toP (f :*: x)   = App . toP f . toP x
 toP (Pure x)    = Push x
