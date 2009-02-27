@@ -63,7 +63,7 @@ display s@State{ls = pst:_} = do
              $ pst 
   where  trimToWindow =  take windowSize . 
                          drop windowBegin
-         windowSize = 10 -- arbitrary number of charaters
+         windowSize = 10 -- arbitrary size
          windowBegin = length (lt s) - windowSize
          
 \end{code}
@@ -117,7 +117,7 @@ we give examples of parsers for S-expressions, written using our library.
 %include SExpr.lhs
 
 We choose S-expressions because they have a recursive structure which can serve
-as prototype for many constructs found in PLs, while being simple enough to be
+as prototype for many constructs found in programming languages, while being simple enough to be
 treated completely within this paper.
 
 The code presented in this section forms the skeleton of any program using our library. A number

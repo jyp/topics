@@ -50,15 +50,12 @@
 
 \maketitle
 
-\comment{Make sure online and incremental parsing are well defined.}
-\textmeta{Use arithmetic expressions as an example}
-
 \begin{abstract}
 
 Structured documents are commonly edited using a free-form editor. 
-Despite the editor accepting all inputs, it makes sense to maintain a structured
+Even though every string is an acceptable input, it makes sense to maintain a structured
 representation of the edited document. The structured representation has a number of uses:
-structural navigation (and optional structural edition), structure highlighting, etc. 
+structural navigation (and optional structural editing), structure highlighting, etc. 
 The construction of the structure must be done incrementally to be
 efficient: the time to process an edit operation should be proportional to the
 size of the change, and (ideally) independent of the total size of the document.
@@ -98,7 +95,7 @@ Dynamic Programming, Polish representation, Editor, Haskell
 %   Some parenthesis do not match because of the layout rule: the
 %   closing ones should be indented. Yi understands that and shows them
 %   in a different color.
-  Despite the file being very big, the feedback can be given
+  Even though the file is longer than 2000 lines, real-time feedback can be given
   as the user types, because parsing is performed incrementally.
 }
 \label{fig:screenshot}
@@ -130,8 +127,8 @@ Our main goals can be formulated as constraints on the parsing library:
 
 To implement this last point, one could choose a stateful approach and update the parse tree as the user
 modifies the input structure. Instead, in this paper we explore the possibility to use a
-more ``functional'' approach: we minimize the amount of state that has to be updated,
-and rely on laziness to implement incrementality as much as possible.
+more ``functional'' approach: minimize the amount of state that has to be updated,
+and rely as much as possible on laziness to implement incrementality.
 
 \subsection{Approach}
 
@@ -154,8 +151,8 @@ in pre-order to display the decorated text presented to the user,
 the situation right after opening a file is depicted in figure~\ref{fig:begin}. The window is positioned
 at the beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
-pre-order). This in turn forces parsing the corresponding part of
-the input, but, thanks to lazy evaluation, \emph{only so far} (or maybe a few tokens ahead,
+pre-order). This traversal in turn forces parsing the corresponding part of
+the input, but, thanks to lazy evaluation, \emph{but no further} (or maybe a few tokens ahead,
 depending on the amount of look-ahead required). If the user modifies
 the input at this point, it invalidates the AST, but discarding it and
 re-parsing is not too costly: only a screenful of parsing needs to be
@@ -180,7 +177,7 @@ serious: re-parsing naively from the beginning can be too costly for a big file.
 Fortunately we can again exploit the linear behavior of parsing algorithms to
 our advantage. Indeed, if the editor stores the parser state for the input point
 where the user made the modification, we can \emph{resume} parsing from that
-point. Further, if it stores partial results for every point of the input, we
+point. Furthermore, if it stores partial results for every point of the input, we
 can ensure that we will never parse more than a screenful at a time. Thereby, we
 achieve incremental parsing, in the sense that the amount of parsing work needed
 after each user interaction depends only on the size of the change or the length of the move.
@@ -194,9 +191,8 @@ Our contributions can be summarized as follows.
 \begin{itemize}
 \item
   We describe a novel, purely functional approach to incremental parsing, which
-  makes essential use of lazy evaluation. This is achieved by
-  combining online parsers with caching of intermediate
-  results.
+  makes essential use of lazy evaluation. 
+  % This is achieved by combining online parsers with caching of intermediate results.
 
 \item
   We complete our treatment of incremental parsing with 
@@ -243,10 +239,10 @@ This interface supports production of results (|Pure|), sequencing (|:*:|)
 reading of input symbols (|Symb|), and disjunction (|Disj|, |Fail|).
 
 
-Most of this paper is devoted to uncover an appropriate representation for our
+Most of this paper is devoted to uncovering an appropriate representation for our
 parsing process type, and the implementation of the functions manipulating it.
 The core of this representation is introduced in section~\ref{sec:applicative},
-where we merely handle the |Pure| and |:*:| constructors. Dependence on input
+where we merely handle the |Pure| and |(:*:)| constructors. Dependence on input
 and the constructor |Symb| are treated in section~\ref{sec:input}. Disjunction
 and error correction will be implemented as a refinement of these concepts in
 section~\ref{sec:parsing}.
@@ -270,10 +266,10 @@ We also need a few functions to create and manipulate the parsing processes:
 \begin{itemize}
  
  \item |mkProcess :: Parser s a -> Process s a|: given a parser description, create the corresponding initial parsing process.
- \item |feed :: [s] -> Process s a -> Process s a|: feed the parsing process with a number of symbols.
- \item |feedEof :: Process s a -> Process s a|: feed the parsing process with the end of the input.
+ \item |feed :: [s] -> Process s a -> Process s a|: feed the parsing process a number of symbols.
+ \item |feedEof :: Process s a -> Process s a|: feed the parsing process the end of the input.
  \item |precompute :: Process s a -> Process s a|: transform a parsing process by pre-computing all the intermediate parsing results available.
- \item |finish :: Process s a -> a|: compute the final result of the parsing, in an online way. This assumes that the end of input has been fed into the process.
+ \item |finish :: Process s a -> a|: compute the final result of the parsing, in an online way, assuming that the end of input has been fed into the process.
 \end{itemize}
 
 Section \ref{sec:mainloop} details our approach to incrementality by sketching
@@ -305,11 +301,11 @@ approach to some of the closest alternatives.
 
 
 The idea of incremental analysis of programs is not new.
-\citet{wilcox_design_1976} already implemented such a system. Their program would
-work very similarly to ours: parsing states to the left of the cursor were saved
+\citet{wilcox_design_1976} already implemented such a system. Their program 
+works very similarly to ours: parsing states to the left of the cursor are saved
 so that changes to the program would not force a complete re-parse. A big
-difference is that it would not rely on built-in lazy evaluation: the online production
-of ``results'' would have to be managed entirely by hand. It also did not
+difference is that it does not rely on built-in lazy evaluation. If they had produced an AST, its online production
+would have had to be managed entirely by hand. It also did not
 provide error correction nor analysis to the right of the cursor.
 
 
@@ -351,9 +347,9 @@ to start displaying it.
 
 \item Another important point is that a small change in the input may often
 completely invalidate the results from the previous parsing runs. 
-A simple example is the opening of a comment. (For example,
+A simple example is the opening of a comment:
 while editing an Haskell source file, typing \verb!{-! implies that the rest of
-the file becomes a comment up to the next \verb!-}!.)
+the file becomes a comment up to the next matching \verb!-}!.
 
 It is therefore questionable that reusing right-bound parts of the parse
 tree offers any reasonable benefit in practice: it seems to be optimizing for a
@@ -370,19 +366,19 @@ They contributed the first incremental parser that took in account the
 inefficiency of linear repetition. We compared our approach to theirs in
 section~\ref{sec:sublinear}.
 
-Despite extensive research dating as far back as 30 years ago, somehow, none of
-these solutions have caught up in the mainstream. Editors typically work using
-regular expressions for syntax highlighting at the lexical level (Emacs, Vim,
-Textmate, \ldots{}) and integrated development environments run a full compiler
-in the background for syntax level feedback (Eclipse).
-\begin{meta}
-What does Visual Haskell do?
-\end{meta}
+Despite extensive research dating as far back as 30 years ago, these solutions
+have barely caught up in the mainstream. Editors typically work using regular
+expressions for syntax highlighting at the lexical level (Emacs, Vim, Textmate,
+\ldots{}). 
+
+% Integrated development environments (Eclipse, Visual Studio, ...) may
+% offer generic support for storing intermediate parser state and fetching
+% feedback information, but the interface forces the production of output to
+% be synchronized with the reading of input.
 
 It is possible that the implementation cost of earlier solutions outweighed
 their benefits. We hope that the simplicity of our approach will permit more
-widespread application.
-
+widespread application. 
 
 % \subsection{Incremental parsing in natural language processing} 
 % 
@@ -433,9 +429,9 @@ and laziness to explore the tree of all possible parses.
 
 \citet{wallace_partial_2008} presents another, simpler approach to online
 parsing, based on the notion of \emph{commitment}. His library features two
-sequencing operators: the classic monadic bind, and a special application with
+sequencing combinators: the classic monadic bind, and a special application with
 commitment. The former supports backtracking in the classic way, but the latter
-decouples errors occuring on its left hand side from errors occuring on its
+decouples errors occurring on its left hand side from errors occurring on its
 right hand side. This design has the advantage that no prior linearization of
 applications are needed. The drawback is that the user of the library has to
 decide where errors can be recovered or not. We believe that we could have based
@@ -448,25 +444,36 @@ in case of error, but we require more precise reporting.
 Due to our choice to commit to a purely functional, lazy approach, our 
 incremental parsing library occupies a unique point in the design space.
 
-More specifically, it is the first time an incremental parsing system
-is implemented in a combinator library.
+It is also the first time that incremental and online parsing are 
+both available in a combinator library.
 
-What is the advantages of using the laziness properties of the online parser?
-% A way to answer this question is to see how the system could be modify to do away with laziness.
+What are the advantages of using the laziness properties of the online parser?
+% A way to answer this question is to see how the system could be modified to do away with laziness.
 Our system could be modified to avoid relying on laziness at all. In section
 \ref{sec:zipper} we propose to apply the reverse polish automaton (on the left)
 to the stack produced --- lazily --- by the polish expression (on the right).
 Instead of that stack, we could feed the automaton with a stack of dummy values,
 or |undefined|s. Everything would work as before, except that we would get
 exceptions when trying to access unevaluated parts of the tree. If we know in
-advance how much of the AST is consumed, we could make the system to work as such.
-We see that laziness liberates essentially us from any such guesswork: the
-parser can be fully decoupled from the functions using the AST.
-On the flip side, the efficiency of the system crucially depends on the lazy
-behaviour of consumers of the AST. One has to take lots of care in writing
+advance how much of the AST is consumed, we could make the system work as such.
+
+One could take the stance that this guesswork (knowing where to stop the
+parsing) is practically possible only for mostly linear syntaxes, where
+production of output is highly coupled with the consumption of input. Since
+laziness essentially liberates us from any such guesswork, the parser can be
+fully decoupled from the functions using the syntax tree.
+
+The above reflexion offers another explanation why most mainstream syntax
+highlighters are based on regular-expressions or other lexical analysis
+mechanism: they lack a mechanism to decouple processing of input from production
+of output.
+
+The flip side to our approach is that the efficiency of the system crucially depends on the lazy
+behavior of consumers of the AST. One has to take lots of care in writing
 them.
 
-\textmeta{Is there a tool that does laziness analysis? note: deforestation possible implies laziness.}
+% \textmeta{Is there a tool that does laziness analysis? note: deforestation possible implies laziness.}
+% Patrik: IFL'06, Strictcheck
 
 \section{Future work}
 
@@ -480,8 +487,8 @@ Although it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
 parsers. 
 Of course, one can use our our |Yuck| combinator in place of failure, but one
-has to take in account that the parser continues running after the |Yuck| occurence.
-In particular, if many |Yuck|s follow each other, this can lead to some performance loss, as
+has to take in account that the parser continues running after the |Yuck| occurrence.
+In particular, many |Yuck|s following each other can lead to some performance loss, as
 the ``very disliked'' branch would require more analysis to be discarded than an
 immediate failure. Indeed, if one takes this idea to the extreme and tries to
 use the fix-point (|fix Yuck|) to represent failure, it will lead to
@@ -532,14 +539,11 @@ The parsing library presented in this paper is
 used in the Yi editor to help matching parenthesis and layout the Haskell
 functions, and environment delimiters as well as parenthetical
 symbols were matched in the \LaTeX{} source.
-
-This paper and accompanying source code have been edited in this environment.
+This paper and accompanying source code have been edited in Yi.
 
 
 \section{Conclusion}
 \label{sec:conclusion}
-
-\textmeta{Review}
 
 We have shown that the combination of a few simple techniques
 achieve the goal of incremental parsing.
@@ -549,11 +553,14 @@ achieve the goal of incremental parsing.
 \item In a lazy setting, the combination of online production of results and
 saving intermediate results provide incrementality;
 
+\item The efficient computation of intermediate results require some care:
+a zipper-like structure is necessary to improve performance.
+
 \item Online parsers can be extended with an error correction scheme for
 modularity.
 
 \item Provided that they are carefully constructed to preserve laziness, tree
-structures can always replace lists in functional programs. Doing so can improve
+structures can replace lists in functional programs. Doing so can improve
 the complexity class of algorithms.
 
 \end{enumerate}
@@ -564,26 +571,25 @@ replaced by an other one without invalidating the approach.
 
 Also, while functional data structures are often presented in a way that
 ignores their lazy constructions (and thus are not always as good as plain
-lists), we have shown that this need not be the case. The simple structure
-presented here has three applications in our system only, and is virtually always
-an improvement over plain lists.
-
-
+lists), we have shown that this need not be the case. 
 
 
 \acks
 
 We thank Koen Claessen for persuading us to write this paper, and for his
 unfading support throughout the writing process. This paper was greatly improved
-by his comments on early and late drafts. Krasimir Angelov helped sorting out
-the notions of incremental parsing. Patrick Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski
-\textmeta{!!!Your name here!!!}
-gave helpful comments on drafts.
+by his comments on early and late drafts. Discussions with Krasimir Angelov helped sorting out
+the notions of incremental parsing. 
+Patrik Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski and Micha{\l} Pa{\l}ka
+gave helpful comments on the presentation of the paper.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
 \section*{Appendix: The complete code}
-The complete code of the library described in this paper can be found here: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.lhs}
+The complete code of the library described in this paper can be found at: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.lhs}
+The Yi source code is constently evolving, but at the time of this writing it
+uses a version of the parsing library which is very close to the descriptions
+given in the paper. It can be found at: \url{http://code.haskell.org/yi/Parser/Incremental.hs}
 
 % %include Code.lhs
 

@@ -132,7 +132,7 @@ application is not saturated, the polish expression will start with
 a long prefix of partial applications, which has to be traversed again
 in forthcoming partial results.
 
-For example, after applying the s-expr parser to the string \verb!(abcdefg!, 
+For example, after applying the S-expression parser to the string \verb!(abcdefg!, 
 |evalL| is unable to perform any simplification of the list prefix:
 
 \begin{spec}

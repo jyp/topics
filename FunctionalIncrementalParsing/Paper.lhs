@@ -383,7 +383,7 @@ widespread application.
 % \subsection{Incremental parsing in natural language processing} 
 % 
 % 
-% In natural language processing, a parsing alagorithm is deemed incremental if ``it
+% In natural language processing, a parsing algorithm is deemed incremental if ``it
 % reads the input one token at a time and calculates all the possible consequences
 % of the token, before the net token is read.''
 % 
@@ -580,14 +580,14 @@ We thank Koen Claessen for persuading us to write this paper, and for his
 unfading support throughout the writing process. This paper was greatly improved
 by his comments on early and late drafts. Discussions with Krasimir Angelov helped sorting out
 the notions of incremental parsing. 
-Patrik Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski and Michal Pa{\l}ka
+Patrik Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski and Micha{\l} Pa{\l}ka
 gave helpful comments on the presentation of the paper.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}
 \section*{Appendix: The complete code}
 The complete code of the library described in this paper can be found at: \url{http://github.com/jyp/topics/tree/master/FunctionalIncrementalParsing/Code.lhs}
-The Yi source code is constently evolving, but at the time of this writing it
+The Yi source code is constantly evolving, but at the time of this writing it
 uses a version of the parsing library which is very close to the descriptions
 given in the paper. It can be found at: \url{http://code.haskell.org/yi/Parser/Incremental.hs}
 
