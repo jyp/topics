@@ -6,7 +6,7 @@ import Code
 \end{code}
 }
 
-In this section we rewrite our parser for S-expressions in section \ref{sec:input} 
+In this section we rewrite our parser for S-expressions from section \ref{sec:input} 
 using disjunction and error-correction. 
 The goal is to illustrate how these new constructs can help in writing more modular parser descriptions.
 
@@ -52,16 +52,16 @@ data SExpr
 parseExpr = Symb
      (Yuck $ Pure Missing) 
      (\c ->case c of 
-         '(' -> Pure S :*: many parseExpr :*: pleaseSymbol ')'
-         ')' -> Yuck $ Pure $ Deleted ')'
-         c   -> Pure $ Atom c)
+         '('   ->  Pure S :*: many parseExpr :*: pleaseSymbol ')'
+         ')'   ->  Yuck $ Pure $ Deleted ')'
+         c     ->  Pure $ Atom c)
 
 parseTopLevel 
     = Pure const :*: parseExpr :*: eof
 \end{code}
 
 
-We have seen that the constructs introduced in this section (|Disj|, |Yuck|) 
+We see that the constructs introduced in this section (|Disj|, |Yuck|) 
 permit to write general purpose derived combinators, such as |many|, in a
 traditional style.
 

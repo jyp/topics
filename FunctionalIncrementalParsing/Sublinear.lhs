@@ -178,7 +178,7 @@ without pattern matching on any node which is not the direct path to it.
 This allows efficient indexed access without loosing any property of laziness. 
 Again, the technique can be adapted for arbitrary non-terminals. However, it
 will only work if each node in the tree is ``small'' enough. Finding the first
-node of interest might force an extra node, and force parsing the corresponding
+node of interest might force an extra node, and in turn force parsing the corresponding
 part of the file.
 
 

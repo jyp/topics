@@ -96,22 +96,20 @@ feedEof  Done             = Done
 
 For example, |evalR $ feedEof $ feed "(a)" $ toPolish $ parseList| yields back our example expression: |S [Atom 'a']|.
 
-
-We can also obtain intermediate parsing results by feeding symbols one at a
-time. 
-
+We recall from section \ref{sec:mainloop} that feeding symbols one at a
+time yields all intermediate parsing results.
 \begin{spec}
 allPartialParses = scanl (\p c -> feed [c] p)
 \end{spec}
-
-Now, if the $(n+1)^{th}$ element of the input is changed, one can reuse
+If the $(n+1)^{th}$ element of the input is changed, one can reuse
 the $n^{th}$ element of the partial results list and feed it the
 new input's tail (from that position).
+
 
 This suffers from a major issue: partial results remain in their ``polish
 expression form'', and reusing offers little benefit, because no part of the
 result value is shared between the partial results: the function |evalR| has to perform
-the the full computation for each of them.
+the the full computation for each of them. 
 Fortunately, it is possible to partially evaluate
 prefixes of polish expressions.
 
@@ -151,13 +149,13 @@ only up to some point: indeed, there must always be an unsaturated
 application (otherwise the result would be independent of the
 input). In general, after parsing a prefix of size $n$, it is
 reasonable to expect a partial application of at least depth
-$O(log~n)$, (otherwise the parser is discarding
-information).
+$O(log~n)$, otherwise the parser is discarding
+information.
 
 \subsection{Zipping into Polish}
 \label{sec:zipper}
 
-In this section we develop an efficient strategy to compute intermediate results.
+In this section we develop an efficient strategy to pre-compute intermediate results.
 As seen in the above section, we want
 to avoid the cost of traversing the structure up to the suspension at each step.
 This suggests to use a zipper structure \citep{huet_zipper_1997} with the
@@ -240,17 +238,19 @@ result based on the previous partial result) is $O(1)$, if the size of the
 result expression is proportional to the size of the input. We discuss the worst
 case complexity in section~\ref{sec:sublinear}.
 
-In summary, it is essential for our purposes to have two evaluation procedures 
-for our parsing results. The first one, presented in section~\ref{sec:applicative}
-provides the online property, and corresponds to call-by-name CPS transformation
-of the direct evaluation of applicative expressions. The second one, presented in
-this section, enables incremental evaluation of intermediate results, and corresponds to
-a call-by-value transformation of the same direct evaluation function.
+In summary, it is essential for our purposes to have two evaluation procedures
+for our parsing results. The first one, presented in
+section~\ref{sec:applicative}, provides the online property, and corresponds to
+call-by-name CPS transformation of the direct evaluation of applicative
+expressions. It underlies the |finish| function in our interface. The
+second one, presented in this section, enables incremental evaluation of
+intermediate results, and corresponds to a call-by-value transformation of the
+same direct evaluation function. It underlies the |precompute| function.
 
 It is also interesting to note that, apparently, we could have done away
 with the reverse polish automaton entirely, and just have composed partial applications.
 This solution, while a lot simpler, falls short of our purposes: a composition of partially
-applied functions never gets simplified, whereas we are able to do so while traversing
+applied functions is not simplified under Haskell semantics, whereas we are able to do so while traversing
 polish expressions.
 
 \comment{Interesting potential for the runtim system or compiler optimisation}

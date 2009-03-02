@@ -15,7 +15,7 @@ import Control.Monad (when)
 \section{Main loop}
 \label{sec:mainloop}
 
-In this section we write a toy editor written using the interface described in
+In this section we write an editor using the interface described in
 section \ref{sec:interface}. This editor lacks most features one would expect
 from a real application, and is therefore just a toy. It is however a self-contained
 implementation which tackles the issues related to incremental parsing.
@@ -31,12 +31,6 @@ loop s = display s >> update s >>= loop
 \end{code}
 
 The |State| structure stores the ``current state'' of our toy editor. 
-The fields |lt| and |rt| contain the text respectively to the left and to the right of the edit point.
-The |ls| field is our main interest: it contains the parsing processes corresponding to each symbol to the left of the edit point.
-The left-bound lists, |lt| and |ls|, contain data in reversed order, so that the information next to the cursor corresponds to the
-head of the lists.
-Note that there is always one more element in |ls| than in |lt|, because we also have a parser state for the empty input.
-
 \begin{code}
 data State ast = State
     {
@@ -44,12 +38,18 @@ data State ast = State
       ls :: [Process Char ast]
     }
 \end{code}
+The fields |lt| and |rt| contain the text respectively to the left and to the right of the edit point.
+The field |ls| is our main interest: it contains the parsing processes corresponding to each symbol to the left of the edit point.
+The left-bound lists, |lt| and |ls|, contain data in reversed order, so that the information next to the cursor corresponds to the
+head of the lists.
+Note that there is always one more element in |ls| than in |lt|, because we also have a parser state for the empty input.
+
 
 We do not display the input document as typed by the user, but an annotated version.
 Therefore, we have to parse the input and then serialize the result.
 First, we feed the remainder of the input to the current state and then
 run the online parser. The display is then trimmed to show only a window around the edit point.
-This takes a time proportional to the position in the file, but for the time being we assume that displaying is much faster than
+Trimming takes a time proportional to the position in the file, but for the time being we assume that displaying is much faster than
 parsing and therefore the running time of the former can be neglected.
 
 
@@ -112,11 +112,11 @@ main = do  hSetBuffering stdin NoBuffering
 
 As we have seen before, the top-level parser can
 return any type. In sections \ref{sec:input} and \ref{sec:choice}
-we give examples of parsers for S-expressions, written using our library. 
+we give examples of parsers for S-expressions, which can be used as instances of |parseTopLevel|.
 
 %include SExpr.lhs
 
-We choose S-expressions because they have a recursive structure which can serve
+We illustrate using S-expressions because they have a recursive structure which can serve
 as prototype for many constructs found in programming languages, while being simple enough to be
 treated completely within this paper.
 

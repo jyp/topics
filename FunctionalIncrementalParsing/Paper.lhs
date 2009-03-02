@@ -3,6 +3,7 @@
 %include lhs2TeX.fmt
 %format :*: = " \applbind"
 %format :|: = " \disjunct"
+%format :# = " \prog"
 %format +> = " \secondPush"
 \usepackage{amsmath}
 \usepackage[mathletters]{ucs}
@@ -23,7 +24,7 @@
 \newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
 \newcommand{\disjunct}{\mathbin{:\!\!||\!\!:}}
 \newcommand{\secondPush}{\mathbin{+\!\!>}}
-\newcommand{\prog}{\ensuremath{\mathbin{:>}}}
+\newcommand{\prog}{\ensuremath{\mathbin{:\!\!\#}}}
 
 \newenvironment{meta}{%
 \begin{quote}
@@ -115,7 +116,7 @@ parsing.
 
 Another feature of Yi is that it is configurable in Haskell. Therefore, we
 prefer to use the Haskell language for every aspect of the application, so that
-the user can configure it. In particular, syntax should be described using a
+the user can configure it. In particular, syntax is described using a
 combinator library.
 
 Our main goals can be formulated as constraints on the parsing library:
@@ -132,7 +133,7 @@ and rely as much as possible on laziness to implement incrementality.
 
 \subsection{Approach}
 
-In this section we sketch how laziness can help achieving incremental parsing.
+In this section we sketch how lazy evaluation can help achieving incremental parsing.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
@@ -152,7 +153,7 @@ the situation right after opening a file is depicted in figure~\ref{fig:begin}. 
 at the beginning of the file. To display the decorated output, the program
 has to traverse the first few nodes of the syntax tree (in
 pre-order). This traversal in turn forces parsing the corresponding part of
-the input, but, thanks to lazy evaluation, \emph{but no further} (or maybe a few tokens ahead,
+the input, but, thanks to lazy evaluation, \emph{no further} (or maybe a few tokens ahead,
 depending on the amount of look-ahead required). If the user modifies
 the input at this point, it invalidates the AST, but discarding it and
 re-parsing is not too costly: only a screenful of parsing needs to be
@@ -236,8 +237,9 @@ data Parser s a where
 \end{spec}
 
 This interface supports production of results (|Pure|), sequencing (|:*:|)
-reading of input symbols (|Symb|), and disjunction (|Disj|, |Fail|).
-
+reading of input symbols (|Symb|), and disjunction (|Disj|, |Fail|). The type
+parameter |s| stands for the type of input symbols, while |a| is the type of
+values produced by the parser.
 
 Most of this paper is devoted to uncovering an appropriate representation for our
 parsing process type, and the implementation of the functions manipulating it.
@@ -305,13 +307,13 @@ The idea of incremental analysis of programs is not new.
 works very similarly to ours: parsing states to the left of the cursor are saved
 so that changes to the program would not force a complete re-parse. A big
 difference is that it does not rely on built-in lazy evaluation. If they had produced an AST, its online production
-would have had to be managed entirely by hand. It also did not
+would have had to be managed entirely by hand. The system also did not
 provide error correction nor analysis to the right of the cursor.
 
 
 \citet{ghezzi_incremental_1979} 
 % and \citet{ghezzi_augmenting_1980}
-improved the concept by also reusing parsing results to the right of the cursor:
+improved the concept by reusing parsing results to the right of the cursor:
 after parsing every symbol they check if the new state of the LR automaton
 matches that of the previous run. If it does they know that they can reuse the
 results from that point on. 
@@ -345,8 +347,8 @@ While our approach is much more modest, it can be considered better in some resp
 is that there is no start-up cost: only a screenful of text needs to be parsed
 to start displaying it.
 
-\item Another important point is that a small change in the input may often
-completely invalidate the results from the previous parsing runs. 
+\item Another important point is that a small change in the input might
+completely invalidate the result from the previous parsing run.
 A simple example is the opening of a comment:
 while editing an Haskell source file, typing \verb!{-! implies that the rest of
 the file becomes a comment up to the next matching \verb!-}!.
@@ -358,7 +360,7 @@ expect consistent response times.
 
 \item Finally, comparing parser states is very tricky to accomplish in the
 context of a combinator library: since parsing states normally contain
-abstractions, it is not clear how they can be compared to one another.
+lambda abstractions, it is not clear how they can be compared to one another.
 \end{enumerate}
 
 \citet{wagner_efficient_1998} improved on the state-matching technique.
@@ -393,7 +395,7 @@ widespread application.
 
 \subsection{Incremental computation}
 
-An alternative approach would be to build the library as a plain parser on top
+An alternative to our approach to would be to build the library as a plain parser on top
 of a generic incremental computation system. The main drawback is that there
 currently exists no such off-the-shelf system for Haskell. The closest
 matching solution is provided by \citet{carlsson_monads_2002}, and relies
@@ -432,8 +434,8 @@ parsing, based on the notion of \emph{commitment}. His library features two
 sequencing combinators: the classic monadic bind, and a special application with
 commitment. The former supports backtracking in the classic way, but the latter
 decouples errors occurring on its left hand side from errors occurring on its
-right hand side. This design has the advantage that no prior linearization of
-applications are needed. The drawback is that the user of the library has to
+right hand side. This design offers the advantage that no prior linearization of
+applications is needed. The drawback is that the user of the library has to
 decide where errors can be recovered or not. We believe that we could have based
 our library on a similar scheme, with some care: Wallace's parser throws an exception
 in case of error, but we require more precise reporting.
@@ -486,7 +488,7 @@ the current point of focus, so that it can be done efficiently.
 Although it is trivial to add a \emph{failure} combinator to the library
 presented here, we refrained from doing so because it can lead to failing
 parsers. 
-Of course, one can use our our |Yuck| combinator in place of failure, but one
+Of course, one can use our |Yuck| combinator in place of failure, but one
 has to take in account that the parser continues running after the |Yuck| occurrence.
 In particular, many |Yuck|s following each other can lead to some performance loss, as
 the ``very disliked'' branch would require more analysis to be discarded than an
@@ -499,9 +501,9 @@ represent progress by a mere interleaving of |Shift| and |Dislike| constructors.
 
 Our library suffers from the usual drawbacks of parser combinator approaches.
 In particular, it is impossible to write left-recursive parsers, because they
-yield a non-terminating loop in the parsing algorithm. We could proceed as
-\citet{baars_typed_2009} and represent the grammar rules and transform them on
-the fly. It is interesting to note however that we could represent traditional
+cause a non-terminating loop in the parsing algorithm. We could proceed as
+\citet{baars_typed_2009} and transform the grammar to remove left-recursion.
+It is interesting to note however that we could represent traditional
 left-recursive parsers as long as they either consume or \emph{produce} data,
 provided the progress information is indexed by the number of |Push|es in
 addition to |Shift|s.
@@ -539,7 +541,7 @@ The parsing library presented in this paper is
 used in the Yi editor to help matching parenthesis and layout the Haskell
 functions, and environment delimiters as well as parenthetical
 symbols were matched in the \LaTeX{} source.
-This paper and accompanying source code have been edited in Yi.
+This paper and the accompanying source code have been edited in Yi.
 
 
 \section{Conclusion}
@@ -569,9 +571,9 @@ While these techniques work together here, we believe that they are valuable
 independently of each other. In particular, our error correction scheme can be
 replaced by an other one without invalidating the approach. 
 
-Also, while functional data structures are often presented in a way that
-ignores their lazy constructions (and thus are not always as good as plain
-lists), we have shown that this need not be the case. 
+% Also, while functional data structures are often presented in a way that
+% ignores their lazy constructions (and thus are not always as good as plain
+% lists), we have shown that this need not be the case. 
 
 
 \acks

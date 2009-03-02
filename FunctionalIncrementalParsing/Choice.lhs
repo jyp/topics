@@ -105,7 +105,7 @@ the amount of look-ahead.) We use the widespread technique \citep[chapter
 look-ahead. 
 
 \citet{hughes_polish_2003}'s algorithm searches for the best path by direct manipulation
-of the polish representation, but this direct approach forces to transformation between two normal forms:
+of the polish representation, but this direct approach forces to transforma between two normal forms:
 one where the \emph{progress} nodes (|Shift|, |Dislike|) are at the head  and one where the 
 result nodes (|Pure|, |:*:|) are at the head.
 Therefore, we choose to use an intermediate datatype which represents the
@@ -135,7 +135,8 @@ progress (Shift p)        = 0 :# progress p
 progress (Done)           = D 0
 progress (Dislike p)      = mapSucc (progress p)                
 progress (Susp _ _)       = S                               
-progress (Best p q)       = snd $ better (progress p) (progress q)
+progress (Best p q)       = snd $ better  (progress p) 
+                                          (progress q)
 \end{spec}
 
 \ignore{
@@ -155,7 +156,7 @@ To deal with the last case (|Best|), we need to find out which of two profiles i
 Using our thinning heuristic, given two |Progress| values corresponding to two
 terminated |Polish| processes, it is possible to determine which one is best by
 demanding only a prefix of each. The following function handles this task. It
-returns the best of two processes information, together with an indicator of
+returns the best of two progress information, together with an indicator of
 which is to be chosen. Constructors |LT| or |GT| respectively indicates that the second or
 third argument is the best, while |EQ| indicates that a suspension is reached.
 The first argument (|lk|) keeps track of how much lookahead has been processed. This
@@ -262,7 +263,7 @@ expressions with disjunction), then we compute a progress information that we
 tie to it, for each node; finally, finding the best path is a matter of looking
 only at a subset of the information we constructed, using any suitable
 heuristic. The cut-off heuristic makes sure that only a part of the
-exponentially big data structure is demanded. Thanks to lazy evaluation, only
+exponentially growing data structure is demanded. Thanks to lazy evaluation, only
 that small part will be actually constructed.
 
 \subsection{Thinning out results and ambiguous grammars}

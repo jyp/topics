@@ -21,7 +21,7 @@ import Stack
 applicative (\citet{mcbride_applicative_2007}) to allow for online production of
 results. This result is the cornerstone of our approach to incremental parsing,
 so we review it in this section, justifying the use of the combinators |Pure|
-and |:*:|, which form the applicative sub-language.
+and |(:*:)|, which form the applicative sub-language.
 
 We also introduce the \emph{polish representation} for applicative
 expressions: it is the essence of our parsing semantics. This
@@ -29,7 +29,7 @@ section culminates in the definition of the pipeline from applicative language
 to results by going through polish expressions. Our final parser (section \ref{sec:choice}) is an
 extension of this machinery with the all the features mentioned in the introduction.
 
-\subsection{The applicative sub-language}
+% \subsection{The applicative sub-language}
 
 A requirement for online production of the result is that nodes are
 available before their children are computed. In terms of datatypes, this means that
@@ -71,7 +71,7 @@ evalA (Pure a)   = a
 \end{code}
 
 If the arguments to the |Pure| constructor are constructors, then we know that
-demanding a given part of the result will force only the corresponding part of
+demanding a given part of the result forces only the corresponding part of
 the applicative expression. 
 
 % In that case, the |Applic| type effectively allows us to define partial computations and reason about them.
@@ -168,6 +168,8 @@ evalR (Done)      = Nil
 %                  in (f x, s'')
 
 We have the equality |evalR (toPolish x) == evalA x :< Nil|.
+
+% Patrik: and: evalR (toP x r) == evalA :< evalR r
 
 Additionally, we note that this evaluation procedure still possesses the ``online''
 property: prefixes of the polish expression are demanded only if the corresponding
