@@ -14,9 +14,14 @@ we have fixed the type argument.
 
 
 -- Playing with bools.
-t ≡ (a -> Bool) -> a -> Bool
-prop 
+t ≡ a -> Bool
+a ≡ 1
 
+
+
+t ≡ (a -> Bool, a) -> Bool
+exampleFunction (f, a) = not (f a)
+a ≡ 2 
 
 
 -- Length
@@ -60,3 +65,6 @@ prop1 :: (a -> a -> Bool) -> (a -> a -> Bool) -> [a] -> Bool
 prop1 (.<=.) (.==.) x = let y = sort' (.<=.) x in i <= j ==> y !! i .<=. y !! j
 
 
+-----------------
+
+ stable sort vs. sort
