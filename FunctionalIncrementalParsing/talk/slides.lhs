@@ -78,11 +78,11 @@
 \pause
 \begin{verbatim}
 data Parser s a where
-  Pure   :: a                               -> Parser s a
-  (:*:)  :: Parser s (b -> a) -> Parser s b -> Parser s a
-  Symb   :: Parser s a -> (s -> Parser s a) -> Parser s a
-  Disj   :: Parser s a -> Parser s a        -> Parser s a
-  Yuck   :: Parser s a                      -> Parser s a
+  Pure  :: a                               -> Parser s a
+  (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
+  Symb  :: Parser s a -> (s -> Parser s a) -> Parser s a
+  Disj  :: Parser s a -> Parser s a        -> Parser s a
+  Yuck  :: Parser s a                      -> Parser s a
 \end{verbatim}
 
 \end{frame}
@@ -133,19 +133,42 @@ evalR (Done)      = Nil
 }
 
 \frame{
-  \frametitle{Offline}
+    \frametitle{Offline (idea)}
+    Precompute prefixes of polish expression.
+\begin{verbatim}
+evalL :: Polish s a -> Polish s a
+evalL (Push x r) = Push x (evalL r)
+evalL (App f) = case evalL f of
+                  (Push g (Push b r)) -> Push (g b) r
+                  r -> App r
+\end{verbatim}
+}
+
+\frame{
+  \frametitle{Offline (zipper)}
 \begin{verbatim}
 data Zip s out where
   Zip :: RPolish stack out -> Polish s stack -> Zip s out
 
 data RPolish inp out where
-  RPush  :: a -> RPolish (a :< r) out ->
+  RPush :: a -> RPolish (a :< r) out ->
                RPolish r out
-  RApp   :: RPolish (b :< r) out ->
+  RApp  :: RPolish (b :< r) out ->
                RPolish ((a -> b) :< a :< r) out 
-  RStop  ::    RPolish r r
+  RStop :: RPolish r r
 \end{verbatim}
 
+\begin{verbatim}
+right :: Zip s out -> Zip s out
+right (Zip l (Push a r))  = Zip (RPush a l) r
+right (Zip l (App r))     = Zip (RApp l) r   
+right (Zip l s)           = Zip l s
+\end{verbatim}
+
+}
+
+\frame{
+  \frametitle{Offline (computation)}
 \begin{verbatim}
 evalRP :: RPolish inp out -> inp -> out
 evalRP RStop acc          = acc 
@@ -156,18 +179,38 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
 }
 
 \frame{
-\frametitle{Contributions}
+  \frametitle{Input}
+  
+\begin{verbatim}
+data Polish s r where
+  Push  :: a -> Polish s r                 -> Polish s (a :< r)
+  App   :: Polish s ((b -> a) :< b :< r)   -> Polish s (a :< r)
+  Done  ::                                    Polish s Nil
+  Susp  :: Polish s r -> (s -> Polish s r) -> Polish s r
+\end{verbatim}
 
-Our contributions can be summarized as follows.
+\begin{verbatim}
+feed :: [s] -> Polish s r -> Polish s r
+feed  []      p                = p
+feed  (s:ss)  (Susp nil cons)  = feed ss (cons s)
+feed  ss      (Push x p)       = Push x  (feed ss p)  
+feed  ss      (App p)          = App     (feed ss p)  
+feed  ss      Done             = Done                 
+\end{verbatim}
+}
+
+
+\frame{
+\frametitle{Contributions}
 
 \begin{itemize}
 \item
-  Purely functional approach to incremental parsing
+  Functional approach to incremental parsing;
 \item
-  Essential use of lazy evaluation. 
+  Essential use of lazy evaluation;
 
 \item
-  Error correction.
+  Error correction;
 
 \item
   Parser-combinator library;
