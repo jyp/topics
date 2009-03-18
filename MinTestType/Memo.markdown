@@ -11,14 +11,14 @@ type for each type variable.
 
 For example, if one wishes to test
 
-> sort :: forall a. (a -> a -> Ordering) -> [a] -> [a]
+> sort :: forall a. ((a,a) -> (a,a)) -> [a] -> [a]
 
 one can pick `Int` for `a`. If one can gain confidence that the function works for `Int`, 
 it will work for any type `a`.
 
 
 Picking `Int` is a waste however: it is a type with 2^32^ elements, but it would
-have sufficed to use a type with $3$ (?) elements to verify that the $sort$ function
+have sufficed to use a type with $2$ elements to verify that the $sort$ function
 works.
 
 In this memo I propose a systematic technique to pick the minimal type for verifying a 
@@ -40,7 +40,7 @@ $f x = g x$
 
 That is, `f` is the function to check and `g` is the specification we want to check against.
 
-I conjecture that the type of `f` is enough to infer the minimal type $μ$
+I conjecture that the type of `f` is enough to infer a (minimal) type $μ$
 and to prove the theorem:
 
 $∀ x ∈ μ. f x = g x ⇒ ∀ a ∈ ★. ∀ x ∈ a. f x = g x$
@@ -237,3 +237,87 @@ $∀ x₂ ∈ Bool. f (fst,snd,x₃) = g (fst,snd,x₃) ⇒ ∀ a ∈ ★. ∀ (
 observing that $(x₁ x₃, x₂ x₃) ∈ Bool × Bool$, we can conclude.
 
 qed.
+
+
+## Four
+
+> f :: a -> a
+
+
+$∀ R ∈ (t₁ ↔ t₂). ∀ x,y. (x ⟨R⟩ y ⇒ f x ⟨R⟩ f y)
+
+
+Let's choose $R = \{(x,z) | x ∈ a\}$ (constant function)
+
+Using R:
+
+$∀ z,x,y. (x = z ⇒ f x = z)$
+
+or
+
+$∀ z. f z = z$
+
+we can pick any μ, and there is nothing to prove.
+
+## Five
+
+> f :: (a -> Bool, a) -> a
+
+Parametricity: 
+
+
+$∀ R ∈ (t₁ ↔ t₂). ∀ ((p,x),(q,y)). (∀a,b. a R b ⇒ p a = q b) ⇒ x R y ⇒ (f p x) R (f q y)$
+
+
+Let's choose $R = \{(x,z) | x ∈ a\}$ (constant function)
+
+
+$∀ z. ∀ ((p,x),(q,y)). (∀a,b. a = z ⇒ p a = q b) ⇒ x = z ⇒ f p x = z$
+
+or 
+
+$∀ z. ∀ ((p,x),(q,y)). (∀b. p z = q b) ⇒ f p z = z$
+
+let $q _ = p z$
+
+$∀ z. ∀ ((p,x),(q,y)). (∀b. p z = q b) ⇒ f p z = z$
+
+then
+
+$∀ z p. f p z = z$
+
+we can pick any μ, and there is nothing to prove.
+
+
+
+## Six
+
+> f :: (a -> Bool, [a]) -> [a]
+
+Parametricity: 
+
+
+$∀ R ∈ (t₁ ↔ t₂). ∀p : t₁ → Bool, q: t₂ → Bool, x : [t₁], y : [t₂]. (∀a:t₁,b:t₂. a ⟨R⟩ b ⇒ p a = q b) ⇒ x ⟨[R]⟩ y ⇒ f p x ⟨[R]⟩ f q y$
+
+let $q = id$ and thus $t₂ = Bool$
+
+we have:
+
+$∀ R ∈ (t₁ ↔ Bool). ∀p : t₁ → Bool, x : [t₁], y : [Bool] ((p,x),y). (∀a,b. a ⟨R⟩ b ⇒ p a = b) ⇒ x ⟨[R]⟩ y ⇒ f p x ⟨[R]⟩ f id y$
+
+
+Let's choose $R = \{(x,y) | p x = y}$
+
+
+The premise can be dropped:
+
+$∀p : t₁ → Bool, x : [t₁], y : [Bool]. x ⟨[R]⟩ y ⇒ f p x ⟨[R]⟩ f id y$
+
+
+by definition of $R$
+
+$∀p : t₁ → Bool, x : [t₁]. fmap p (f p x) = f id (fmap p x)$
+
+or
+
+$∀p : t₁ → Bool, x : [t₁]. f p x = fmap p? (f id (fmap p x))$
