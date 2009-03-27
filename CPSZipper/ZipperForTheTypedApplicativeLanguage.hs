@@ -35,3 +35,10 @@ downRight (Zip ctx (Pure x)) = error "All the way down"
 
 
 
+preorder, next :: Zipper a -> Zipper a
+preorder z@(Zip _ (_ :*: _)) = downLeft z
+preorder z@(Zip _ (Pure _)) = next z
+
+
+next z@(Zip (Left ctx r) l) = Zip (Right l ctx) r
+next z@(Zip (Right l ctx) r) = next $ Zip ctx (l :*: r)
