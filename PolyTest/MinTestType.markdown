@@ -292,32 +292,23 @@ we can pick any μ, and there is nothing to prove.
 
 ## Six
 
-> f :: (a -> Bool, [a]) -> [a]
+> f :: (X -> a) -> a
 
 Parametricity: 
 
 
-$∀ R ∈ (t₁ ↔ t₂). ∀p : t₁ → Bool, q: t₂ → Bool, x : [t₁], y : [t₂]. (∀a:t₁,b:t₂. a ⟨R⟩ b ⇒ p a = q b) ⇒ x ⟨[R]⟩ y ⇒ f p x ⟨[R]⟩ f q y$
+$f ⟨(X → a) → a⟩ f$
 
-let $q = id$ and thus $t₂ = Bool$
+$p ⟨X → a⟩ q ⇒ f p ⟨a⟩ f q$
 
-we have:
-
-$∀ R ∈ (t₁ ↔ Bool). ∀p : t₁ → Bool, x : [t₁], y : [Bool] ((p,x),y). (∀a,b. a ⟨R⟩ b ⇒ p a = b) ⇒ x ⟨[R]⟩ y ⇒ f p x ⟨[R]⟩ f id y$
+$p x ⟨a⟩ q x ⇒ f p ⟨a⟩ f q$
 
 
-Let's choose $R = \{(x,y) | p x = y}$
 
 
-The premise can be dropped:
+## More
 
-$∀p : t₁ → Bool, x : [t₁], y : [Bool]. x ⟨[R]⟩ y ⇒ f p x ⟨[R]⟩ f id y$
+> f :: (X -> a) -> (a -> Y) -> a
+> f :: (X -> a) -> (a -> Y) -> Z
+> f :: (X -> a) -> (a -> Y) -> Z -> a
 
-
-by definition of $R$
-
-$∀p : t₁ → Bool, x : [t₁]. fmap p (f p x) = f id (fmap p x)$
-
-or
-
-$∀p : t₁ → Bool, x : [t₁]. f p x = fmap p? (f id (fmap p x))$
