@@ -1,7 +1,7 @@
-{-# LANGUAGE TypeOperators, EmptyDataDecls, TypeFamilies #-}
+{-# LANGUAGE TypeOperators, EmptyDataDecls, TypeFamilies, GADTs #-}
 
--- From Type-Indexed Data Types, pp 166..
--- Hinze, Jeuring, Löh
+-- Copied directly from McBride's  Jokers & Clowns.
+-- http://portal.acm.org/citation.cfm?id=1328438.1328474&coll=GUIDE&dl=GUIDE&CFID=4573058&CFTOKEN=30689630
 
 -- Polynomial functors
 data K1 a x = K1 a
@@ -45,27 +45,84 @@ instance (Bifunctor p,Bifunctor q) => Bifunctor (p :** q) where
     bimap f g (p :** q) = bimap f g p :** bimap f g q
 
 
-data Zero 
+data Zero
+
+refute :: Zero -> a
+refute x = x `seq` error "we never get this far"
+
+inflate :: Functor p => p Zero -> p x
+inflate = fmap refute
 
 
--- borrow the jokers and clowns to implement "lambda" forms at the type level.
-newtype JJ f r c = JJ (f r)
-newtype CC f r c = CC (f c)
+type T01 = K1 Zero
+
+type T02 = K2 Zero
+
+
+-- We emulate lambdas at the type lever by using special combinators,
+-- ie. the clowns & jokers from Mc Bride.
+-- All clowns (left)
+data CC p c j = CC (p c)
 
 instance Functor f => Bifunctor (CC f) where
     bimap f g (CC pc) = CC (fmap f pc)
 
+-- All jokers (right)
+
+data JJ p c j = JJ (p j)
+
 instance Functor f => Bifunctor (JJ f) where
     bimap f g (JJ pj) = JJ (fmap g pj)
 
+-- dissection: turns a functor into a bifunctor
 
-type family Context (f :: * -> *) :: (* -> * -> *)
-type instance (Context Id) = Fst
-type instance (Context (K1 a)) = K2 Zero
-type instance (Context (p :+ q)) = Context p :++ Context q
-type instance (Context (f1 :* f2)) = (Context f1 :** JJ f2) :++ (CC f1 :** Context f2)
+class Dissect (p :: * -> *) where 
+    type Ctx p :: (* -> * -> *)
+    plug :: x -> Ctx p x x -> p x
+    right :: Either (p j) (Ctx p c j, c) -> Either (j, Ctx p c j) (p c)
 
-type Fix
+instance Dissect (K1 a) where
+    type Ctx (K1 a) = T02
+    plug x (K2 z) = refute z
+
+    right (Left (K1 a))     = Right (K1 a)
+    right (Right (K2 z, c)) = refute z
+    
+
+instance Dissect Id where
+    type Ctx (Id) = T12
+    plug x (K2 ()) = Id x
+
+    right (Left (Id j)) = Left (j, K2 ())
+    right (Right (K2 (), c)) = Right (Id c)
+
+instance (Dissect p, Dissect q) => Dissect (p :+ q) where
+    type Ctx (p :+ q) = Ctx p :++ Ctx q
+    plug x (L2 pd) = L1 (plug x pd)
+    plug x (R2 qd) = R1 (plug x qd)
+
+    right x = case x of
+        (Left (L1 pj)) -> mindp (right (Left pj))
+        (Left (R1 qj)) -> mindq (right (Left qj))
+        (Right ((L2 pd, c))) -> mindp (right (Right (pd, c)))
+        (Right ((R2 qd, c))) -> mindq (right (Right (qd, c)))
+        where mindp (Left (j,pd)) = Left (j, L2 pd)
+              mindp (Right pc) = Right (L1 pc)
+              mindq (Left (j,pd)) = Left (j, R2 pd)
+              mindq (Right pc) = Right (R1 pc)
 
 
-plug :: 
+instance (Dissect p, Dissect q) => Dissect (p :* q) where
+    type Ctx (p :* q) = (Ctx p :** JJ q) :++ (CC p :** Ctx q)
+    plug x (L2 (pd :** JJ qx)) = plug x pd :* qx
+    plug x (R2 (CC px :** qd)) = px :* plug x qd
+
+
+
+newtype Fix f = In { out :: f (Fix f) }
+
+type Loc f = (Fix f, [Ctx f (Fix f) (Fix f)])
+
+type Context f r = Fix (K1 () :+ Ctx f r) -- note that the order of parameter is adapted from the paper.
+
+-- This ends up being exactly as Dissect, so I stop here.

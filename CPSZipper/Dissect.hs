@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, EmptyDataDecls, TypeFamilies #-}
+{-# LANGUAGE TypeOperators, EmptyDataDecls, TypeFamilies, GADTs #-}
 
 -- Copied directly from McBride's  Jokers & Clowns.
 -- http://portal.acm.org/citation.cfm?id=1328438.1328474&coll=GUIDE&dl=GUIDE&CFID=4573058&CFTOKEN=30689630
@@ -73,27 +73,32 @@ instance Functor f => Bifunctor (JJ f) where
     bimap f g (JJ pj) = JJ (fmap g pj)
 
 -- dissection: turns a functor into a bifunctor
-type family DD (a :: * -> *) :: (* -> * -> *)
 
-type instance DD (K1 a) = T02
-type instance DD (Id) = T12
-type instance DD (p :+ q) = DD p :++ DD q
-type instance DD (p :* q) = (DD p :** JJ q) :++ (CC p :** DD q)
-
-
-
-class Right p where
+class Dissect (p :: * -> *) where 
+    type DD p :: (* -> * -> *)
+    plug :: x -> DD p x x -> p x
     right :: Either (p j) (DD p c j, c) -> Either (j, DD p c j) (p c)
 
-instance Right (K1 a) where
+instance Dissect (K1 a) where
+    type DD (K1 a) = T02
+    plug x (K2 z) = refute z
+
     right (Left (K1 a))     = Right (K1 a)
     right (Right (K2 z, c)) = refute z
+    
 
-instance Right Id where
+instance Dissect Id where
+    type DD (Id) = T12
+    plug x (K2 ()) = Id x
+
     right (Left (Id j)) = Left (j, K2 ())
     right (Right (K2 (), c)) = Right (Id c)
 
-instance (Right p, Right q) => Right (p :+ q) where
+instance (Dissect p, Dissect q) => Dissect (p :+ q) where
+    type DD (p :+ q) = DD p :++ DD q
+    plug x (L2 pd) = L1 (plug x pd)
+    plug x (R2 qd) = R1 (plug x qd)
+
     right x = case x of
         (Left (L1 pj)) -> mindp (right (Left pj))
         (Left (R1 qj)) -> mindq (right (Left qj))
@@ -103,5 +108,28 @@ instance (Right p, Right q) => Right (p :+ q) where
               mindp (Right pc) = Right (L1 pc)
               mindq (Left (j,pd)) = Left (j, R2 pd)
               mindq (Right pc) = Right (R1 pc)
-              
-        
+
+
+instance (Dissect p, Dissect q) => Dissect (p :* q) where
+    type DD (p :* q) = (DD p :** JJ q) :++ (CC p :** DD q)
+    plug x (L2 (pd :** JJ qx)) = plug x pd :* qx
+    plug x (R2 (CC px :** qd)) = px :* plug x qd
+
+
+newtype Mu f = In { out :: f (Mu f) }
+
+type Zipper f = (Mu f, [DD f (Mu f) (Mu f)])
+
+zUp,zDown :: Dissect f => Zipper f -> Maybe (Zipper f)
+
+zUp (t, []) = Nothing
+zUp (t, pd : pds) = Just (In (plug t pd), pds)
+
+zDown (In pt, pds) = case right (Left pt) of
+    Left (t', pd') -> Just (t', pd': pds)
+    Right _ -> Nothing
+
+    
+
+
+

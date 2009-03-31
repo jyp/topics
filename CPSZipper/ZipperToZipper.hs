@@ -15,13 +15,13 @@ evalAppl (Pure x) = x
 -- One-hole contexts for Appl
 data Context hole result where
     Root :: Context hole hole
-    Left :: Context hole result -> Appl a -> Context (a -> hole) result
-    Right :: Appl (hole -> hole') -> Context hole' result -> Context hole result
+    Left  :: Appl a              -> Context hole  result -> Context (a -> hole) result
+    Right :: Appl (hole -> hole') -> Context hole' result -> Context hole       result
 
 -- Plug a hole:
 plug :: Context hole result -> Appl hole -> Appl result
 plug Root x = x
-plug (Left z r) x = plug z (x :*: r)
+plug (Left r z) x = plug z (x :*: r)
 plug (Right l z) x = plug z (l :*: x)
 
 
@@ -31,7 +31,7 @@ plug (Right l z) x = plug z (l :*: x)
 -- one hole)
 evalCtx :: Context hole result -> hole -> result
 evalCtx Root = id
-evalCtx (Left ctx a)  = \a_to_hole -> (evalCtx ctx) (a_to_hole (evalAppl a))
+evalCtx (Left a ctx)  = \a_to_hole -> (evalCtx ctx) (a_to_hole (evalAppl a))
 evalCtx (Right a ctx) = \hole      -> (evalCtx ctx) (evalAppl a hole)
 
 
@@ -42,12 +42,11 @@ data Zipper result where
 -- navigation:
 up, next, downLeft, downRight, preorder :: Zipper a -> Zipper a
 
-up (Zip (Left ctx b) a) = Zip ctx (a :*: b)
+up (Zip (Left b ctx) a) = Zip ctx (a :*: b)
 up (Zip (Right a ctx) b) = Zip ctx (a :*: b)
 up (Zip Root _) = error "All the way up"
 
-downLeft :: Zipper result -> Zipper result
-downLeft  (Zip ctx (a :*: b)) = Zip (Left ctx b) a
+downLeft  (Zip ctx (a :*: b)) = Zip (Left b ctx) a
 downLeft  (Zip ctx (Pure x)) = error "All the way down"
 
 downRight (Zip ctx (a :*: b)) = Zip (Right a ctx) b
@@ -57,12 +56,24 @@ preorder z@(Zip _ (_ :*: _)) = downLeft z
 preorder z@(Zip _ (Pure _)) = next z
 
 -- helper for pre-order traversal
-next z@(Zip (Left ctx r) l) = Zip (Right l ctx) r
+next z@(Zip (Left r ctx) l) = Zip (Right l ctx) r
 next z@(Zip (Right l ctx) r) = next $ Zip ctx (l :*: r)
 
 
+data Bin = Y Bin Bin | B
+
+-- type of contexts
+data CBin = T | L Bin CBin | R Bin CBin
 
 
+specCtx :: Context Bin Bin -> CBin
+specCtx (Right l ctx) = continueSpecCtx ctx (fetchContext 0 l) 
 
+continueSpecCtx :: Context Bin Bin -> (CBin -> CBin) -> CBin
+continueSpecCtx (Right l ctx) precontext = continueSpecCtx ctx (precontext (fetchContext 0 l))
 
+continueSpecCtx :: Context Bin Bin -> (Bin -> CBin -> CBin) -> CBin
+continueSpecCtx (Left r ctx) precontext = continueSpecCtx ctx (precontext (evalAppl r))
 
+fetchContext :: 1 -> Appl (Bin -> Bin -> Bin) -> (Bin -> CBin -> CBin)
+fetchContext :: 0 -> Appl (Bin -> Bin)       -> (CBin -> CBin)
