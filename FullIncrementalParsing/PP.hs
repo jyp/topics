@@ -1,17 +1,27 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+
+import Data.Char
 import Data.List
 import Data.Maybe
+import Data.FingerTree
+import Data.Monoid
 -- import Data.Sequence
 
--- data P s a where
---     Sym :: (s -> Bool) -> P s 
---     (:*:) :: P s -> P s -> P s
---     (:|:) :: P s -> P s -> P s
---     (:>) :: String -> P s a
+-- data P s where
+--      Sym :: (s -> Bool) -> P s 
+--      (:*:) :: P s -> P s -> P s
+--      (:|:) :: P s -> P s -> P s
+--      (:>) :: String -> P s
+
+
+
+----------------------------
+
 
 
 type Check = El -> Bool
 data El = S Char | Nt Int [El]
-    deriving Eq
+    deriving (Show,Eq)
 
 data Rule = Rule Int [Check] 
 
@@ -39,10 +49,33 @@ applyAll :: Grammar -> Seq -> Seq
 applyAll g s = foldr apply' s g
 
 merge :: Grammar -> State -> State -> State
-merge g ls rs = nub [applyAll g (l ++ r) | l <- ls, r <- ls]
+merge g ls rs = nub [applyAll g (l ++ r) | l <- ls, r <- rs]
 
 
+newtype M = M State deriving Show
+
+instance Measured M Char where
+    measure c = M [[S c]]
+
+instance Monoid M where
+    mappend (M s) (M t) = M (merge grammar s t)
+    mempty = M [[]]
 
 ------------------------------
 
+sym c (S c') = c == c'
+sym _ _ = False
+
+symbol f (S c) = f c
+symbol _ _ = False
+
+nt x (Nt y _) = x == y
+nt _ _ = False
+
+grammar = [Rule 1 [sym '(', nt 1, sym ')'],
+           Rule 1 [nt 1, sym '+', nt 1],
+           Rule 1 [symbol isDigit]
+          ]
+
+test = measure $ fromList $ "1+((2+4)+(5+4))" ++ concat (replicate 1000 "+1+((2+4)+(5+4))")
 
