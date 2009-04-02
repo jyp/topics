@@ -304,6 +304,19 @@ $p ⟨X → a⟩ q ⇒ f p ⟨a⟩ f q$
 $p x ⟨a⟩ q x ⇒ f p ⟨a⟩ f q$
 
 
+$f (⟨a⟩ . q) = ⟨a⟩ (f q)$
+
+
+pick μ = X -> X.
+
+∀ x ∈ a. f x = g x
+
+==> 
+
+∀ x ∈ X. f x = g x
+
+
+
 
 
 ## More

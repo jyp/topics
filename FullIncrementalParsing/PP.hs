@@ -37,16 +37,18 @@ match (x:xs) (y:ys) = x y && match xs ys
 match _ _ = False
 
 
-apply :: Rule -> [El] -> Maybe [El]
+apply :: Rule -> Seq -> Maybe Seq
 apply (Rule n xs) ys = listToMaybe [prefix ++ [Nt n matched] ++ suffix |
                                     (prefix,rest) <- zip (inits ys) (tails ys), 
                                     match xs rest, let (matched,suffix) = splitAt (length xs) rest]
         
-apply' :: Rule -> Seq -> Seq
-apply' rule ys = maybe ys id (apply rule ys)  
-
 applyAll :: Grammar -> Seq -> Seq
-applyAll g s = foldr apply' s g
+applyAll g s = foldr (\rule -> tillConverge (apply rule)) s g
+
+tillConverge :: (a -> Maybe a) -> (a -> a)
+tillConverge f a = case f a of
+    Nothing -> a
+    Just x -> tillConverge f x
 
 merge :: Grammar -> State -> State -> State
 merge g ls rs = nub [applyAll g (l ++ r) | l <- ls, r <- rs]
