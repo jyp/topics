@@ -307,21 +307,107 @@ $p x ⟨a⟩ q x ⇒ f p ⟨a⟩ f q$
 $f (⟨a⟩ . q) = ⟨a⟩ (f q)$
 
 
-pick μ = X -> X.
+pick q = id
 
-∀ x ∈ a. f x = g x
+$f ⟨a⟩ = ⟨a⟩ (f id)$
 
-==> 
+pick t1 = X, t2 = a; (⟨a⟩ :: X → a)
 
-∀ x ∈ X. f x = g x
+so, renaming ⟨a⟩ to p:
+
+$f p = p (f id)$
+    
+
+Using this result we can prove the theorem:
+
+$∀ p : (X → a). f p = g p$
+
+<==>
+
+$∀ p : (X → a). p (f id) = p (g id)$
+
+<==
+
+$∀ p : (X → a). (f id) = (g id)$
+
+<==>
+
+$f id = g id$
+
+<==>
+
+$∀ p : (X → X). f p = g p$
+
+
+and we have the theorem for μ = X → X
+
+## Seven
+
+> f :: (X -> a) -> (a -> Y) -> a
+
+Parametricity:
+
+$f ⟨(X -> a) -> (a -> Y) -> a⟩ f$
+
+
+$p ⟨X -> a⟩ q →  h ⟨a -> Y⟩ i →  f p h ⟨a⟩ f q i$
+
+$p z ⟨a⟩ q z →  (∀x,y. x ⟨a⟩ y → h x = i y →  f p h ⟨a⟩ f q i$
+
+$p z = ⟨a⟩ q z →  (∀x,y. x = ⟨a⟩ y → h x = i y →  f p h = ⟨a⟩ (f q i)$
+
+$p = ⟨a⟩ . q →  (∀y. h (⟨a⟩ y) = i y →  f p h = ⟨a⟩ (f q i)$
+
+$(∀y. h (⟨a⟩ y) = i y) →  f (⟨a⟩ . q) h = ⟨a⟩ (f q i)$
+
+
+a = X × Y
 
 
 
+
+
+$$
 
 
 ## More
 
-> f :: (X -> a) -> (a -> Y) -> a
 > f :: (X -> a) -> (a -> Y) -> Z
 > f :: (X -> a) -> (a -> Y) -> Z -> a
+
+
+
+
+----------------
+
+
+conjecture:
+
+if $F, G$ are polynomial functors, and 
+
+> f :: (F a -> a) -> G a
+
+> data Fix f = In { out :: f (Fix f)}
+
+It suffices to test $f In$, which is monomorphic.
+
+> f In :: G (Fix F)
+
+
+
+conjecture:
+
+if $F, G, ...$ are polynomial functors, and 
+
+> f :: (F a -> a) -> (G a -> X) -> H a
+
+> data Fix f = In { out :: f (Fix f)}
+
+It suffices to test $f In$, which is monomorphic.
+
+> f In :: (G (Fix F) -> X) -> H (Fix F)
+
+
+
+
 
