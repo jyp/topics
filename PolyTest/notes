@@ -68,3 +68,46 @@ prop1 (.<=.) (.==.) x = let y = sort' (.<=.) x in i <= j ==> y !! i .<=. y !! j
 -----------------
 
  stable sort vs. sort
+
+
+------------------
+
+
+forall h (relation), forall f g, f == g . (h × h) ⇒  map h . sort f == sort g . map h
+
+f = standard comparison of Int
+g = standard comparison of Bool
+
+f = should I swap?
+g = should I swap?
+
+theorem: (sort g correct ==> sort f correct.)
+
+
+suppose the converse, derive absurd.
+
+converse 
+  == not (sort g correct ==> sort f correct)
+  == sort g correct && sort f incorrect
+
+
+Suppose that xs contains x and y and x < y
+
+
+sort f incorrect ==> exists x < y and y before x in sort f xs
+
+let h (the relation) be defined by
+
+   h n = {y <= n,
+
+
+we verify the premise: g . (h × h) == f
+
+let y = 10
+
+x       f x   (h × h) x       (g . h×h) x
+5,1     T     T,T             F                      
+
+oops!
+
+

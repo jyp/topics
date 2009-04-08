@@ -12,8 +12,8 @@ default: slides.pdf
 	pdflatex $<
 
 %.pdf: %.svg
-	inkscape --export-pdf=$@ $<
-#	convert $< $@
+#	inkscape --export-pdf=$@ $<
+	convert $< $@
 
 slides.pdf: begin.pdf mid.pdf 
 

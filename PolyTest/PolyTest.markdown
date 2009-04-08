@@ -45,7 +45,30 @@ where
 > map :: (a → b) → [a] → [b]
 > foldr :: (a → b → b) → b → [a] → b
 > sort :: ((a × a) → Bool) → [a] → [a]
+
 > sort :: ((a × a) → (a × a)) → [a] → [a]
+
+For this one we get $μ = T$
+
+> data Tree = L (a,a) | R (a,a) | X Nat
+
+and test:
+
+> sort (\p -> (L p, R p)) 
+
+on inputs of the form 
+
+> map X [1..n]
+
+Running the this "initial" sort function then yields a representation of the sorting network.
+
+Can we do better? It's enough if we test:
+
+> \(f :: Nat -> Bool) -> sort (\(x,y) -> if f x <= f y then x else y)
+
+on inputs of the form
+
+> map [1..n]
 
 
 # Effects on quickCheck, smallCheck, lazy smallCheck, EasyCheck, ...

@@ -7,12 +7,11 @@ import Data.FingerTree
 import Data.Monoid
 -- import Data.Sequence
 
--- data P s where
---      Sym :: (s -> Bool) -> P s 
---      (:*:) :: P s -> P s -> P s
---      (:|:) :: P s -> P s -> P s
---      (:>) :: String -> P s
-
+data P s where
+     Sym :: (s -> Bool) -> P s 
+     (:*:) :: P s -> P s -> P s
+     (:|:) :: P s -> P s -> P s
+     (:>) :: String -> P sc
 
 
 ----------------------------
@@ -79,5 +78,25 @@ grammar = [Rule 1 [sym '(', nt 1, sym ')'],
            Rule 1 [symbol isDigit]
           ]
 
+{-
+
+a b 
+
+asd 
+
+f x = a + b
+df
+ 
+df
+s
+
+gg
+
+
+-}
+
+
 test = measure $ fromList $ "1+((2+4)+(5+4))" ++ concat (replicate 1000 "+1+((2+4)+(5+4))")
+
+
 
