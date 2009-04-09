@@ -1,6 +1,6 @@
 {-# OPTIONS --no-positivity-check  #-}
 
-module Fun where
+module Fun5 where
 
 
 open import Data.Unit
@@ -24,6 +24,7 @@ data _×0_ (A : Set) (B : Set) : Set where
 data Type : Set1 where
      var : Type
      _==>_ : (arg : Type) -> (res : Type) -> Type
+     _××_ : (l : Type) -> (r : Type) -> Type
      con : (k : Set) -> Type
 
 infixr 2 _==>_
@@ -31,6 +32,7 @@ infixr 2 _==>_
 NoFun : ℕ -> Type -> Set
 NoFun n var = ⊤
 NoFun n (con _) = ⊤
+NoFun n (l ×× r) = NoFun n l ×0 NoFun n r
 NoFun zero (_ ==> _) = ⊥
 NoFun (suc n) (arg ==> res) = NoFun n arg ×0 NoFun (suc n) res
   
@@ -57,11 +59,13 @@ functor[[_]] : Type -> Set -> Set
 functor[[ var ]] v = v
 functor[[ con t ]] v = t
 functor[[ _==>_ t1 t2 ]] v = functor[[ t1 ]] v → functor[[ t2 ]] v
+functor[[ _××_ t1 t2 ]] v = functor[[ t1 ]] v ×0 functor[[ t2 ]] v
 
 functorOf : (t : Type) -> NoFun 0 t -> Functor
 functorOf var _ = id
 functorOf (_==>_ y y') ()
 functorOf (con y) _ = k1 y
+functorOf (l ×× r) (nfl , nfr) = functorOf l nfl × functorOf r nfr
 
 [[_]] : Type -> Set1
 [[ t ]] = (a : Set) -> functor[[ t ]] a
@@ -70,7 +74,7 @@ wellBehaved : (i : Set) (t : Type) -> (nf : NoFun 0 t) -> functor[[ t ]] i ≡�
 wellBehaved i var _ = refl
 wellBehaved i (y ==> y') ()
 wellBehaved i (con y) nf = refl
-
+wellBehaved i (l ×× r) nf = {!!}
 
 convert : forall {a b : Set} -> (a ≡₁ b) -> a -> b
 convert refl a = a
@@ -80,6 +84,7 @@ functorBit : (t : Type) -> NoFun 1 t -> Functor
 functorBit var _ = (k1 ⊤)
 functorBit  (arg ==> res) (nfa , nf) = functorOf arg nfa × functorBit res nf
 functorBit (con y) _ = z1
+functorBit (l ×× r) nf = {!!}
 
 
 -- Functor of the algebra that the function depends on.
@@ -87,6 +92,7 @@ extractFunctor : (t : Type) -> NoFun 2 t -> Functor
 extractFunctor var _  = z1
 extractFunctor (_==>_ y y') (nfa , nf) = functorBit y nfa + extractFunctor y' nf
 extractFunctor (con y) _ = z1
+extractFunctor (l ×× r) _ = {!!}
 
 
 
@@ -94,20 +100,16 @@ YieldsAlgebra : Type -> Set
 YieldsAlgebra var = ⊤
 YieldsAlgebra (y ==> y') = YieldsAlgebra y'
 YieldsAlgebra (con y) = ⊥
+YieldsAlgebra (l ×× r) = {!!}
 
 doesYieldAlgebra : (t : Type) -> Dec (YieldsAlgebra t)
 doesYieldAlgebra var = yes tt
 doesYieldAlgebra (y ==> y') = doesYieldAlgebra y'
 doesYieldAlgebra (con y) = no (λ ())
+doesYieldAlgebra (l ×× r) = {!!}
 
 
 data Fix (f : Set -> Set) : Set where In : f (Fix f) -> Fix f
-
-
-toMonotypeArgAcc : (initialType : Set) -> (t : Type) -> (Set -> Set) -> Set
-toMonotypeArgAcc i var acc = ⊤
-toMonotypeArgAcc i (y ==> y') acc = toMonotypeArgAcc i y' (λ rhs → acc ((functor[[ y ]] i) → rhs))
-toMonotypeArgAcc i (con y) acc = acc y
 
 toMonotypeArg : (initialType : Set) -> (t : Type) -> Set
 toMonotypeArg i t with doesYieldAlgebra t
@@ -119,12 +121,14 @@ toMonotype : (initialType : Set) -> (t : Type) -> Set
 toMonotype i var = i
 toMonotype i (y ==> y') = toMonotypeArg i y → toMonotype i y'
 toMonotype i (con y) = y
+toMonotype i (l ×× r) = {!!}
 
 
 algebraBit : (initialType : Set) -> (t : Type) -> (nf : NoFun 1 t) -> (f[ functorBit t nf ] initialType -> initialType) -> YieldsAlgebra t -> functor[[ t ]] initialType
 algebraBit i var         nf         inject ya = inject tt
 algebraBit i (y ==> y')  (nfa , nf) inject ya = λ fyi → algebraBit i y' nf (λ bit → inject (convert (wellBehaved i y nfa) fyi , bit)) ya
 algebraBit i (con y)     nf         inject ()
+algebraBit i (l ×× r)    nf         inject ya = {!!}
 
 
 toMono' : (initialType : Set) -> (t : Type) -> (nf : NoFun 2 t) -> (f[ extractFunctor t nf ] initialType -> initialType) -> functor[[ t ]] initialType -> toMonotype initialType t
@@ -133,12 +137,13 @@ toMono' i (y ==> y') nf inj v with doesYieldAlgebra y
 toMono' i (y ==> y') (nfa , nf) inj v | yes p = λ arg → toMono' i y' nf (λ subArg → inj (R subArg)) (v (algebraBit i y nfa (λ subArg → inj (L subArg)) p)) 
 toMono' i (y ==> y') (nfa , nf) inj v | no  _ = λ arg → toMono' i y' nf (λ subArg → inj (R subArg)) (v arg)
 toMono' i (con y)    nf inj v = v
+toMono' i (l ×× r)   nf inj v = {!!}
 
 toTestType : (t : Type) -> NoFun 2 t -> Set
 toTestType t nf = toMonotype (Fix f[ extractFunctor t nf ]) t
 
 toMono : (t : Type) -> (nf : NoFun 2 t) -> [[ t ]] -> toTestType t nf
-toMono t nf v = toMono' initialType t nf In (v initialType)
+toMono t nf v = toMono' initialType t nf In (v initialType) 
   where initialType = Fix f[ extractFunctor t nf ]
 
 
