@@ -50,26 +50,40 @@ where
 
 For this one we get $μ = T$
 
-> data Tree = L (a,a) | R (a,a) | X Nat
+> data Tree = Min (a,a) | Max (a,a) | Ix Nat
 
 and test:
 
-> sort (\p -> (L p, R p)) 
+> sort (\p -> (Min p, Max p)) 
 
 on inputs of the form 
 
-> map X [1..n]
+> map Ix [1..n]
 
 Running the this "initial" sort function then yields a representation of the sorting network.
 
 Can we do better? It's enough if we test:
 
-> \(f :: Nat -> Bool) -> sort (\(x,y) -> if f x <= f y then x else y)
+> \(f :: Nat -> Bool) -> sort (\(x,y) -> if f x <= f y then (x,y) else (y,x))
 
 on inputs of the form
 
 > map [1..n]
 
+Why can we do this? 
+We want to take the alebgra modulo these laws:
+
+$min (a,max(y,z)) = max (min (a,y), min(a,z))$
+$min (a,a) = a$
+$max (a,a) = a$
+$max (a,min(y,z)) = min (max (a,y), max(a,z))$
+$min (x,min(y,z)) = min (min(x,y),z)$
+$min (x,y) = min (y,x)$
+
+> \(f :: Nat -> Bool) -> sort (\(x,y) -> if f x <= f y then (x,y) else (y,x))
+
+
+> (\p -> (L p, R p)) 
 
 # Effects on quickCheck, smallCheck, lazy smallCheck, EasyCheck, ...
 
