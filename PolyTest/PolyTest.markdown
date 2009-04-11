@@ -37,10 +37,56 @@ where
 
 > data Fix f = In { out :: f (Fix f)}
 
+## Proof
+
+This is a very sketchy proof! I'm not even using the above type, but I think
+this is general enough. Also, I'm taking lots of liberties with notations, etc.
+
+Given:
+
+> f :: (F a → a) → X → H a
+
+Parametricity yields: (I'm using parametricity in "arrow form"; see Parametricity.markdown)
+
+f = ⟨ (F a → a) → X → H a ⟩ f
+
+We rewrite the relation as it's usual when using parametricity:
+
+p = ⟨F a → a⟩ q ⇒  f p x = ⟨ H a ⟩ f q x
+
+(i = ⟨F a⟩ j ⇒  p i = ⟨a⟩ q j) ⇒  f p x = ⟨H a⟩ f q x
+
+(i = (F ⟨a⟩) j ⇒  p i = ⟨a⟩ q j) ⇒  f p x = (H ⟨a⟩) f q x
+
+(p ((F ⟨a⟩) j) = ⟨a⟩ (q j)) ⇒  f p x = (H ⟨a⟩) f q x
+
+picking q = initial F-algebra (ι) ensures that
+1. ⟨a⟩ is a function and
+2. the lhs. of the implication is verified.
+
+
+We obtain:
+
+∀ p x. ∃ ⟨a⟩. f p x = (H ⟨a⟩) f ι x
+
+And we can use this to prove the result:
+
+∀ x. f ι x = g ι x
+
+⇒   *f is a function*
+
+∀ x. (H ⟨a⟩) f ι x = (H ⟨a⟩) g ι x 
+
+⇒   *by the above*
+
+∀ p x. f p x = g p x
+
+
+
 
 # Examples
 
-> length :: [a] -> Int
+> length :: [a] → Int
 > filter :: (a → Bool) → [a] → [a]
 > map :: (a → b) → [a] → [b]
 > foldr :: (a → b → b) → b → [a] → b

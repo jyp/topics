@@ -408,6 +408,8 @@ It suffices to test $f In$, which is monomorphic.
 > f In :: (G (Fix F) -> X) -> H (Fix F)
 
 
+--------
+
 
 
 
