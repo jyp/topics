@@ -62,16 +62,11 @@ on inputs of the form
 
 Running the this "initial" sort function then yields a representation of the sorting network.
 
-Can we do better? It's enough if we test:
+Can we do better? 
 
-> \(f :: Nat -> Bool) -> sort (\(x,y) -> if f x <= f y then (x,y) else (y,x))
+Instead of the the initial algebra, we can use the (free) lattice algebra.
 
-on inputs of the form
-
-> map [1..n]
-
-Why can we do this? 
-We want to take the alebgra modulo these laws:
+That is, we want to take the alebgra modulo these laws (the quotient space):
 
 $min (a,max(y,z)) = max (min (a,y), min(a,z))$
 $min (a,a) = a$
@@ -80,10 +75,32 @@ $max (a,min(y,z)) = min (max (a,y), max(a,z))$
 $min (x,min(y,z)) = min (min(x,y),z)$
 $min (x,y) = min (y,x)$
 
-> \(f :: Nat -> Bool) -> sort (\(x,y) -> if f x <= f y then (x,y) else (y,x))
+""We should be able to use the free latice, but I do not understand it""
+
+~~~~
+type MinMax = [Set Int]
 
 
-> (\p -> (L p, R p)) 
+mmin a b = simpl (a ++ b)
+
+mmax :: MinMax -> MinMax -> MinMax
+mmax a b = simpl [x `S.union` y | x <- a, y <- b ]
+
+simpl' [] = []
+simpl' (s:ss) = s : simpl' (filter (not . (s `S.isSubsetOf`)) ss)
+
+simpl = simpl' . sortBy (compare `on` S.size)
+~~~~
+
+Using this we can test a given length in polynomial time. 
+(Because mix/max are polynomial, and because a sort normally has polynomial number of swaps)
+
+Note that this is already better than using Knuth's result and using Bool for
+'a', because the number of tests for a given list length is $2^n$. (The drawback
+is that we are "forced" to run the whole thing... Unless we use laziness or
+other tricks -- like using an even more restricted algebra that will test a
+necessary condition for correctness)
+
 
 # Effects on quickCheck, smallCheck, lazy smallCheck, EasyCheck, ...
 
