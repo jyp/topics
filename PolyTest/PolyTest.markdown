@@ -48,27 +48,29 @@ Given:
 
 Parametricity: (I'm using parametricity in "arrow form"; see Parametricity.markdown)
 
-$f = ⟨(F a → a) → (a → X) → H a⟩ f$
+f = ⟨(F a → a) → (a → X) → H a⟩ f
 
 We rewrite the relation as usual when using parametricity:
 
-$p = ⟨F a → a⟩ q     ⇒  r = ⟨a → X⟩ s     ⇒ f p r = ⟨H a⟩ (f q s)$
+p = ⟨F a → a⟩ q     ⇒  r = ⟨a → X⟩ s     ⇒ f p r = ⟨H a⟩ (f q s)
 
-$p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ = ⟨X⟩ ∘ s ⇒ f p r = ⟨H a⟩ (f q s)$
+p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ = ⟨X⟩ ∘ s ⇒ f p r = ⟨H a⟩ (f q s)
 
-$p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ =       s ⇒ f p r = ⟨H a⟩ (f q s)$
+p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ =       s ⇒ f p r = ⟨H a⟩ (f q s)
 
-$p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = ⟨H a⟩ (f q (r ∘ ⟨a⟩))$
+p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = ⟨H a⟩ (f q (r ∘ ⟨a⟩))
 
-$p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = ⟨H⟩ a (f q (r ∘ ⟨a⟩))$
+p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = H ⟨a⟩ (f q (r ∘ ⟨a⟩))
 
+
+Satisfying the premise is equivalent to make this diagram commute:
 
 \begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
                     semithick]
   \tikzstyle{object}=[]
 
-  \node[object]         (A)                    {$μ$};
-  \node[object]         (B) [right of=A] {$F~μ$};
+  \node[object]         (A)                    {$t$};
+  \node[object]         (B) [left of=A] {$F~t$};
   \node[object]         (C) [below of=A] {$a$};
   \node[object]         (D) [below of=B] {$F~a$};
 
@@ -81,15 +83,21 @@ $p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = ⟨H⟩ a (f q
 \end{tikzpicture}
 
 
-picking q = ι, the initial F-algebra, ensures that
+picking 
 
-1. for all $a$, $⟨a⟩$ is a unique function and
-2. the lhs. of the implication is verified.
+* t = I = Fix F
+* q = ι the initial F-algebra
+
+ensures that
+
+1. for all $a$, $⟨a⟩$ is the unique arrow of type $I → a$;
+2. the lhs. of the implication is verified;
+3. $⟨a⟩$ is a function.
 
 
 We obtain equation (1): 
 
-∀ p r. ∃ ⟨a⟩. f p r = ⟨H⟩ a (f ι (r ∘ ⟨a⟩))
+∀ a : ★, p : F a → a, r : a → X. f p r = H ⟨a⟩  (f ι (r ∘ ⟨a⟩))
 
 And we can use this to prove the result:
 
