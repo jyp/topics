@@ -1,7 +1,6 @@
 default: Memo.pdf
 
 %.tex: %.markdown
-	echo %include lhs2TeX.fmt > header
 	pandoc -s --from markdown+lhs --to latex $< > $@ --include-in-header=header
 #	pandoc -s --from markdown --to latex $< > $@
 

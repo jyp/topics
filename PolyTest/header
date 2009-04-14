@@ -1,1 +1,4 @@
 %include lhs2TeX.fmt
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata}

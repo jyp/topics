@@ -37,50 +37,102 @@ where
 
 > data Fix f = In { out :: f (Fix f)}
 
-## Proof
 
-This is a very sketchy proof! I'm not even using the above type, but I think
-this is general enough. Also, I'm taking lots of liberties with notations, etc.
+## Proof 
+
+This is a very sketchy proof! I'm taking lots of liberties with notations, etc.
 
 Given:
 
-> f :: (F a → a) → X → H a
+> f :: (F a → a) → (a → X) → H a
 
-Parametricity yields: (I'm using parametricity in "arrow form"; see Parametricity.markdown)
+Parametricity: (I'm using parametricity in "arrow form"; see Parametricity.markdown)
 
-f = ⟨ (F a → a) → X → H a ⟩ f
+$f = ⟨(F a → a) → (a → X) → H a⟩ f$
 
-We rewrite the relation as it's usual when using parametricity:
+We rewrite the relation as usual when using parametricity:
 
-p = ⟨F a → a⟩ q ⇒  f p x = ⟨ H a ⟩ f q x
+$p = ⟨F a → a⟩ q     ⇒  r = ⟨a → X⟩ s     ⇒ f p r = ⟨H a⟩ (f q s)$
 
-(i = ⟨F a⟩ j ⇒  p i = ⟨a⟩ q j) ⇒  f p x = ⟨H a⟩ f q x
+$p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ = ⟨X⟩ ∘ s ⇒ f p r = ⟨H a⟩ (f q s)$
 
-(i = (F ⟨a⟩) j ⇒  p i = ⟨a⟩ q j) ⇒  f p x = (H ⟨a⟩) f q x
+$p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ =       s ⇒ f p r = ⟨H a⟩ (f q s)$
 
-(p ((F ⟨a⟩) j) = ⟨a⟩ (q j)) ⇒  f p x = (H ⟨a⟩) f q x
+$p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = ⟨H a⟩ (f q (r ∘ ⟨a⟩))$
 
-picking q = initial F-algebra (ι) ensures that
-1. ⟨a⟩ is a function and
+$p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = ⟨H⟩ a (f q (r ∘ ⟨a⟩))$
+
+
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
+                    semithick]
+  \tikzstyle{object}=[]
+
+  \node[object]         (A)                    {$μ$};
+  \node[object]         (B) [right of=A] {$F~μ$};
+  \node[object]         (C) [below of=A] {$a$};
+  \node[object]         (D) [below of=B] {$F~a$};
+
+  \path (B) edge              node {$q$} (A)
+        (A) edge              node {$⟨a⟩$}   (C);
+
+  \path (B) edge              node {$F ⟨a⟩$} (D)
+        (D) edge              node {$p$}     (C);
+        
+\end{tikzpicture}
+
+
+picking q = ι, the initial F-algebra, ensures that
+
+1. for all $a$, $⟨a⟩$ is a unique function and
 2. the lhs. of the implication is verified.
 
 
-We obtain:
+We obtain equation (1): 
 
-∀ p x. ∃ ⟨a⟩. f p x = (H ⟨a⟩) f ι x
+∀ p r. ∃ ⟨a⟩. f p r = ⟨H⟩ a (f ι (r ∘ ⟨a⟩))
 
 And we can use this to prove the result:
 
-∀ x. f ι x = g ι x
+∀ s. f ι s = g ι s
 
-⇒   *f is a function*
+⇒   *by the lemma 1, we can rewrite $s$ as a composition with $⟨a⟩$*
 
-∀ x. (H ⟨a⟩) f ι x = (H ⟨a⟩) g ι x 
+∀ r. f ι (r ∘ ⟨a⟩) = g ι (r ∘ ⟨a⟩)
 
-⇒   *by the above*
+⇒   *$⟨a⟩$ is a function*
 
-∀ p x. f p x = g p x
+∀ r. (H ⟨a⟩) (f ι (r ∘ ⟨a⟩)) = (H ⟨a⟩) (g ι (r ∘ ⟨a⟩))
 
+⇒   *by (1)*
+
+∀ p r. f p r = g p r
+
+### Lemma 1
+
+Let 
+
+* $I$ be the initial object
+* $s : I → X$
+* $r : A → X$
+* $r ∘ x = s$
+
+then $x$ is the unique arrow $x : I → a$
+
+
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
+                    semithick]
+  \tikzstyle{object}=[]
+
+  \node[object]         (I)                   {$I$};
+  \node[object]         (A) [right of=I]      {$a$};
+  \node[object]         (X) [right of=A]      {$X$};
+
+  \path (I) edge [bend left]  node {$s$} (X);
+  \path (A) edge              node {$r$} (X);
+  \path (I) edge              node {$x$} (A);
+
+        
+\end{tikzpicture}
 
 
 
