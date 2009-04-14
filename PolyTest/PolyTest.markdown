@@ -17,7 +17,7 @@ In order to clearly identify the type we work on, we propose to verify propositi
 
 $f x = g x$
 
-That is, `f` is the function to check and `g` is the specification we want to check against.
+That is, `f` is the function to check and `g` is the model we want to check against.
 
 I conjecture that the type of `f` is enough to infer a (minimal) type $μ$
 and to prove the theorem:
@@ -27,11 +27,11 @@ $∀ x ∈ μ. f x = g x ⇒ ∀ a ∈ ★. ∀ x ∈ a. f x = g x$
 
 ## Finding μ
 
-> f :: (F a -> a) -> (G a -> X) -> (a | X)
+> f :: (F a -> a) -> (G a -> X) -> H a
 
-It suffices to test `f In`, which is monomorphic.
+It suffices to test `f In`, which is monomorphic:
 
-> f In :: (G (Fix F) -> X) -> (Fix F | X)
+> f In :: (G (Fix F) -> X) -> H (Fix F)
 
 where
 
@@ -65,8 +65,7 @@ p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = H ⟨a⟩ (f q 
 
 Satisfying the premise is equivalent to make this diagram commute:
 
-\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
-                    semithick]
+\begin{tikzpicture}[->,auto,node distance=2.8cm, semithick]
   \tikzstyle{object}=[]
 
   \node[object]         (A)                    {$t$};
@@ -101,19 +100,19 @@ We obtain equation (1):
 
 And we can use this to prove the result:
 
-∀ s. f ι s = g ι s
+∀ s : I → X. f ι s = g ι s
 
 ⇒   *by the lemma 1, we can rewrite $s$ as a composition with $⟨a⟩$*
 
-∀ r. f ι (r ∘ ⟨a⟩) = g ι (r ∘ ⟨a⟩)
+∀ a : ★, r : a → X. f ι (r ∘ ⟨a⟩) = g ι (r ∘ ⟨a⟩)
 
 ⇒   *$⟨a⟩$ is a function*
 
-∀ r. (H ⟨a⟩) (f ι (r ∘ ⟨a⟩)) = (H ⟨a⟩) (g ι (r ∘ ⟨a⟩))
+∀ a : ★, r : a → X. (H ⟨a⟩) (f ι (r ∘ ⟨a⟩)) = (H ⟨a⟩) (g ι (r ∘ ⟨a⟩))
 
 ⇒   *by (1)*
 
-∀ p r. f p r = g p r
+∀ a : ★, p : F a → a, r : a → X. f p r = g p r
 
 ### Lemma 1
 
@@ -127,7 +126,7 @@ Let
 then $x$ is the unique arrow $x : I → a$
 
 
-\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
+\begin{tikzpicture}[->,auto,node distance=2.8cm,
                     semithick]
   \tikzstyle{object}=[]
 
@@ -172,7 +171,7 @@ Can we do better?
 
 Instead of the the initial algebra, we can use the (free) lattice algebra.
 
-That is, we want to take the alebgra modulo these laws (the quotient space):
+That is, we want to take the alebgra modulo distributive lattice laws:
 
 $min (a,max(y,z)) = max (min (a,y), min(a,z))$
 $min (a,a) = a$
@@ -181,7 +180,7 @@ $max (a,min(y,z)) = min (max (a,y), max(a,z))$
 $min (x,min(y,z)) = min (min(x,y),z)$
 $min (x,y) = min (y,x)$
 
-""We should be able to use the free latice, but I do not understand it""
+I.e. the minimal type is the free distributive lattice.
 
 ~~~~
 type MinMax = [Set Int]
@@ -208,6 +207,19 @@ other tricks -- like using an even more restricted algebra that will test a
 necessary condition for correctness)
 
 
+
+# Applying the result
+
+The result can be readily applyied to functions of the form (...), it is rare that functions 
+exactly fix it.
+
+However, many functions can be transformed to fix the model, and the result can
+be re-interpreted directly on their initial form.
+
 # Effects on quickCheck, smallCheck, lazy smallCheck, EasyCheck, ...
+
+A parameter that used to be "sampled" becomes fixed. Work is moved from the
+generation of many test cases to checking against the model. We can simplify
+this work by taking advantage of laws that the free algebra must satisfy.
 
 
