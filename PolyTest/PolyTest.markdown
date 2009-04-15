@@ -85,30 +85,30 @@ Satisfying the premise is equivalent to make this diagram commute:
 picking 
 
 * t = I = Fix F
-* q = ι the initial F-algebra
+* q = α, the initial F-algebra
 
 ensures that
 
-1. for all $a$, $⟨a⟩$ is the unique arrow of type $I → a$;
+1. $⟨a⟩$ is an arrow of type $I → a$, the catamorphism of $p$;
 2. the lhs. of the implication is verified;
 3. $⟨a⟩$ is a function.
 
 
 We obtain equation (1): 
 
-∀ a : ★, p : F a → a, r : a → X. f p r = H ⟨a⟩ (f ι (r ∘ G ⟨a⟩))
+∀ a : ★, p : F a → a, r : a → X. f p r = H ⟨a⟩ (f α (r ∘ G ⟨a⟩))
 
 And we can use this to prove the result:
 
-∀ s : I → X.                             f ι s            =        g ι s
+∀ s : I → X.                             f α s            =        g α s
 
 ⇒   *by the lemma 1, we can rewrite $s$ as a composition with $G ⟨a⟩$*
 
-∀ a : ★, r : a → X.                      f ι (r ∘ G ⟨a⟩)  =        g ι (r ∘ G ⟨a⟩)
+∀ a : ★, r : a → X.                      f α (r ∘ G ⟨a⟩)  =        g α (r ∘ G ⟨a⟩)
 
 ⇒   *$⟨a⟩$ is a function*
 
-∀ a : ★, r : a → X.               H ⟨a⟩ (f ι (r ∘ G ⟨a⟩)) = H ⟨a⟩ (g ι (r ∘ G ⟨a⟩))
+∀ a : ★, r : a → X.               H ⟨a⟩ (f α (r ∘ G ⟨a⟩)) = H ⟨a⟩ (g α (r ∘ G ⟨a⟩))
 
 ⇒   *by (1)*
 
@@ -116,15 +116,18 @@ And we can use this to prove the result:
 
 ### Lemma 1
 
-Let 
+Let  $r : G a → X$, $p : F a → a$.
 
-* $I$ be the initial object
+Then there exists
+
 * $s : I → X$
-* $r : G a → X$
+
+such that
+
 * $r ∘ x = s$
 
-then $x$ is the unique arrow $x : I → G ⟨a⟩$
 
+where $x : I → G ⟨a⟩$ is a catamorphism.
 
 \begin{tikzpicture}[->,auto,node distance=2.8cm,
                     semithick]
@@ -141,6 +144,8 @@ then $x$ is the unique arrow $x : I → G ⟨a⟩$
         
 \end{tikzpicture}
 
+
+This is either obvious or provable by using the "fusion" law (AoP p. 48).
 
 
 # Examples
