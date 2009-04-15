@@ -44,23 +44,23 @@ This is a very sketchy proof! I'm taking lots of liberties with notations, etc.
 
 Given:
 
-> f :: (F a → a) → (a → X) → H a
+> f :: (F a → a) → (G a → X) → H a
 
 Parametricity: (I'm using parametricity in "arrow form"; see Parametricity.markdown)
 
-f = ⟨(F a → a) → (a → X) → H a⟩ f
+f = ⟨(F a → a) → (G a → X) → H a⟩ f
 
 We rewrite the relation as usual when using parametricity:
 
-p = ⟨F a → a⟩ q     ⇒  r = ⟨a → X⟩ s     ⇒ f p r = ⟨H a⟩ (f q s)
+p = ⟨F a → a⟩ q     ⇒  r = ⟨G a → X⟩ s     ⇒ f p r = ⟨H a⟩ (f q s)
 
-p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ = ⟨X⟩ ∘ s ⇒ f p r = ⟨H a⟩ (f q s)
+p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨G a⟩ = ⟨X⟩ ∘ s ⇒ f p r = ⟨H a⟩ (f q s)
 
-p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨a⟩ =       s ⇒ f p r = ⟨H a⟩ (f q s)
+p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q ⇒  r ∘ ⟨G a⟩ =       s ⇒ f p r = ⟨H a⟩ (f q s)
 
-p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = ⟨H a⟩ (f q (r ∘ ⟨a⟩))
+p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q                       ⇒ f p r = ⟨H a⟩ (f q (r ∘ ⟨G a⟩))
 
-p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                      ⇒ f p r = H ⟨a⟩ (f q (r ∘ ⟨a⟩))
+p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                       ⇒ f p r = H ⟨a⟩ (f q (r ∘ G ⟨a⟩))
 
 
 Satisfying the premise is equivalent to make this diagram commute:
@@ -96,23 +96,23 @@ ensures that
 
 We obtain equation (1): 
 
-∀ a : ★, p : F a → a, r : a → X. f p r = H ⟨a⟩  (f ι (r ∘ ⟨a⟩))
+∀ a : ★, p : F a → a, r : a → X. f p r = H ⟨a⟩ (f ι (r ∘ G ⟨a⟩))
 
 And we can use this to prove the result:
 
-∀ s : I → X. f ι s = g ι s
+∀ s : I → X.                             f ι s            =        g ι s
 
-⇒   *by the lemma 1, we can rewrite $s$ as a composition with $⟨a⟩$*
+⇒   *by the lemma 1, we can rewrite $s$ as a composition with $G ⟨a⟩$*
 
-∀ a : ★, r : a → X. f ι (r ∘ ⟨a⟩) = g ι (r ∘ ⟨a⟩)
+∀ a : ★, r : a → X.                      f ι (r ∘ G ⟨a⟩)  =        g ι (r ∘ G ⟨a⟩)
 
 ⇒   *$⟨a⟩$ is a function*
 
-∀ a : ★, r : a → X. (H ⟨a⟩) (f ι (r ∘ ⟨a⟩)) = (H ⟨a⟩) (g ι (r ∘ ⟨a⟩))
+∀ a : ★, r : a → X.               H ⟨a⟩ (f ι (r ∘ G ⟨a⟩)) = H ⟨a⟩ (g ι (r ∘ G ⟨a⟩))
 
 ⇒   *by (1)*
 
-∀ a : ★, p : F a → a, r : a → X. f p r = g p r
+∀ a : ★, p : F a → a, r : G a → X.                  f p r = g p r
 
 ### Lemma 1
 
@@ -120,10 +120,10 @@ Let
 
 * $I$ be the initial object
 * $s : I → X$
-* $r : A → X$
+* $r : G a → X$
 * $r ∘ x = s$
 
-then $x$ is the unique arrow $x : I → a$
+then $x$ is the unique arrow $x : I → G ⟨a⟩$
 
 
 \begin{tikzpicture}[->,auto,node distance=2.8cm,
@@ -131,7 +131,7 @@ then $x$ is the unique arrow $x : I → a$
   \tikzstyle{object}=[]
 
   \node[object]         (I)                   {$I$};
-  \node[object]         (A) [right of=I]      {$a$};
+  \node[object]         (A) [right of=I]      {$G a$};
   \node[object]         (X) [right of=A]      {$X$};
 
   \path (I) edge [bend left]  node {$s$} (X);
