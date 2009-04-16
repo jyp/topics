@@ -9,25 +9,31 @@
 * Picking a random type (growing) (This is what QC does!)
 * Picking the minimal μ type such that  $correct (f μ) ⇒ ∀ a ∈ ★. correct (f a)$
 
-# The Big result
+# Initial testing
 
-## Restriction
+## Theorem:
 
-In order to clearly identify the type we work on, we propose to verify propositions of the form:
+Given $f,g : ∀ a : ★. (F a → a) -> (G a → X) → H a$
 
-$f x = g x$
-
-That is, `f` is the function to check and `g` is the model we want to check against.
-
-I conjecture that the type of `f` is enough to infer a (minimal) type $μ$
-and to prove the theorem:
-
-$∀ x ∈ μ. f x = g x ⇒ ∀ a ∈ ★. ∀ x ∈ a. f x = g x$
+Let I = fixpoint of F, and α the initial F-algebra.
 
 
-## Finding μ
 
-> f :: (F a -> a) -> (G a -> X) -> H a
+∀ s : G I → X, α : F I → I.                             f α s            =        g α s
+
+⇒ 
+
+∀ a : ★, p : F a → a, r : G a → X.                                 f p r = g p r
+
+
+This theorem says that, given a `f` is the function to check and `g`, the model we want to check against,
+it suffices to test the correspondance for the inital algebra.
+
+## Haskell
+
+This theorem translates directly in haskell terms as follows:
+
+> f,g :: (f a -> a) -> (g a -> X) -> g a
 
 It suffices to test `f In`, which is monomorphic:
 
@@ -40,11 +46,10 @@ where
 
 ## Proof 
 
-This is a very sketchy proof! I'm taking lots of liberties with notations, etc.
-
 Given:
 
 > f :: (F a → a) → (G a → X) → H a
+
 
 Parametricity: (I'm using parametricity in "arrow form"; see Parametricity.markdown)
 
@@ -82,70 +87,37 @@ Satisfying the premise is equivalent to make this diagram commute:
 \end{tikzpicture}
 
 
-picking 
+This can be achieve by picking
 
-* t = I = Fix F
 * q = α, the initial F-algebra
+* ⟨a⟩ = ⦃p⦄, p's catamorphism.
+* t = I = Fix F
 
-ensures that
+This choice implies that:
 
-1. $⟨a⟩$ is an arrow of type $I → a$, the catamorphism of $p$;
-2. the lhs. of the implication is verified;
-3. $⟨a⟩$ is a function.
+1. the lhs. of the implication is verified;
+2. $⟨a⟩ = ⦃p⦄$ is an function, of type $I → a$.
 
 
 We obtain equation (1): 
 
-∀ a : ★, p : F a → a, r : a → X. f p r = H ⟨a⟩ (f α (r ∘ G ⟨a⟩))
+∀ a : ★, p : F a → a, r : a → X. f p r = H ⦃p⦄ (f α (r ∘ G ⦃p⦄))
 
 And we can use this to prove the result:
 
-∀ s : I → X.                             f α s            =        g α s
+∀ s : G I → X, α : F I → I.                             f α s            =        g α s
 
-⇒   *by the lemma 1, we can rewrite $s$ as a composition with $G ⟨a⟩$*
+⇒   *∀ p : F a → a, r : G a → X. r ∘ G ⦃p⦄ : I → X*
 
-∀ a : ★, r : a → X.                      f α (r ∘ G ⟨a⟩)  =        g α (r ∘ G ⟨a⟩)
+∀ a : ★, p : F a → a, r : G a → X.                      f α (r ∘ G ⦃p⦄)  =        g α (r ∘ G ⦃p⦄)
 
-⇒   *$⟨a⟩$ is a function*
+⇒   *$⦃p⦄$ is a function*
 
-∀ a : ★, r : a → X.               H ⟨a⟩ (f α (r ∘ G ⟨a⟩)) = H ⟨a⟩ (g α (r ∘ G ⟨a⟩))
+∀ a : ★, p : F a → a, r : G a → X.               H ⦃p⦄ (f α (r ∘ G ⦃p⦄)) = H ⦃p⦄ (g α (r ∘ G ⦃p⦄))
 
 ⇒   *by (1)*
 
-∀ a : ★, p : F a → a, r : G a → X.                  f p r = g p r
-
-### Lemma 1
-
-Let  $r : G a → X$, $p : F a → a$.
-
-Then there exists
-
-* $s : I → X$
-
-such that
-
-* $r ∘ x = s$
-
-
-where $x : I → G ⟨a⟩$ is a catamorphism.
-
-\begin{tikzpicture}[->,auto,node distance=2.8cm,
-                    semithick]
-  \tikzstyle{object}=[]
-
-  \node[object]         (I)                   {$I$};
-  \node[object]         (A) [right of=I]      {$G a$};
-  \node[object]         (X) [right of=A]      {$X$};
-
-  \path (I) edge [bend left]  node {$s$} (X);
-  \path (A) edge              node {$r$} (X);
-  \path (I) edge              node {$x$} (A);
-
-        
-\end{tikzpicture}
-
-
-This is either obvious or provable by using the "fusion" law (AoP p. 48).
+∀ a : ★, p : F a → a, r : G a → X.                                 f p r = g p r
 
 
 # Examples
