@@ -216,6 +216,44 @@ exactly fix it.
 However, many functions can be transformed to fix the model, and the result can
 be re-interpreted directly on their initial form.
 
+
+
+
+> (a → Bool) → [a] → [a]
+
+list morphism
+
+> (a → Bool) → (Nat × (Nat → a)) → (Nat × (Nat → a))
+
+ignoring the parameter for the 1st component in the tuple
+
+> (a → Bool) → (Nat × (Nat → a)) → Nat → (a × Nat) 
+
+→-normal form
+
+> (a → Bool) → Nat → (Nat → a) → Nat → (a × Nat) 
+
+reordering 
+
+> (Nat → a) → (a → Bool) → Nat → Nat → (a × Nat) 
+
+ignoring monomorphic arguments
+
+> (Nat → a) → (a → Bool) → (a × Nat) 
+
+rewriting as functors
+
+> (K Nat → a) → (a → Bool) → (Id × K Nat) a
+
+
+
+
+> [a] → Nat 
+
+> (Nat × (Nat → a)) → Nat 
+
+
+
 # Effects on quickCheck, smallCheck, lazy smallCheck, EasyCheck, ...
 
 A parameter that used to be "sampled" becomes fixed. Work is moved from the
@@ -223,3 +261,6 @@ generation of many test cases to checking against the model. We can simplify
 this work by taking advantage of laws that the free algebra must satisfy.
 
 
+# Limitations
+
+* Order 3 polymorphism?

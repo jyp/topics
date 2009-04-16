@@ -12,7 +12,17 @@ bubble xchg list = iterate pass list !! length list
           pass [x] = [x]
           pass (x:y:ys) = a:pass (b:ys) where (a,b) = xchg (x,y)
 
+insertion :: Oblivous a
+insertion _ [] = []
+insertion _ [x] = [x]
+insertion xchg (x:xs) = pass x (insertion xchg xs)
+    where pass x [] = [x]
+          pass x (y:ys) = a:pass b ys where (a,b) = xchg (x,y)
 
+
+testK = 
+    where swap (False,True) = (True,False)
+          swap _ = 
 
 data I = Min I I | Max I I | Ix Int
     deriving Show
@@ -47,5 +57,14 @@ testQ f n = f (\(x,y) -> (mmin x y, mmax x y)) (fmap ix [1..n])
 
 propDistr a b c d = max (min a b)  (min c d) == minimum [max a c, max b c, max a d, max b d]
 propSimpl x as bs = min (maximum (x:as)) (maximum (x : as ++ bs)) == maximum (x:as)
+
+-- http://en.wikipedia.org/wiki/Distributive_lattice
+
+{-
+
+http://www.math.hawaii.edu/~ralph/Preprints/appendix.pdf
+-}
+
+
 
 
