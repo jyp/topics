@@ -34,9 +34,9 @@ As relations in arrow form $⟨\_⟩ : (A : ★) → (A ↔ A)$
 
 If $t$ is a closed term of type $T$, then $f = ⟨T⟩ f$, where
 
-* $⟨K⟩ x = x$
+* $⟨K⟩ = id$
 * $⟨A × B⟩ (x,y) = (⟨A⟩ x, ⟨B⟩ y)$
-* $⟨[A]⟩ x = map ⟨A⟩ x$
+* $⟨[A]⟩ = map ⟨A⟩$
 * $⟨A → B⟩ f =  ⟨B⟩ ∘ f ∘ ⟨A⟩°$
 * $⟨∀ X. F(X)⟩ g = ∀ a : A ↔ A'. ⟨F(a)⟩ g_{A}$
 

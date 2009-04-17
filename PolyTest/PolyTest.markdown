@@ -61,7 +61,7 @@ This theorem translates directly in Haskell terms as follows:
 
 Given:
 
-> f,g :: (F a -> a) -> (G a -> X) -> G a
+> f,g :: (F a -> a) -> (G a -> X) -> H a
 > data Fix f = In { out :: f (Fix f) }
 
 It suffices to test `f In`, which is monomorphic:
@@ -75,7 +75,10 @@ It suffices to test `f In`, which is monomorphic:
 
 Applying parametricity on the type of interest yields:
 
-f = ⟨(F a → a) → (G a → X) → H a⟩ f
+f ⟨forall a. (F a → a) → (G a → X) → H a⟩ f 
+
+forall t1,t2: ★ , R : t1 <-> t2, 
+f_t1 = ⟨(F a → a) → (G a → X) → H a⟩ R f_t2
 
 We rewrite the relation as usual when using parametricity:
 
@@ -118,19 +121,19 @@ This can be achieved by picking
 
 Thus, the lhs. of the implication is verified, and
 
-1. t₁ = a, t₂ = fixpoint of F (from now on written I)
+1. t₁ = fixpoint of F (from now on written I)
 2. $⦃p⦄$ is an function, of type $I → a$.
 
 
-We obtain equation (1): 
+We obtain equation (1) by subtituting a for t₂.: 
 
-∀ a : ★, p : F a → a, r : G a → X. f p r = H ⦃p⦄ (f α (r ∘ G ⦃p⦄))
+∀ a : ★, p : F a → a, r : G a → X. f_{a} p r = H ⦃p⦄ (f_{I} α (r ∘ G ⦃p⦄))
 
 And we can use this to prove the result:
 
 ∀ s : G I → X, α : F I → I.                             f α s            =        g α s
 
-⇒   *∀ p : F a → a, r : G a → X. r ∘ G ⦃p⦄ : I → X, and is a function.*
+⇒   *∀ p : F a → a, r : G a → X. r ∘ G ⦃p⦄ : I → X*
 
 ∀ a : ★, p : F a → a, r : G a → X.                      f α (r ∘ G ⦃p⦄)  =        g α (r ∘ G ⦃p⦄)
 
