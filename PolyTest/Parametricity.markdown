@@ -34,15 +34,15 @@ As relations in arrow form $⟨\_⟩ : (A : ★) → (A ↔ A)$
 
 If $t$ is a closed term of type $T$, then $f = ⟨T⟩ f$, where
 
-* ⟨K⟩ x = x
-* ⟨A × B⟩ (x,y) = (⟨A⟩ x, ⟨B⟩ y)
-* ⟨[A]⟩ x = fmap ⟨A⟩ x
-* ⟨A → B⟩ f =  ⟨B⟩ ∘ f ∘ ⟨A⟩°
-* ⟨∀ X. F(X)⟩ g = ∀ a : A ↔ A'. ⟨F(a)⟩ g_{A}$
+* $⟨K⟩ x = x$
+* $⟨A × B⟩ (x,y) = (⟨A⟩ x, ⟨B⟩ y)$
+* $⟨[A]⟩ x = map ⟨A⟩ x$
+* $⟨A → B⟩ f =  ⟨B⟩ ∘ f ∘ ⟨A⟩°$
+* $⟨∀ X. F(X)⟩ g = ∀ a : A ↔ A'. ⟨F(a)⟩ g_{A}$
 
 I guess that this last line can be re-written as follows:
 
-* ⟨F A⟩ x = fmap_{F} ⟨A⟩ x$
+* $⟨F A⟩ x = fmap_{F} ⟨A⟩ x$
 
 
 

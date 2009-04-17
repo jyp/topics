@@ -38,7 +38,7 @@ type parameters to concrete types. Here, multiple approaches spring to mind:
 
 ## Theorem:
 
-Given $f,g : ∀ a : ★. (F a → a) -> (G a → X) → H a$
+Given $f,g : ∀ a : ★. (F a → a) → (G a → X) → H a$
 
 Let I = fixpoint of F, and α the initial F-algebra.
 
@@ -51,17 +51,18 @@ Let I = fixpoint of F, and α the initial F-algebra.
 ∀ a : ★, p : F a → a, r : G a → X.                                 f p r = g p r
 
 
-This theorem says that, given a `f` is the function to check and `g`, the model we want to check against,
-it suffices to test the correspondance for the inital algebra.
+This theorem says that, given `f`, the function to check and `g`, the model we
+want to check against, it suffices to test the correspondance for the inital
+F-algebra.
 
 ## Haskell
 
-This theorem translates directly in haskell terms as follows:
+This theorem translates directly in Haskell terms as follows:
 
 Given:
-> data Fix f = In { out :: f (Fix f)}
 
 > f,g :: (F a -> a) -> (G a -> X) -> G a
+> data Fix f = In { out :: f (Fix f) }
 
 It suffices to test `f In`, which is monomorphic:
 
@@ -110,16 +111,15 @@ Satisfying the premise is equivalent to make this diagram commute:
 \end{tikzpicture}
 
 
-This can be achieved by picking
+This can be achieved by picking 
 
-* q = α, the initial F-algebra;
+* q = α, the initial F-algebra.
+* ⟨a⟩ = ⦃p⦄, the catamorphism of p.
 
-This choice implies that:
+Thus, the lhs. of the implication is verified, and
 
-1. the lhs. of the implication is verified;
-2. ⟨a⟩ = ⦃p⦄, the catamorphism of p.
-3. t₁ = a, t₂ = fixpoint of F (from now on written I)
-3. $⦃p⦄$ is an function, of type $I → a$.
+1. t₁ = a, t₂ = fixpoint of F (from now on written I)
+2. $⦃p⦄$ is an function, of type $I → a$.
 
 
 We obtain equation (1): 
