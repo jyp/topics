@@ -1,9 +1,34 @@
 % Testing polymorphic functions
 % JP Bernardy
 
-\DeclareUnicodeCharacter{9733}{\ensuremath{\star}} 
+\newcommand{\lbana}{\mbox{$(\![$}}
+\newcommand{\rbana}{\mbox{$]\!)$}}
+\newcommand{\cata}[1]{\mbox{$\lbana #1 \rbana$}}
 
-# Approaches
+\DeclareUnicodeCharacter{9733}{\ensuremath{\star}} 
+\DeclareUnicodeCharacter{10627}{\ensuremath{\lbana}} 
+\DeclareUnicodeCharacter{10628}{\ensuremath{\rbana}} 
+
+
+# Intro
+
+Testing lends itself well to concrete functions. Polymorphic (higher order) functions are
+more abstract and are often considered easy to proove correct: testing is less
+useful. Thanks to parametricity, there is often only one possible implementation
+for "very polymorphic" functions. If types are considered theorems, the
+computational content of the values is often irrelevant.
+
+We attack the middle ground where there is little polymorphism, but there is
+still a possibility to get it wrong; and doing a proof is still more tedious than
+performing a simple test.
+
+Introduce the running example here.
+
+# Picking a type
+
+Testing a polymorphic function is often considered "not possible" . For example, 
+QuickCheck simply requires monomorphic properties. One must first instanciate the
+type parameters to concrete types. Here, multiple approaches spring to mind:
 
 * Picking a small type (1, 2, ...)
 * Picking a random type (growing) (This is what QC does!)
@@ -33,25 +58,21 @@ it suffices to test the correspondance for the inital algebra.
 
 This theorem translates directly in haskell terms as follows:
 
-> f,g :: (f a -> a) -> (g a -> X) -> g a
+Given:
+> data Fix f = In { out :: f (Fix f)}
+
+> f,g :: (F a -> a) -> (G a -> X) -> G a
 
 It suffices to test `f In`, which is monomorphic:
 
 > f In :: (G (Fix F) -> X) -> H (Fix F)
 
-where
-
-> data Fix f = In { out :: f (Fix f)}
-
 
 ## Proof 
 
-Given:
+(I'm using parametricity in "arrow form"; see Parametricity.markdown)
 
-> f :: (F a → a) → (G a → X) → H a
-
-
-Parametricity: (I'm using parametricity in "arrow form"; see Parametricity.markdown)
+Applying parametricity on the type of interest yields:
 
 f = ⟨(F a → a) → (G a → X) → H a⟩ f
 
@@ -67,16 +88,18 @@ p ∘ ⟨F a⟩ = ⟨a⟩ ∘ q                       ⇒ f p r = ⟨H a⟩ (f q
 
 p ∘ F ⟨a⟩ = ⟨a⟩ ∘ q                       ⇒ f p r = H ⟨a⟩ (f q (r ∘ G ⟨a⟩))
 
+where ⟨a⟩, p, q, r, are universally quantified.
+
 
 Satisfying the premise is equivalent to make this diagram commute:
 
 \begin{tikzpicture}[->,auto,node distance=2.8cm, semithick]
   \tikzstyle{object}=[]
 
-  \node[object]         (A)                    {$t$};
-  \node[object]         (B) [left of=A] {$F~t$};
-  \node[object]         (C) [below of=A] {$a$};
-  \node[object]         (D) [below of=B] {$F~a$};
+  \node[object]         (A)                    {$t₁$};
+  \node[object]         (B) [left of=A] {$F~t₁$};
+  \node[object]         (C) [below of=A] {$t₂$};
+  \node[object]         (D) [below of=B] {$F~t₂$};
 
   \path (B) edge              node {$q$} (A)
         (A) edge              node {$⟨a⟩$}   (C);
@@ -87,27 +110,27 @@ Satisfying the premise is equivalent to make this diagram commute:
 \end{tikzpicture}
 
 
-This can be achieve by picking
+This can be achieved by picking
 
-* q = α, the initial F-algebra
-* ⟨a⟩ = ⦃p⦄, p's catamorphism.
-* t = I = Fix F
+* q = α, the initial F-algebra;
 
 This choice implies that:
 
 1. the lhs. of the implication is verified;
-2. $⟨a⟩ = ⦃p⦄$ is an function, of type $I → a$.
+2. ⟨a⟩ = ⦃p⦄, the catamorphism of p.
+3. t₁ = a, t₂ = fixpoint of F (from now on written I)
+3. $⦃p⦄$ is an function, of type $I → a$.
 
 
 We obtain equation (1): 
 
-∀ a : ★, p : F a → a, r : a → X. f p r = H ⦃p⦄ (f α (r ∘ G ⦃p⦄))
+∀ a : ★, p : F a → a, r : G a → X. f p r = H ⦃p⦄ (f α (r ∘ G ⦃p⦄))
 
 And we can use this to prove the result:
 
 ∀ s : G I → X, α : F I → I.                             f α s            =        g α s
 
-⇒   *∀ p : F a → a, r : G a → X. r ∘ G ⦃p⦄ : I → X*
+⇒   *∀ p : F a → a, r : G a → X. r ∘ G ⦃p⦄ : I → X, and is a function.*
 
 ∀ a : ★, p : F a → a, r : G a → X.                      f α (r ∘ G ⦃p⦄)  =        g α (r ∘ G ⦃p⦄)
 
