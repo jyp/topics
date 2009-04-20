@@ -36,43 +36,45 @@ postulate replaceElements : forall {a} -> List ⊤ -> (ℕ -> a) -> List a
 
 data Args : Type -> Set1 where
   split : (s t : Type) -> Args (cross s t)
-  massa : (s : Type) {t : Type} -> (out : (forall a -> [[ s ]] a -> [[ t ]] a)) -> Args t
+  massag : (s : Type) {t : Type} -> (out : (forall a -> [[ s ]] a -> [[ t ]] a)) -> Args t
 
   observ : forall {t k} -> {- rank t ≤ 1 -> -} Args (t ==> con k)
   constr : forall {t} -> {- rank t ≤ 1 -> -} Args (t ==> var)
 
 
 describe : (t : Type) -> Args t
-describe (x ==> list arg) = massa (cross (x ==> con (List ⊤)) (con ℕ ==> arg)) (λ a → λ struc,rec → λ theX → replaceElements (proj₁ struc,rec theX) (proj₂ struc,rec))
+describe (x ==> list arg) = massag (cross (x ==> con (List ⊤)) (con ℕ ==> arg)) (λ a → λ struc,rec → λ theX → replaceElements (proj₁ struc,rec theX) (proj₂ struc,rec))
 describe (arg ==> var) = constr
-describe (arg ==> arg' ==> res) = massa (cross arg arg' ==> res) (λ a → λ fxy → λ x → λ y → fxy (x , y)) 
+describe (arg ==> arg' ==> res) = massag (cross arg arg' ==> res) (λ a → λ fxy → λ x → λ y → fxy (x , y)) 
 describe (arg ==> con k) = observ
-describe (arg ==> cross left right) = massa (cross (arg ==> left) (arg ==> right)) (λ a → λ fg → λ argValue → proj₁ fg argValue , proj₂ fg argValue)
+describe (arg ==> cross left right) = massag (cross (arg ==> left) (arg ==> right)) (λ a → λ fg → λ argValue → proj₁ fg argValue , proj₂ fg argValue)
 describe (cross left right) = split left right
 -- add a dummy argument.
-describe (con k) = massa (con ⊤ ==> con k)  (λ a → λ f → f tt)
-describe var = massa (con ⊤ ==> var) (λ a → λ f → f tt)
-describe (list arg) = massa (con ⊤ ==> list arg)  (λ a → λ f → f tt)
+describe (con k) = massag (con ⊤ ==> con k)  (λ a → λ f → f tt)
+describe var = massag (con ⊤ ==> var) (λ a → λ f → f tt)
+describe (list arg) = massag (con ⊤ ==> list arg)  (λ a → λ f → f tt)
 
 
 Functor : (t : Type) -> (Set -> Set)
 Functor t with describe t 
 Functor .(cross s t)   | split s t = λ a → Functor s a ⊎ Functor t a
-Functor t              | massa s {.t} out = Functor s
+Functor t              | massag s {.t} out = Functor s
 Functor .(t ==> con k) | observ {t} {k} = λ a → ⊥
 Functor .(t ==> var)   | constr {t} = [[ t ]]
 
 rndArg : (μF : Set) -> (t : Type) -> (Functor t μF -> μF) -> [[ t ]] μF
 rndArg μF t ι with describe t 
 rndArg μF .(cross s t) ι | split s t = rndArg μF s (λ sub → ι (inj₁ sub)) , rndArg μF t (λ sub → ι (inj₂ sub))
-rndArg μF t ι | massa s {.t} out = out μF (rndArg μF s (λ [[Dt]]μF → ι [[Dt]]μF))
+rndArg μF t ι | massag s {.t} out = out μF (rndArg μF s ι)
 rndArg μF .(t ==> con k) ι | observ {t} {k} = arbitrary ([[ t ]] μF → k)
 rndArg μF .(t ==> var) ι | constr {t} = ι
 
 
+-- Gives the type to use for the type variable
 monotype : (t : Type) -> Set
 monotype t = (fix (Functor t))
 
+-- The test case generator "profile"
 testArg : (t : Type) -> [[ t ]] (monotype t)
 testArg t = rndArg (fix (Functor t)) t In
 
