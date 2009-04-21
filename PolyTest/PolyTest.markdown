@@ -82,7 +82,7 @@ definition of ⟨...⟩
 
 ∀ t₁,t₂:★, R : t₁ ↔ t₂,      $f_{t₁} ⟨(F a → a) → (G a → X) → H a⟩_{a ↦ R} f_{t₂}$
 
-in particular, we can restrict ρ to be a function:
+in particular, we can restrict R to be a function ρ:
 
 ∀ t₁,t₂:★, ρ : t₁ → t₂,      $f_{t₁} ⟨(F a → a) → (G a → X) → H a⟩_{a ↦ ρ} f_{t₂}$
 
