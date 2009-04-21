@@ -7,6 +7,8 @@ open import Data.Maybe
 open import Data.Nat
 open import Data.Unit hiding (_≤_; _≤?_)
 open import Data.Empty
+open import Data.Function
+
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.PropositionalEquality1
@@ -32,7 +34,42 @@ postulate arbitrary : (A : Set) -> A
 postulate fix : (Set -> Set) -> Set
 postulate In : {F : Set -> Set} -> F (fix F) -> fix F
 
-postulate replaceElements : forall {a} -> List ⊤ -> (ℕ -> a) -> List a
+replaceElements : forall {a} -> List ⊤ -> (ℕ -> a) -> List a
+replaceElements []       f  = []
+replaceElements (x ∷ xs) f =  f zero ∷ replaceElements xs (f ∘ suc)
+
+{-
+replaceElements' : forall {a} -> (t :: Type) -> [[ t ]] ⊤ -> (Path t  -> a) -> List a
+
+Type1 = Type
+
+data Type0 : Set where
+     here : Type0
+--     _==>_ : (arg : Type) -> (res : Type) -> Type
+--     con : (k : Set) -> Type
+     cross : (left : Type0) -> (right : Type0) -> Type0
+     plus  : (left : Type0) -> (right : Type0) -> Type0
+--     list : (arg : Type) -> Type
+
+Path' : Type1 -> Type0
+Path' var                = {!!}
+Path' (arg ==> res)      = {!!}
+Path' (con k)            = {!!}
+Path' (cross left right) = {!!}
+Path' (list arg)         = {!!}
+
+[[_]]0 : Type0 -> Set 
+[[ here ]]0  = ⊤
+-- [[ con t ]]0  = t
+[[ cross t1 t2 ]]0  = [[ t1 ]]0 × [[ t2 ]]0 
+[[ plus  t1 t2 ]]0  = [[ t1 ]]0 ⊎ [[ t2 ]]0 
+
+
+-- Path t ??
+
+Path : Type -> Set
+Path t = [[ Path' t ]]0
+-}
 
 data Args : Type -> Set1 where
   split : (s t : Type) -> Args (cross s t)
@@ -86,3 +123,8 @@ filterArgs = cross (var ==> con Bool) (list var)
 --     monotype  filterArgs
 --     testArg   filterArgs
 
+alist : List ⊤
+alist = tt ∷ tt ∷ []
+
+test : List (monotype filterArgs)
+test = replaceElements alist (λ sub → In (inj₂ (inj₂ sub)))

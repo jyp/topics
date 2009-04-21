@@ -1,3 +1,4 @@
+{-# OPTIONS --no-termination-check #-}
 module Translation3 where
 
 open import Data.Product
