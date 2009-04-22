@@ -285,6 +285,9 @@ A parameter that used to be "sampled" becomes fixed. Work is moved from the
 generation of many test cases to checking against the model. We can simplify
 this work by taking advantage of laws that the free algebra must satisfy.
 
+## Counter examples
+
+The counter examples generated are more informative!
 
 # Limitations
 
