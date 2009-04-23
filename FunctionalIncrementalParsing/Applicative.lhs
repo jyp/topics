@@ -39,7 +39,7 @@ applications explicit in the expression describing the results.
 
 For example, the Haskell expression |S [Atom 'a']|, which stands for |S ((:)
 (Atom 'a') [])| if we remove syntactic sugar, can be represented in applicative
-form by
+form by using @@ for applications.
 
 \begin{spec}
 S @ ((:) @ (Atom @ 'a') @ [])

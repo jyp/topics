@@ -39,7 +39,7 @@
 \begin{document}
 
 \titlebanner{Draft}        % These are ignored unless
-\preprintfooter{In preparation for ICFP09}   % 'preprint' option specified.
+\preprintfooter{Submitted to Haskell'09}   % 'preprint' option specified.
 
 \title{Lazy Functional Incremental Parsing}
 
@@ -133,7 +133,7 @@ and rely as much as possible on laziness to implement incrementality.
 
 \subsection{Approach}
 
-In this section we sketch how lazy evaluation can help achieving incremental parsing.
+In this section we sketch how lazy evaluation can help achieve incremental parsing.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{begin}
@@ -225,7 +225,8 @@ Such an interface can be captured in a generalized algebraic data type (GADT)
 as follows. These combinators are traditionally given as functions instead of
 constructors, but since we make extensive use of GADTs for modeling purposes at
 various levels, we prefer to use this presentation style everywhere for
-consistency.
+consistency. (Sometimes mere ADTs would suffice, but we prefer to spell out the
+types of the combinators explicitly, using the GADT syntax)
 
 \begin{spec}
 data Parser s a where
@@ -582,7 +583,7 @@ We thank Koen Claessen for persuading us to write this paper, and for his
 unfading support throughout the writing process. This paper was greatly improved
 by his comments on early and late drafts. Discussions with Krasimir Angelov helped sorting out
 the notions of incremental parsing. 
-Patrik Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski and Micha{\l} Pa{\l}ka
+Patrik Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski and Micha{\l} Pa{\l}ka and the anonymous reviewers of ICFP
 gave helpful comments on the presentation of the paper.
 
 \bibliographystyle{mybst}

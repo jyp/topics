@@ -50,7 +50,7 @@ the translation. Intermediate results are represented by a polish expression
 with a |Susp| element. The part before the |Susp| element corresponds to the
 constant part that is fixed by the input already parsed. The arguments of
 |Susp| contain the continuations of the parsing algorithm: the first one 
-if there is a symbol to consume, the second one when the end of input is reached.
+if the end of input is reached, the second one when there is a symbol to consume.
 
 \begin{code}
 data Polish s r where
@@ -249,8 +249,7 @@ same direct evaluation function. It underlies the |precompute| function.
 
 It is also interesting to note that, apparently, we could have done away
 with the reverse polish automaton entirely, and just have composed partial applications.
-This solution, while a lot simpler, falls short of our purposes: a composition of partially
-applied functions is not simplified under Haskell semantics, whereas we are able to do so while traversing
-polish expressions.
+This solution, while a lot simpler, falls short of our purposes: such compositions of partially
+applied functions are not simplified, given the standard evaluation models for Haskell. 
 
 \comment{Interesting potential for the runtim system or compiler optimisation}

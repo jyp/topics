@@ -56,7 +56,8 @@ parsing and therefore the running time of the former can be neglected.
 \begin{code}
 display s@State{ls = pst:_} = do
   putStrLn ""
-  putStrLn   $ show 
+  putStrLn   $ trimToWindow
+             $ show 
              $ finish
              $ feedEof
              $ feed (rt s)

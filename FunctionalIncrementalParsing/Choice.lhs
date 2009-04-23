@@ -66,7 +66,8 @@ branch to yield a successful outcome. Indeed, since the |evalR| function
 conjure up a suitable result for \emph{any} input.
 
 If the grammar is sufficiently permissive, no error correction in the parsing
-library itself is necessary. This is the case for the simple S-expression parser of section \ref{sec:input}.
+library itself is necessary. An example is the simple S-expression parser of section \ref{sec:input},
+ which performs error correction in an ad-hoc way.
 However, most interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting the parser with
 error correction is therefore desirable.
@@ -246,8 +247,12 @@ evalR (Susp _ _)             = error "input pending"
 evalR (Best choice _ p q)    = case choice of                     
     LT -> evalR p
     GT -> evalR q
-    EQ -> error $ "evalR: Ambiguous parse!"
+    EQ -> error "Ambiguous parse!"
 \end{code}
+
+Note that this version of |evalR| expects a process without any pending
+suspension (the end of file must have been reached). In this version we also
+disallow ambiguity, see section \ref{sec:thinning} for a discussion.
 
 \subsection{Summary}
 
@@ -267,6 +272,7 @@ exponentially growing data structure is demanded. Thanks to lazy evaluation, onl
 that small part will be actually constructed.
 
 \subsection{Thinning out results and ambiguous grammars}
+\label{sec:thinning}
 
 A sound basis for thinning out less desirable paths is to discard those which
 are less preferable by some amount. In order to pick one path after a constant

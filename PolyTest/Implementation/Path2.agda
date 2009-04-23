@@ -10,13 +10,13 @@ open import Data.Vec1
 open import Data.Unit hiding (_≤_; _≤?_)
 open import Data.Empty
 open import Data.Function
-import Data.Fin
-open Data.Fin using (Fin;zero;suc)
+import Data.Fin as Fin 
+open Fin using (Fin;Fin′;inject;inject';zero;suc;toℕ;less;greater;equal) renaming (_+_ to _+F_)
 
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.PropositionalEquality1
+open import Relation.Binary.PropositionalEquality1 hiding (cong)
 open import Data.List
 
 
@@ -99,28 +99,42 @@ _$$_ : forall {n} -> Fun n -> Vec₁ Set n -> Set
 f $$ [] = f
 f $$ (x ∷ xs) = f x $$ xs
 
+-- Apply all variables
 _$!_ : forall {n} -> Funct n -> Vec₁ Set n -> Set
-μ arg $! as = Fix (λ rec → arg $! (rec ∷ as))
+μ arg $! as = Fix (λ r → arg $! (r ∷ as))
 K t $! as = t
 (l ⊕ r) $! as = l $! as ⊎ r $! as
 (l ⊗ r) $! as = l $! as × r $! as
 π idx $! as = lookup idx as
 
-data FOrdering : Set where
-  less    : FOrdering
-  equal   : FOrdering
-  greater : FOrdering
 
-fcompare : ∀ {k} (m n : Fin k) → FOrdering
-fcompare zero    zero    = equal   
-fcompare (suc m) zero    = greater 
-fcompare zero    (suc n) = less    
-fcompare (suc m) (suc n) = fcompare m n
+-- Apply one variable.
+[[_]]$_!_ : forall {n} -> Funct (1 + n) -> (v : Fin (1 + n)) -> Set -> Funct n
+[[ μ arg ]]$ v ! x = μ ([[ arg ]]$ suc v ! x)
+[[ K t ]]$ v ! x = K t
+[[ l ⊕ r ]]$ v ! x = ([[ l ]]$ v ! x) ⊕ ([[ r ]]$ v ! x)
+[[ l ⊗ r ]]$ v ! x = ([[ l ]]$ v ! x) ⊕ ([[ r ]]$ v ! x)
+[[ π idx ]]$ v ! x with Fin.compare idx v 
+[[ π .(inject least) ]]$ v ! x | less .v least = π (inject' least)
+[[ π .v ]]$ v ! x | equal .v = K x
+[[ π  zero ]]$ ._ ! x | greater .zero ()
+[[ π  (suc idx) ]]$ .(inject least) ! x | greater .(suc idx) least  = π idx
 
 
+path : (f : Funct 1) -> (a : Set) -> (x : f $! (a ∷ [])) -> Set
+path (μ arg) a x = {!!}
+path (K t) a x = {!!}
+path (l ⊕ r) a x = {!!}
+path (l ⊗ r) a x = {!!}
+path (π idx) a x = {!!}
+
+{-
+
+
+ 
 path : (n : ℕ) -> (v : Fin n)  (f : Funct n) -> (as : Vec₁ Set n) -> (x : f $! as) -> Set
-path zero () f as x 
-path n v (μ arg) as (In x) = Fix (λ rec → path (suc n) (suc v) arg (rec ∷ as) {!!}) -- Fix (λ rec → path (suc n) (suc v) arg (rec ∷ as) {!!})
+path n v (μ arg) as (In x) = path (suc n) (suc v) {!arg $! [[ μ arg ]]!} {!!} {!!} -- ([[ μ arg  ]] ∷ as) x
+-- Fix (λ rec → path (suc n) (suc v) arg (Fix (λ r → arg $! (r ∷ as)) ∷ as) x)
 path n v (K t) as x = ⊥
 path n v (l ⊕ r) as (inj₁ x) = path n v l as x
 path n v (l ⊕ r) as (inj₂ y) = path n v r as y
@@ -130,7 +144,22 @@ path v _ (π idx) as x | less = lookup idx as -- keep these (because we need to 
 path v _ (π idx) as x | equal = ⊤            -- position we are interested in; keep it.
 path v _ (π idx) as x | greater = ⊥          -- treat these as constants
 
+-}
+
 {-
+
+path : (n : ℕ) -> (v : Fin n)  (f : Funct n) -> (as : Vec₁ Set n) -> (x : f $! as) -> Funct (toℕ v)
+path n v (μ arg) as (In x) = μ (path (suc n) (suc v) arg ({!!} ∷ as) {!!})
+path n v (K t) as x = K ⊥
+path n v (l ⊕ r) as x = {!!}
+path n v (l ⊗ r) as (x , y) = path n v l as x ⊕ path n v r as y
+path n v (π idx) as x with inspect (toℕ v) | inspect (toℕ idx)
+path n v (π idx) as x | v' with-≡ eq | idx' with-≡ eq' with compare v' idx' 
+path v _ (π idx) as x | v' with-≡ eq | .(suc (v' + k)) with-≡ eq' | less .v' k = π {!idx (with complicated crap)!}
+path v _ (π idx) as x | .idx' with-≡ eq | idx' with-≡ eq' | equal .idx'  = K ⊤
+path v _ (π idx) as x | .(suc (idx' + k)) with-≡ eq | idx' with-≡ eq' | greater .idx' k = K ⊥
+
+
 path : {a : Set} -> (f : Funct 1) -> (x : [[ f ]] a) -> Set
 path (μ arg) (In y) = {!!}
 path (K t) x = ⊥
@@ -141,4 +170,15 @@ path (π zero) x = ⊤
 path (π (suc ())) x
 -}
 
-postulate genLookup : (n : ℕ) (v : Fin n) (f : Funct n) (as : Vec₁ Set n) -> (x : f $! as) -> (path n v f as x -> lookup v as )
+-- postulate genLookup : (n : ℕ) (v : Fin n) (f : Funct n) (as : Vec₁ Set n) -> (x : f $! as) -> (path n v f as x -> lookup v as )
+
+FList : Funct 1
+FList = μ (K ⊤ ⊕ (π (suc zero) ⊗ π (zero)))
+
+args : Vec₁ Set 1
+args = ℕ ∷ []
+
+test1 = FList $! args
+
+-- test2 = path _ (zero) FList args (In (inj₂ (3 , (In (inj₂ (5 , In (inj₁ tt)))))))
+

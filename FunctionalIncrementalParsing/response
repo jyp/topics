@@ -1,0 +1,20 @@
+In response to review #1, I'd like to say that, while there is a lot of
+folklore about the expressive power of lazy evaluation, I feel that there are
+few documented non-trivial applications. Detailing what laziness implies in 
+the case of incremental parsing is a useful contribution to the functional
+programming community.
+
+In response to review #3:
+
+About the simplification of compositions:
+  * Yes, evaluation under lambda would solve the problem;
+  * Yes, using combinators can solve the problem. Indeed, the solution
+presented in the paper is an instance of this approach.
+
+About the essential uses of lazy evaluation:
+Section 8 details the benefits of using lazy evaluation.
+I'm not sure how this falls short of listing the essential usages
+of lazy evaluation.
+
+Thanks for the helpful reviews!
+
