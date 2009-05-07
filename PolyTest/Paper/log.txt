@@ -1,0 +1,11 @@
+090507: PJ: Setting up a paper infrastructure
+
+  I have copied recently updated bibtex files from proposals/bibtex/
+  {- proposals is in a CVS repository:
+  :ext;CVS_RSH=ssh:candela03.ita.chalmers.se:/chalmers/groups/cse-set/cvs
+  -}
+
+  (I'm not sure if the "completely open" repository at
+  git@github.com:jyp/topics is the right place for a "paper in
+  making".)
+

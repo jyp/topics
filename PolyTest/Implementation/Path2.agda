@@ -11,7 +11,8 @@ open import Data.Unit hiding (_≤_; _≤?_)
 open import Data.Empty
 open import Data.Function
 import Data.Fin as Fin 
-open Fin using (Fin;Fin′;inject;inject';zero;suc;toℕ;less;greater;equal) renaming (_+_ to _+F_)
+-- open Fin using (Fin;Fin′;inject;inject';zero;suc;toℕ;less;greater;equal) renaming (_+_ to _+F_)
+open Fin using (Fin;Fin′;inject;zero;suc;toℕ) renaming (_+_ to _+F_)
 
 open import Relation.Nullary
 open import Relation.Binary
@@ -107,18 +108,23 @@ K t $! as = t
 (l ⊗ r) $! as = l $! as × r $! as
 π idx $! as = lookup idx as
 
+-- compareFin : {n : ℕ} -> (i j : Fin n) -> Ordering (toℕ i) (toℕ j)
+-- compareFin i j = compare (toℕ i) (toℕ j)
 
 -- Apply one variable.
 [[_]]$_!_ : forall {n} -> Funct (1 + n) -> (v : Fin (1 + n)) -> Set -> Funct n
 [[ μ arg ]]$ v ! x = μ ([[ arg ]]$ suc v ! x)
-[[ K t ]]$ v ! x = K t
+[[ K t ]]$   v ! x = K t
 [[ l ⊕ r ]]$ v ! x = ([[ l ]]$ v ! x) ⊕ ([[ r ]]$ v ! x)
 [[ l ⊗ r ]]$ v ! x = ([[ l ]]$ v ! x) ⊕ ([[ r ]]$ v ! x)
-[[ π idx ]]$ v ! x with Fin.compare idx v 
-[[ π .(inject least) ]]$ v ! x | less .v least = π (inject' least)
-[[ π .v ]]$ v ! x | equal .v = K x
-[[ π  zero ]]$ ._ ! x | greater .zero ()
+[[ π idx ]]$ v ! x = {!!}
+{-
+-- with compareFin idx v 
+[[ π .(inject least) ]]$ v ! x | less .v least = π (? least)
+[[ π .v ]]$              v ! x | equal .v      = K x
+[[ π  zero ]]$          ._ ! x | greater .zero ()
 [[ π  (suc idx) ]]$ .(inject least) ! x | greater .(suc idx) least  = π idx
+-}
 
 
 path : (f : Funct 1) -> (a : Set) -> (x : f $! (a ∷ [])) -> Set

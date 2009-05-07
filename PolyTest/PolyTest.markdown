@@ -14,20 +14,20 @@
 # Intro
 
 Testing lends itself well to concrete functions. Polymorphic (higher order) functions are
-more abstract and are often considered easy to proove correct: testing is less
+more abstract and are often considered easy to prove correct: testing is less
 useful. Thanks to parametricity, there is often only one possible implementation
 for "very polymorphic" functions. If types are considered theorems, the
 computational content of the values is often irrelevant.
 
-We attack the middle ground where there is little polymorphism, but there is
+We attack the middle ground where there is some polymorphism, but there is
 still a possibility to get it wrong; and doing a proof is still more tedious than
-performing a simple test.
+performing simple tests.
 
 Introduce the running example here.
 
 # Picking a type
 
-Testing a polymorphic function is often considered "not possible" . For example, 
+Testing a polymorphic function is often considered impossible. For example, 
 QuickCheck simply requires monomorphic properties. One must first instanciate the
 type parameters to concrete types. Here, multiple approaches spring to mind:
 
@@ -235,13 +235,11 @@ necessary condition for correctness)
 
 # Applying the result
 
-The result can be readily applyied to functions of the form (...), it is rare that functions 
-exactly fix it.
+The result can be readily applied only to functions of the form (...), it is rare that functions 
+exactly fit it.
 
-However, many functions can be transformed to fix the model, and the result can
+However, many functions can be transformed to fit the model, and the result can
 be re-interpreted directly on their initial form.
-
-
 
 
 > (a → Bool) → [a] → [a]
