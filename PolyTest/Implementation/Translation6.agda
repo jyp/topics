@@ -75,6 +75,7 @@ Path t = [[ Path' t ]]0
 _-n>_ : {A : Set1} -> (A -> Set) -> (A -> Set) -> Set1
 f -n> g = forall a -> f a -> g a
 
+-- A 1-step transformation of the arguments
 data Args : Type -> Set1 where
   split  : (s t : Type) -> Args (cross s t)
   massag : (s : Type) {t : Type} -> (out : [[ s ]] -n> [[ t ]]) -> Args t
@@ -82,6 +83,7 @@ data Args : Type -> Set1 where
   constr : forall {t}   -> {- rank t ≤ 1 -> -} Args (t ==> var)
 
 
+-- Syntax-directed transformation to make
 describe : (t : Type) -> Args t
 describe (x ==> list arg)           = massag (cross (x ==> con (List ⊤)) (con ℕ ==> arg)) 
                                         (λ a → λ struc,rec → λ theX → replaceElements (proj₁ struc,rec theX) (proj₂ struc,rec))
@@ -97,7 +99,7 @@ describe (con k)                    = massag (con ⊤ ==> con k)     (λ a → �
 describe var                        = massag (con ⊤ ==> var)       (λ a → λ f → f tt)
 describe (list arg)                 = massag (con ⊤ ==> list arg)  (λ a → λ f → f tt)
 
-
+-- The functor generating the initial type for the polymorphic argument.
 Functor : (t : Type) -> (Set -> Set)
 Functor t with describe t 
 Functor .(cross s t)   | split s t          = λ a → Functor s a ⊎ Functor t a
@@ -105,6 +107,7 @@ Functor t              | massag s {.t} out  = Functor s
 Functor .(t ==> con k) | observ {t} {k}     = λ a → ⊥
 Functor .(t ==> var)   | constr {t}         = [[ t ]]
 
+-- The description of random arguments to create
 rndArg : (μF : Set) -> (t : Type) -> (Functor t μF -> μF) -> [[ t ]] μF
 rndArg μF t ι with describe t 
 rndArg μF .(cross s t) ι   | split s t         = rndArg μF s (λ sub → ι (inj₁ sub)) , 
