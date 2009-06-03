@@ -71,7 +71,7 @@ However, most interesting grammars produce a highly structured result, and are
 correspondingly restrictive on the input they accept. Augmenting the parser with
 error correction is therefore desirable.
 
-We can do so by introducing an other constructor (|Yuck|) in the |Parser| type
+We can do so by introducing another constructor (|Yuck|) in the |Parser| type
 to denote less desirable parses. Parsers will accept any input, but some will be
 less desirable than other and reflect this in the output. The parsing algorithm
 can then maximize the desirability of the set of rules used for parsing a given

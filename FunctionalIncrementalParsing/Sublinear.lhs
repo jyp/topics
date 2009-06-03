@@ -36,7 +36,7 @@ Section~\ref{sec:zipper} explained how to optimize the creation of intermediate
 results, by skipping this prefix. 
 Unfortunately this does not improve the asymptotic performance of computing the
 final result. The partial result corresponding to the end of input contains the long chain of partial
-applications (in reverse polish representation), and to produce the final result the
+applications (in reverse Polish representation), and to produce the final result the
 whole prefix has to be traversed.
 
 Therefore, in the worst case, the construction of the result has a cost
@@ -89,8 +89,8 @@ a simple binary tree can fulfill these requirements.
 
 \label{tree_structure}
 \begin{code}
-data Tree a  = Node a (Tree a) (Tree a)
-             | Leaf
+data Tree a  =  Node a (Tree a) (Tree a)
+             |  Leaf
 \end{code}
 The only choice that remains is the size of the sub-trees. The
 specific choice we make is not important as long as we make sure

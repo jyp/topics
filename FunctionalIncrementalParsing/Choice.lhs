@@ -58,11 +58,11 @@ is 1 for look-ahead 1.
 \end{figure*}
 
 
-Disjunction is not very useful unless coupled with \emph{failure} (otherwise all
-branches would be equivalent). Still, the (unrestricted) usage of failure is
+Disjunction is not very useful unless coupled with \emph{failure} (otherwise any branch would
+be as good as another). Still, the (unrestricted) usage of failure is
 problematic for our application: the online property requires at least one
 branch to yield a successful outcome. Indeed, since the |evalR| function
-\emph{must} return a result (we want a total function!), the parser must a
+\emph{must} return a result (we want a total function!), the parser must
 conjure up a suitable result for \emph{any} input.
 
 If the grammar is sufficiently permissive, no error correction in the parsing
@@ -74,7 +74,7 @@ error correction is therefore desirable.
 
 Our approach is to add some rules to accept erroneous inputs. These will be
 marked as less desirable by enclosing them with |Yuck| combinators, introduced
-as an other constructor in the |Parser| type. The parsing algorithm can then
+as another constructor in the |Parser| type. The parsing algorithm can then
 maximize the desirability of the set of rules used for parsing a given fragment
 of input.
 
@@ -89,7 +89,7 @@ of input.
 Having defined our definitive interface for parsers, we can describe
 the parsing algorithm itself.
 
-As before, we linearize the applications (|:*:|) by transforming the |Parser| into a polish-like 
+As before, we linearize the applications (|:*:|) by transforming the |Parser| into a Polish-like 
 representation. In addition to the the |Dislike| and |Best| constructors corresponding to |Yuck| and
 |Disj|, |Shift| records where symbols have been processed, once |Susp| is removed.
 
@@ -105,8 +105,8 @@ the amount of look-ahead.) We use the widespread technique \citep[chapter
 8]{bird_algebra_1997} to \emph{thin out} the search after some constant, small amount of
 look-ahead. 
 
-\citet{hughes_polish_2003}'s algorithm searches for the best path by direct manipulation
-of the polish representation, but this direct approach forces to transforma between two normal forms:
+Hughes and Swierstra's algorithm searches for the best path by direct manipulation
+of the Polish representation, but this direct approach forces to transform between two normal forms:
 one where the \emph{progress} nodes (|Shift|, |Dislike|) are at the head  and one where the 
 result nodes (|Pure|, |:*:|) are at the head.
 Therefore, we choose to use an intermediate datatype which represents the
@@ -138,6 +138,9 @@ progress (Dislike p)      = mapSucc (progress p)
 progress (Susp _ _)       = S                               
 progress (Best p q)       = snd $ better  (progress p) 
                                           (progress q)
+mapSucc S = S
+mapSucc (D x) = D (succ x) 
+mapSucc (x :# xs) = succ x :# mapSucc xs
 \end{spec}
 
 \ignore{
@@ -201,9 +204,17 @@ whatever parser \emph{follows} it. This is not an issue in the |Polish|
 representation, because applications (|:*:|) are unfolded.
 
 We now have all the elements to write our final data structures and algorithms.
-The following code shows the final version |Polish| and its construction procedure.
+The following code shows the final construction procedure. In the |Polish| datatype, only
+the |Best| constructor is amended.
 
 
+\begin{spec}
+data Polish s a where
+    ...
+    Best     ::  Ordering -> Progress -> 
+                 Polish s a -> Polish s a           ->  Polish s a
+\end{spec}
+\ignore{
 \begin{code}
 data Polish s a where
     Push     ::  a -> Polish s r                      ->  Polish s (a :< r)
@@ -216,6 +227,10 @@ data Polish s a where
     Best     ::  Ordering -> Progress -> 
                  Polish s a -> Polish s a           ->  Polish s a
     Dislike  ::  Polish s a                           ->  Polish s a
+\end{code}
+}
+
+\begin{code}
 
 toP :: Parser s a -> (Polish s r -> Polish s (a :< r))
 toP (Symb a f)  = \fut -> Susp  (toP a fut)
@@ -242,12 +257,12 @@ evalR (Push a r)             = a :< evalR r
 evalR (App s)                = apply (evalR s)                    
   where apply ~(f:< ~(a:<r)) = f a :< r                           
 evalR (Shift v)              = evalR v                            
-evalR (Dislike v)            = (evalR v)                          
+evalR (Dislike v)            = evalR v
 evalR (Susp _ _)             = error "input pending"
 evalR (Best choice _ p q)    = case choice of                     
     LT -> evalR p
     GT -> evalR q
-    EQ -> error "Ambiguous parse!"
+    EQ -> error "Suspension reached"
 \end{code}
 
 Note that this version of |evalR| expects a process without any pending
@@ -264,7 +279,7 @@ disjunctions (|progress| and |better|) into |Progress|. The final result is comp
 
 Our technique can also be re-formulated as lazy dynamic programming, in the style of
 \citet{allison_lazy_1992}. We first define a full tree of possibilities (Polish
-expressions with disjunction), then we compute a progress information that we
+expressions with disjunction), then we compute progress information that we
 tie to it, for each node; finally, finding the best path is a matter of looking
 only at a subset of the information we constructed, using any suitable
 heuristic. The cut-off heuristic makes sure that only a part of the

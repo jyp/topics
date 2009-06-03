@@ -192,7 +192,7 @@ Our contributions can be summarized as follows.
 \begin{itemize}
 \item
   We describe a novel, purely functional approach to incremental parsing, which
-  makes essential use of lazy evaluation. 
+  makes essential use of lazy evaluation;
   % This is achieved by combining online parsers with caching of intermediate results.
 
 \item
@@ -206,11 +206,8 @@ Our contributions can be summarized as follows.
   more efficient but has the same properties for laziness;
 }
 
-\item
-  We have implemented such a system in a parser-combinator library;
-
-\item
-  We made use of it to provide syntax-dependent feedback in a production-quality editor.
+\item We have implemented such a system in a parser-combinator library and made
+use of it to provide syntax-dependent feedback in a production-quality editor.
 
 \end{itemize}
 
@@ -221,12 +218,12 @@ Our contributions can be summarized as follows.
 Our goal is to provide a combinator library with a standard interface, similar to that
 presented by \citet{swierstra_combinator_2000}.
 
-Such an interface can be captured in a generalized algebraic data type (GADT)
+Such an interface can be captured in a generalized algebraic data type (GADT, \citet{xi_guarded_2003})
 as follows. These combinators are traditionally given as functions instead of
 constructors, but since we make extensive use of GADTs for modeling purposes at
 various levels, we prefer to use this presentation style everywhere for
 consistency. (Sometimes mere ADTs would suffice, but we prefer to spell out the
-types of the combinators explicitly, using the GADT syntax)
+types of the combinators explicitly, using the GADT syntax.)
 
 \begin{spec}
 data Parser s a where
@@ -237,7 +234,7 @@ data Parser s a where
     Fail   ::                                        Parser s a
 \end{spec}
 
-This interface supports production of results (|Pure|), sequencing (|:*:|)
+This interface supports production of results (|Pure|), sequencing (|:*:|),
 reading of input symbols (|Symb|), and disjunction (|Disj|, |Fail|). The type
 parameter |s| stands for the type of input symbols, while |a| is the type of
 values produced by the parser.
@@ -252,7 +249,7 @@ section~\ref{sec:parsing}.
 
 Parsing combinator libraries usually propose a mere
 |run| function that executes the parser on a given input: |run :: Parser s a ->
-[s] -> [a]|. 
+[s] -> Either Error a|. 
 Incremental systems require finer control over the execution of the parser.
 Therefore, we have to split the |run| function into pieces and reify the parser
 state in values of type |Process|.
@@ -413,14 +410,14 @@ Therefore, we think that such an approach would be awkward, if at all applicable
 \subsection{Parser combinators}
 
 Our approach is firmly anchored in the tradition of parser combinator libraries
-\citep{hutton_monadic_1998}, and particularly close to the polish parsers of
+\citep{hutton_monadic_1998}, and particularly close to the Polish parsers of
 \citet{hughes_polish_2003}.
 
 The introduction of the |Susp| operator is directly inspired by the parallel
 parsing processes of \citet{claessen_parallel_2004}, which features a very similar
 construct to access the first symbol of the input and make it accessible to
 the rest of the computation. This paper presents our implementation as a version of
-polish parsers extended with an evaluation procedure ``by-value'', but we could
+Polish parsers extended with an evaluation procedure ``by-value'', but we could
 equally have started with parallel parsing processes and extended them with
 ``by-name'' evaluation. The combination of both evaluation techniques is unique
 to our library.
@@ -453,8 +450,8 @@ both available in a combinator library.
 What are the advantages of using the laziness properties of the online parser?
 % A way to answer this question is to see how the system could be modified to do away with laziness.
 Our system could be modified to avoid relying on laziness at all. In section
-\ref{sec:zipper} we propose to apply the reverse polish automaton (on the left)
-to the stack produced --- lazily --- by the polish expression (on the right).
+\ref{sec:zipper} we propose to apply the reverse Polish automaton (on the left)
+to the stack produced --- lazily --- by the Polish expression (on the right).
 Instead of that stack, we could feed the automaton with a stack of dummy values,
 or |undefined|s. Everything would work as before, except that we would get
 exceptions when trying to access unevaluated parts of the tree. If we know in
@@ -531,7 +528,7 @@ semantic functions. Incrementality is not guaranteed then.
 \label{sec:results}
 
 We carried out development of a parser combinator library for incremental
-parsing with support for error correction. We argumented that, using suitable
+parsing with support for error correction. We argued that, using suitable
 data structures for the output, the complexity of parsing (without error
 correction) is $O(log~m + n)$ where $m$ is the number of tokens in the state we
 resume from and $n$ is the number of tokens to parse. Parsing an increment of
@@ -556,7 +553,7 @@ achieve the goal of incremental parsing.
 \item In a lazy setting, the combination of online production of results and
 saving intermediate results provide incrementality;
 
-\item The efficient computation of intermediate results require some care:
+\item The efficient computation of intermediate results requires some care:
 a zipper-like structure is necessary to improve performance.
 
 \item Online parsers can be extended with an error correction scheme for
@@ -570,7 +567,7 @@ the complexity class of algorithms.
 
 While these techniques work together here, we believe that they are valuable
 independently of each other. In particular, our error correction scheme can be
-replaced by an other one without invalidating the approach. 
+replaced by another one without invalidating the approach. 
 
 % Also, while functional data structures are often presented in a way that
 % ignores their lazy constructions (and thus are not always as good as plain
@@ -584,7 +581,8 @@ unfading support throughout the writing process. This paper was greatly improved
 by his comments on early and late drafts. Discussions with Krasimir Angelov helped sorting out
 the notions of incremental parsing. 
 Patrik Jansson, Wouter Swierstra, Gustav Munkby, Marcin Zalewski and Micha{\l} Pa{\l}ka and the anonymous reviewers of ICFP
-gave helpful comments on the presentation of the paper.
+gave helpful comments on the presentation of the paper. Finally, special thanks go to the reviewers of the Haskell 
+Symposium for their extremely helpful comments.
 
 \bibliographystyle{mybst}
 \bibliography{../Zotero.bib}

@@ -46,7 +46,7 @@ parseList = Symb
 
 
 We adapt the |Polish| expressions with the construct corresponding to |Symb|, and amend
-the translation. Intermediate results are represented by a polish expression
+the translation. Intermediate results are represented by a Polish expression
 with a |Susp| element. The part before the |Susp| element corresponds to the
 constant part that is fixed by the input already parsed. The arguments of
 |Susp| contain the continuations of the parsing algorithm: the first one 
@@ -68,7 +68,7 @@ toP (Pure x)        = Push x
 
 Although we broke the linearity of the type, it does no harm since the parsing
 algorithm will not proceed further than the available input anyway, and
-therefore will stop at the first |Susp|. Suspensions in a polish expression can
+therefore will stop at the first |Susp|. Suspensions in a Polish expression can
 be resolved by feeding input into it. When facing a suspension, we pattern match
 on the input, and choose the corresponding branch in the result.
 
@@ -106,15 +106,15 @@ the $n^{th}$ element of the partial results list and feed it the
 new input's tail (from that position).
 
 
-This suffers from a major issue: partial results remain in their ``polish
+This suffers from a major issue: partial results remain in their ``Polish
 expression form'', and reusing offers little benefit, because no part of the
 result value is shared between the partial results: the function |evalR| has to perform
 the the full computation for each of them. 
 Fortunately, it is possible to partially evaluate
-prefixes of polish expressions.
+prefixes of Polish expressions.
 
 The following function performs this task
-by traversing a polish expression and applying functions along
+by traversing a Polish expression and applying functions along
 the way.
 
 \begin{code}
@@ -123,18 +123,19 @@ evalL (Push x r) = Push x (evalL r)
 evalL (App f) = case evalL f of
                   (Push g (Push b r)) -> Push (g b) r
                   r -> App r
+evalL x = x
 partialParses = scanl (\p c -> evalL . feed [c] $ p)
 \end{code}
 This still suffers from a major drawback: as long as a function
-application is not saturated, the polish expression will start with
+application is not saturated, the Polish expression will start with
 a long prefix of partial applications, which has to be traversed again
 in forthcoming partial results.
 
-For example, after applying the S-expression parser to the string \verb!(abcdefg!, 
+For example, after applying the S-expression parser to the string \verb!abcdefg!, 
 |evalL| is unable to perform any simplification of the list prefix:
 
 \begin{spec}
-evalL $ feed "(abcdefg" (toPolish parseList) 
+evalL $ feed "abcdefg" (toPolish parseList) 
   ==  App $ Push (Atom 'a' :) $ 
       App $ Push (Atom 'b' :) $ 
       App $ Push (Atom 'c' :) $ 
@@ -180,13 +181,12 @@ we never go past a suspension.
 
 The interesting features of this zipper are its type and its
 meaning.
-
 We note that, while we obtained the data type for the left part by
-mechanically inverting the type for polish expressions, it can be
+mechanically inverting the type for Polish expressions, it can be
 assigned a meaning independently: it corresponds to \emph{reverse}
-polish expressions.
+Polish expressions.
 
-In contrast to forward polish expressions, which directly produce
+In contrast to forward Polish expressions, which directly produce
 an output stack, reverse expressions can be understood as automata
 which transform a stack to another. This is captured in the type
 indices |inp| and |out|, which stand respectively for the input and the output stack.
@@ -203,13 +203,13 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
                           = evalRP r (f a :< acc)
 \end{code}
 
-In our zipper type, the polish expression yet-to-visit
-(``on the right'') has to correspond to the reverse polish
+In our zipper type, the Polish expression yet-to-visit
+(``on the right'') has to correspond to the reverse Polish
 automation (``on the left''): the output of the latter has to match
 the input of the former.
 
 Capturing all these properties in the types (though GADTs)
-allows to write a properly typed traversal of polish expressions.
+allows to write a properly typed traversal of Polish expressions.
 The |right| function moves the focus by one step to the right.
 \begin{code}
 right :: Zip s out -> Zip s out
@@ -218,7 +218,7 @@ right (Zip l (App r))     = Zip (RApp l) r
 right (Zip l s)           = Zip l s
 \end{code}
 
-As the input is traversed, we also simplify the prefix that we went past,
+As the input is traversed, in the implementation of |precompute|, we also simplify the prefix that we went past,
 evaluating every application, effectively ensuring that each |RApp| is preceded
 by at most one |RPush|.
 
@@ -231,7 +231,7 @@ simplify x = x
 
 
 
-We see that simplifying a complete reverse polish expression requires $O(n)$
+We see that simplifying a complete reverse Polish expression requires $O(n)$
 steps, where $n$ is the length of the expression. This means that the
 \emph{amortized} complexity of parsing one token (i.e. computing a partial
 result based on the previous partial result) is $O(1)$, if the size of the
@@ -248,7 +248,7 @@ intermediate results, and corresponds to a call-by-value transformation of the
 same direct evaluation function. It underlies the |precompute| function.
 
 It is also interesting to note that, apparently, we could have done away
-with the reverse polish automaton entirely, and just have composed partial applications.
+with the reverse Polish automaton entirely, and just have composed partial applications.
 This solution, while a lot simpler, falls short of our purposes: such compositions of partially
 applied functions are not simplified, given the standard evaluation models for Haskell. 
 

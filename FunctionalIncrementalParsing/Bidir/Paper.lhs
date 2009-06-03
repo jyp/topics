@@ -463,7 +463,7 @@ the complexity class of algorithms.
 
 While these techniques work together here, we believe that they are valuable
 independent on each other. In particular, our error correction scheme can be
-replaced by an other one without invalidating the approach. 
+replaced by another one without invalidating the approach. 
 
 Also, while functional data structures are often presented in a way that
 ignores their lazy constructions (and thus are not always as good as plain

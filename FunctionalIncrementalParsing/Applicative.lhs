@@ -23,11 +23,11 @@ results. This result is the cornerstone of our approach to incremental parsing,
 so we review it in this section, justifying the use of the combinators |Pure|
 and |(:*:)|, which form the applicative sub-language.
 
-We also introduce the \emph{polish representation} for applicative
+We also introduce the \emph{Polish representation} for applicative
 expressions: it is the essence of our parsing semantics. This
 section culminates in the definition of the pipeline from applicative language
-to results by going through polish expressions. Our final parser (section \ref{sec:choice}) is an
-extension of this machinery with the all the features mentioned in the introduction.
+to results by going through Polish expressions. Our final parser (section \ref{sec:choice}) is an
+extension of this machinery with all the features mentioned in the introduction.
 
 % \subsection{The applicative sub-language}
 
@@ -78,18 +78,18 @@ the applicative expression.
 
 Because our parsers process the input in a linear fashion, they require a
 linear structure for the output as well. (This is revisited in section~\ref{sec:parsing}). As
-\citet{hughes_polish_2003}, we convert the applicative expressions to their polish
+\citet{hughes_polish_2003}, we convert the applicative expressions to their Polish
 representation to obtain such a linear structure.
 
-The key idea of the polish representation is to put the application in a
+The key idea of the Polish representation is to put the application in a
 prefix position rather than an infix one. Our example expression (in applicative form 
 |S @ ((:) @ (Atom @ 'a') @ [])|)
 becomes
-|@ S (@ (@ (:) (@ Atom 'a') []))|
+|@ S (@ (@ (:) (@ Atom 'a')) [])|
 
 Since |@| is always followed by exactly two arguments, grouping information can
 be inferred from the applications, and the parentheses can be dropped. The final
-polish expression is therefore
+Polish expression is therefore
 
 \begin{spec}
 @ S @ @ (:) @ Atom 'a' []
@@ -113,24 +113,24 @@ data UPolish where
 
 
 Unfortunately, the above datatype does not allow to evaluate expressions in a
-typeful manner. The key insight is that polish expressions are in fact more
-general than applicative expressions: they produce a stack of values instead of
+typeful manner. The key insight is that Polish expressions are in fact more
+general than applicative expressions: they represent a stack of values instead of
 a single one.
 
-As hinted by the constructor names we chose, we can reinterpret polish
-expressions as follows. |Push| produces a stack with one more value than its
+As hinted by the constructor names we chose, we can reinterpret Polish
+expressions as follows. |Push| produces a stack with one more value than its second
 argument, |App| transforms the stack produced by its argument by applying the
-function on the top to the argument on the second position, and |Done| produces
+function on the top to the argument on the second position and pushing back the result. |Done| produces
 the empty stack.
 
 The expression |Push (:) $ App $ Push Atom $ Push 'a' $ Push [] $ Done| is an
-example producing a non-trivial stack. It produces the stack |(:) (Atom 'a')
+example producing a non-trivial stack. It produces the stack |(:), (Atom 'a'),
 []|, which can be expressed purely in Haskell as |(:) :< Atom 'a' :< [] :< Nil|,
 using the following representation for heterogeneous stacks.
 
 %include Stack.lhs
 
-We are now able to properly type polish expressions, by indexing the datatype
+We are now able to properly type Polish expressions, by indexing the datatype
 with the type of the stack produced.
 
 \begin{code}
@@ -141,7 +141,7 @@ data Polish r where
 \end{code}
 
 We can also write a translation from the pure applicative language to
-polish expressions.
+Polish expressions.
 
 \begin{code}
 toPolish :: Applic a -> Polish (a :< Nil)
@@ -172,11 +172,11 @@ We have the equality |evalR (toPolish x) == evalA x :< Nil|.
 % Patrik: and: evalR (toP x r) == evalA :< evalR r
 
 Additionally, we note that this evaluation procedure still possesses the ``online''
-property: prefixes of the polish expression are demanded only if the corresponding
+property: prefixes of the Polish expression are demanded only if the corresponding
 parts of the result are demanded. This preserves the incremental properties of
 lazy evaluation that we required in the introduction. Furthermore, the equality
 above holds even when |undefined| appears as argument to the |Pure| constructor.
-In fact, the conversion from applicative to polish expressions can be understood as 
+In fact, the conversion from applicative to Polish expressions can be understood as 
 a reification of the working stack of the |evalA| function with call-by-name
 semantics.
 

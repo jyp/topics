@@ -45,7 +45,7 @@ head of the lists.
 Note that there is always one more element in |ls| than in |lt|, because we also have a parser state for the empty input.
 
 
-We do not display the input document as typed by the user, but an annotated version.
+We do not display the input document as typed by the user, but an enriched version, to hightlight syntactic constructs.
 Therefore, we have to parse the input and then serialize the result.
 First, we feed the remainder of the input to the current state and then
 run the online parser. The display is then trimmed to show only a window around the edit point.
@@ -54,6 +54,7 @@ parsing and therefore the running time of the former can be neglected.
 
 
 \begin{code}
+display :: (Show ast) => State ast -> IO ()
 display s@State{ls = pst:_} = do
   putStrLn ""
   putStrLn   $ trimToWindow
@@ -76,6 +77,7 @@ text. For example, every time a character is typed, a new parser state is
 computed and stored. The other editing operations proceed in a similar fashion.
 
 \begin{code}
+update :: State ast -> IO (State ast)
 update s@State{ls = pst:psts} = do
   c <- getChar
   return $ case c of
@@ -99,7 +101,7 @@ update s@State{ls = pst:psts} = do
  where addState c = precompute (feed [c] pst) : ls s
 \end{code}
 
-Besides disabling buffering of the input for real-time responsivity,
+Besides disabling buffering of the input for real-time response,
 the top-level program has to instantiate the main loop with an initial state, 
 and pick a specific parser to use: |parseTopLevel|. 
 
@@ -115,11 +117,11 @@ As we have seen before, the top-level parser can
 return any type. In sections \ref{sec:input} and \ref{sec:choice}
 we give examples of parsers for S-expressions, which can be used as instances of |parseTopLevel|.
 
-%include SExpr.lhs
-
 We illustrate using S-expressions because they have a recursive structure which can serve
 as prototype for many constructs found in programming languages, while being simple enough to be
 treated completely within this paper.
+
+%include SExpr.lhs
 
 The code presented in this section forms the skeleton of any program using our library. A number
 of issues are glossed over though. Notably, we would like to avoid re-parsing when
