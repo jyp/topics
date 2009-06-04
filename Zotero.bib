@@ -11,6 +11,19 @@
 	comment = {* Conjectures that refactoring, synthesis and model-driven development will converge (but {NOT} "how" as the abstract says) * Review of these areas in the light of the conjecture}
 },
 
+@inproceedings{claessen_quickcheck:lightweight_2000,
+	title = {{QuickCheck:} a lightweight tool for random testing of Haskell programs},
+	isbn = {1-58113-202-6},
+	url = {http://portal.acm.org/citation.cfm?id=351240.351266&coll=Portal&dl=GUIDE&CFID=28330491&CFTOKEN=25101450},
+	doi = {10.1145/351240.351266},
+	abstract = {Quick Check is a tool which aids the Haskell programmer in formulating and testing properties of programs. Properties are described as Haskell functions, and can be automatically tested on random input, but it is also possible to define custom test data generators. We present a number of case studies, in which the tool was successfully used, and also point out some pitfalls to avoid. Random testing is especially suitable for functional programs because properties can be stated at a fine grain. When a function is built from separately tested components, then random testing suffices to obtain good coverage of the definition under test.},
+	booktitle = {Proceedings of the fifth {ACM} {SIGPLAN} international conference on Functional programming},
+	publisher = {{ACM}},
+	author = {Koen Claessen and John Hughes},
+	year = {2000},
+	pages = {268--279}
+},
+
 @techreport{gregor_proposed_2007,
 	title = {Proposed {{W}ording} for {{C}oncepts} {({R}evision} 4)},
 	author = {D Gregor and B Stroustrup and J Siek and James Widman},
@@ -53,6 +66,20 @@
 	year = {2003},
 	keywords = {cps},
 	pages = {8--19}
+},
+
+@inproceedings{wadler_theorems_1989,
+	address = {Imperial College, London, United Kingdom},
+	title = {Theorems for free!},
+	isbn = {0-89791-328-0},
+	url = {http://portal.acm.org/citation.cfm?id=99404},
+	doi = {10.1145/99370.99404},
+	abstract = {Note: {OCR} errors may be found in this Reference List extracted from the full text article. {ACM} has opted to expose the complete List rather than only correct and linked references.},
+	booktitle = {Proceedings of the fourth international conference on Functional programming languages and computer architecture},
+	publisher = {{ACM}},
+	author = {Philip Wadler},
+	year = {1989},
+	pages = {347--359}
 },
 
 @book{bird_algebra_1997,
@@ -227,6 +254,32 @@
 	pages = {741--757}
 },
 
+@article{fokkinga_datatype_1996,
+	title = {Datatype Laws Without Signatures},
+	volume = {6},
+	url = {http://journals.cambridge.org/action/displayAbstract?fromPage=online&aid=4131224},
+	doi = {{10.1017/S0960129500000852}},
+	number = {01},
+	journal = {Mathematical Structures in Computer Science},
+	author = {Maarten M. Fokkinga},
+	year = {1996},
+	pages = {1--32}
+},
+
+@inproceedings{fegaras_revisiting_1996,
+	address = {St. Petersburg Beach, Florida, United States},
+	title = {Revisiting catamorphisms over datatypes with embedded functions (or, programs from outer space)},
+	isbn = {0-89791-769-3},
+	url = {http://portal.acm.org/citation.cfm?id=237792},
+	doi = {10.1145/237721.237792},
+	abstract = {Note: {OCR} errors may be found in this Reference List extracted from the full text article. {ACM} has opted to expose the complete List rather than only correct and linked references.},
+	booktitle = {Proceedings of the 23rd {ACM} {SIGPLAN-SIGACT} symposium on Principles of programming languages},
+	publisher = {{ACM}},
+	author = {Leonidas Fegaras and Tim Sheard},
+	year = {1996},
+	pages = {284--294}
+},
+
 @inproceedings{pennings_using_1992,
 	title = {Using Cached Functions and Constructors for Incremental Attribute Evaluation},
 	isbn = {3-540-55844-6},
@@ -319,6 +372,20 @@
 	pages = {112--131}
 },
 
+@article{svenningsson_shortcut_2002,
+	title = {Shortcut fusion for accumulating parameters {\textbackslash}\& zip-like functions},
+	volume = {37},
+	url = {http://portal.acm.org/citation.cfm?id=581491&dl=GUIDE&coll=GUIDE&CFID=36359476&CFTOKEN=55918602},
+	doi = {10.1145/583852.581491},
+	abstract = {We present an alternative approach to shortcut fusion based on the function unfoldr,. Despite its simplicity the technique can remove intermediate lists in examples which are known to be difficult. We show that it can remove all lists from definitions involving zip-like functions and functions using accumulating parameters.},
+	number = {9},
+	journal = {{SIGPLAN} Not.},
+	author = {Josef Svenningsson},
+	year = {2002},
+	keywords = {deforestation,functional programming,intermediate data structures,optimisation,program transformation},
+	pages = {124--132}
+},
+
 @inbook{jones_type_2000,
 	title = {Type Classes with Functional Dependencies},
 	url = {http://dx.doi.org/10.1007/3-540-46425-5_15},
@@ -328,6 +395,16 @@
 	year = {2000},
 	keywords = {typeclass},
 	pages = {230--244}
+},
+
+@book{knuth_art_1998,
+	edition = {2},
+	title = {The Art of Computer Programming, Volume 3: Sorting and Searching (2nd Edition)},
+	isbn = {0201896850},
+	publisher = {{Addison-Wesley} Professional},
+	author = {Donald E. Knuth},
+	month = may,
+	year = {1998}
 },
 
 @article{wilcox_design_1976,
@@ -439,6 +516,21 @@
 	pages = {55--62}
 },
 
+@inproceedings{xu_static_2009,
+	address = {Savannah, {GA,} {USA}},
+	title = {Static contract checking for Haskell},
+	isbn = {978-1-60558-379-2},
+	url = {http://portal.acm.org/citation.cfm?id=1480881.1480889},
+	doi = {10.1145/1480881.1480889},
+	abstract = {Program errors are hard to detect and are costly both to programmers who spend significant efforts in debugging, and for systems that are guarded by runtime checks. Static verification techniques have been applied to imperative and object-oriented languages, like Java and C\#, but few have been applied to a higher-order lazy functional language, like Haskell. In this paper, we describe a sound and automatic static verification framework for Haskell, that is based on contracts and symbolic execution. Our approach is modular and gives precise blame assignments at compile-time in the presence of higher-order functions and laziness.},
+	booktitle = {Proceedings of the 36th annual {ACM} {SIGPLAN-SIGACT} symposium on Principles of programming languages},
+	publisher = {{ACM}},
+	author = {Dana N. Xu and Simon Peyton Jones and Koen Claessen},
+	year = {2009},
+	keywords = {contract satisfaction,static contract checking},
+	pages = {41--52}
+},
+
 @inproceedings{zeller_yesterday_1999,
 	title = {Yesterday, my program worked. Today, it does not. Why?},
 	isbn = {0163-5948},
@@ -512,6 +604,22 @@
 	keywords = {sibylle,wgp08}
 },
 
+@inbook{abbott_categories_2003,
+	title = {Categories of Containers},
+	url = {http://dx.doi.org/10.1007/3-540-36576-1_2},
+	abstract = {We introduce the notion of containers as a mathematical formalisation of the idea that many important datatypes consist of
+templates where data is stored. We show that containers have good closure properties under a variety of constructions including
+the formation of initial algebras and final coalgebras. We also show that containers include strictly positive types and shapely
+types but that there are containers which do not correspond to either of these. Further, we derive a representation result
+classifying the nature of polymorphic functions between containers. We finish this paper with an application to the theory
+of shapely types and refer to a forthcoming paper which applies this theory to differentiable types.
+},
+	booktitle = {Foundations of Software Science and Computation Structures},
+	author = {Michael Abbott and Thorsten Altenkirch and Neil Ghani},
+	year = {2003},
+	pages = {23--38}
+},
+
 @article{mens_state-of--art_2002,
 	title = {A state-of-the-art survey on software merging},
 	volume = {28},
@@ -523,6 +631,20 @@
 	year = {2002},
 	keywords = {survey,vc,vc-project},
 	pages = {449--462}
+},
+
+@article{hinze_generics_2004,
+	title = {Generics for the masses},
+	volume = {39},
+	url = {http://portal.acm.org/citation.cfm?id=1016882},
+	doi = {10.1145/1016848.1016882},
+	abstract = {A generic function is a function that can be instantiated on many data types to obtain data type specific functionality. Examples of generic functions are the functions that can be derived in Haskell, such as show, read, and '=='. The recent years have seen a number of proposals that support the definition of generic functions. Some of the proposals define new languages, some define extensions to existing languages. As a common characteristic none of the proposals can be made to work within Haskell 98: they all require something extra, either a more sophisticated type system or an additional language construct. The purpose of this pearl is to show that one can, in fact, program generically within Haskell 98 obviating to some extent the need for fancy type systems or separate tools. Haskell's type classes are at the heart of this approach: they ensure that generic functions can be defined succinctly and, in particular, that they can be used painlessly.},
+	number = {9},
+	journal = {{SIGPLAN} Not.},
+	author = {Ralf Hinze},
+	year = {2004},
+	keywords = {generic programming,haskell 98,type classes},
+	pages = {236--243}
 },
 
 @article{hudson_incremental_1991,
@@ -537,6 +659,21 @@
 	year = {1991},
 	keywords = {lazy},
 	pages = {315--341}
+},
+
+@inproceedings{voigtlnder_proving_2008,
+	address = {San Francisco, California, {USA}},
+	title = {Proving correctness via free theorems: the case of the destroy/build-rule},
+	isbn = {978-1-59593-977-7},
+	url = {http://portal.acm.org/citation.cfm?id=1328408.1328412},
+	doi = {10.1145/1328408.1328412},
+	abstract = {Free theorems feature prominently in the field of program transformation for pure functional languages such as Haskell. However, somewhat disappointingly, the semantic properties of so based transformations are often established only very superficially. This paper is intended as a case study showing how to use the existing theoretical foundations and formal methods for improving the situation. To that end, we investigate the correctness issue for a new transformation rule in the short cut fusion family. This destroy/build-rule provides a certain reconciliation between the competing foldr/build- and destroy/unfoldr-approaches to eliminating intermediate lists. Our emphasis is on systematically and rigorously developing the rule's correctness proof, even while paying attention to semantic aspects like potential nontermination and mixed strict/nonstrict evaluation.},
+	booktitle = {Proceedings of the 2008 {ACM} {SIGPLAN} symposium on Partial evaluation and semantics-based program manipulation},
+	publisher = {{ACM}},
+	author = {Janis Voigtl\"{a}nder},
+	year = {2008},
+	keywords = {correctness proofs,intermediate data structures,program transformations,rank-2 types,relational parametricity,shortcut deforestation,theorems for free},
+	pages = {13--20}
 },
 
 @inproceedings{elliott_functional_1997,
@@ -558,6 +695,30 @@
 	author = {Simon Peyton Jones},
 	year = {2003},
 	keywords = {file-import-08-05-29}
+},
+
+@article{day_logical_1999,
+	title = {Logical abstractions in Haskell},
+	url = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.37.2140},
+	doi = {10.1.1.37.2140},
+	journal = {In Proceedings of the 1999 Haskell Workshop},
+	author = {Nancy A Day and John Launchbury and Je Lewis},
+	year = {1999}
+},
+
+@inproceedings{voigtlnder_bidirectionalization_2009,
+	address = {Savannah, {GA,} {USA}},
+	title = {Bidirectionalization for free! {(Pearl)}},
+	isbn = {978-1-60558-379-2},
+	url = {http://portal.acm.org/citation.cfm?id=1480881.1480904&coll=portal&dl=ACM.&type=series&idx=SERIES317&part=series&WantType=Proceedings&title=POPL},
+	doi = {10.1145/1480881.1480904},
+	abstract = {A bidirectional transformation consists of a function get that takes a source (document or value) to a view and a function put that takes an updated view and the original source back to an updated source, governed by certain consistency conditions relating the two functions. Both the database and programming language communities have studied techniques that essentially allow a user to specify only one of get and put and have the other inferred automatically. All approaches so far to this bidirectionalization task have been syntactic in nature, either proposing a domain-specific language with limited expressiveness but built-in (and composable) backward components, or restricting get to a simple syntactic form from which some algorithm can synthesize an appropriate definition for put. Here we present a semantic approach instead. The idea is to take a general-purpose language, Haskell, and write a higher-order function that takes (polymorphic) get-functions as arguments and returns appropriate put-functions. All this on the level of semantic values, without being willing, or even able, to inspect the definition of get, and thus liberated from syntactic restraints. Our solution is inspired by relational parametricity and uses free theorems for proving the consistency conditions. It works beautifully.},
+	booktitle = {Proceedings of the 36th annual {ACM} {SIGPLAN-SIGACT} symposium on Principles of programming languages},
+	publisher = {{ACM}},
+	author = {Janis Voigtl\"{a}nder},
+	year = {2009},
+	keywords = {bidirectionalization,free theorems,generic programming,program transformation,relational parametricity,view-update problem},
+	pages = {165--176}
 },
 
 @article{swierstra_combinator_2000,
@@ -712,6 +873,23 @@
 	pages = {52--61}
 },
 
+@inbook{bove_formalising_2006,
+	title = {Formalising Bitonic Sort in Type Theory},
+	url = {http://dx.doi.org/10.1007/11617990_6},
+	abstract = {We discuss two complete formalisations of bitonic sort in constructive type theory. Bitonic sort is one of the fastest sorting
+algorithms where the sequence of comparisons is not data-dependent. In addition, it is a general recursive algorithm. In the
+formalisation we face two main problems: only structural recursion is allowed in type theory, and a formal proof of the correctness
+of the algorithm needs to consider quite a number of cases. In our first formalisation we define bitonic sort over dependently-typed
+binary trees with information in the leaves and we make use of the 0-1-principle to prove that the algorithm sorts inputs
+of arbitrary types. In our second formalisation we use notions from linear orders, lattice theory and monoids. The correctness
+proof is directly performed for any ordered set and not only for Boolean values.
+},
+	booktitle = {Types for Proofs and Programs},
+	author = {Ana Bove and Thierry Coquand},
+	year = {2006},
+	pages = {82--97}
+},
+
 @inproceedings{lippe_operation-based_1992,
 	title = {Operation-based merging},
 	isbn = {0163-5948},
@@ -833,6 +1011,21 @@
 	pages = {15--28}
 },
 
+@inproceedings{mcbride_clowns_2008,
+	address = {San Francisco, California, {USA}},
+	title = {Clowns to the left of me, jokers to the right (pearl): dissecting data structures},
+	isbn = {978-1-59593-689-9},
+	url = {http://portal.acm.org/citation.cfm?id=1328474&dl=GUIDE&coll=GUIDE&CFID=17840475&CFTOKEN=88160233},
+	doi = {10.1145/1328438.1328474},
+	abstract = {This paper introduces a small but useful generalisation to the 'derivative' operation on datatypes underlying Huet's notion of 'zipper', giving a concrete representation to one-hole contexts in data which is undergoing transformation. This operator, 'dissection', turns a container-like functor into a bifunctor representing a one-hole context in which elements to the left of the hole are distinguished in type from elements to its right.},
+	booktitle = {Proceedings of the 35th annual {ACM} {SIGPLAN-SIGACT} symposium on Principles of programming languages},
+	publisher = {{ACM}},
+	author = {Conor {McBride}},
+	year = {2008},
+	keywords = {datatype,differentiation,dissection,division,generic programming,iteration,stack,tail recursion,traversal,zipper},
+	pages = {287--295}
+},
+
 @article{plotkin_call-by-name_1975,
 	title = {Call-by-name, call-by-value and the ?-calculus},
 	volume = {1},
@@ -853,6 +1046,20 @@
 	year = {2007},
 	keywords = {haskell},
 	pages = {119}
+},
+
+@inproceedings{gill_short_1993,
+	address = {Copenhagen, Denmark},
+	title = {A short cut to deforestation},
+	isbn = {{0-89791-595-X}},
+	url = {http://portal.acm.org/citation.cfm?id=165180.165214},
+	doi = {10.1145/165180.165214},
+	abstract = {Note: {OCR} errors may be found in this Reference List extracted from the full text article. {ACM} has opted to expose the complete List rather than only correct and linked references.},
+	booktitle = {Proceedings of the conference on Functional programming languages and computer architecture},
+	publisher = {{ACM}},
+	author = {Andrew Gill and John Launchbury and Simon L. Peyton Jones},
+	year = {1993},
+	pages = {223--232}
 },
 
 @article{chakravarty_associated_2005-1,
@@ -927,6 +1134,15 @@
 	keywords = {bibtex-import,vc}
 },
 
+@article{mckinna_type-correct_2006,
+	title = {A type-correct, stack-safe, provably correct, expression compiler},
+	url = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.105.4086},
+	doi = {10.1.1.105.4086},
+	journal = {in Epigram. Submitted to the Journal of Functional Programming},
+	author = {James Mckinna and Joel Wright},
+	year = {2006}
+},
+
 @phdthesis{peng_programmable_????,
 	type = {{PhD} Thesis},
 	title = {{PROGRAMMABLE} {CONCURRENCY} {IN} A {PURE} {AND} {LAZY}
@@ -989,17 +1205,23 @@
 	keywords = {points-to}
 },
 
-@techreport{doaitse_swierstra_combinator_????,
-	type = {technical report},
+@inproceedings{doaitse_swierstra_combinator_2009,
+	address = {Piriapolis},
+	series = {{{LNCS}}},
 	title = {Combinator Parsing: A Short Tutorial},
+	volume = {5520},
 	url = {http://www.cs.uu.nl/research/techreps/repo/CS-2008/2008-044.pdf},
-	number = {{UU-CS-2008-044}},
-	institution = {Department of Information and Computing Sciences, Utrecht University},
-	author = {Doaitse Swierstra}
+	booktitle = {Language Engineering and Rigorous Software Development},
+	publisher = {Springer},
+	author = {Doaitse Swierstra},
+	year = {2009},
+	pages = {252--300}
 },
 
 @inbook{wallace_partial_2008,
+	series = {{LNCS}},
 	title = {Partial Parsing: Combining Choice with Commitment},
+	volume = {5083/2008},
 	url = {http://dx.doi.org/10.1007/978-3-540-85373-2_6},
 	abstract = {Parser combinators, often monadic, are a venerable and widely-used solution to read data from some external format. However,
 the capability to return a partial parse has, until now, been largely missing. When only a small portion of the entire data
@@ -1020,6 +1242,7 @@ worse. The trade-off is that partiality has consequences when dealing with ill-f
 
 },
 	booktitle = {Implementation and Application of Functional Languages},
+	publisher = {Springer Berlin / Heidelberg},
 	author = {Malcolm Wallace},
 	year = {2008},
 	pages = {93--110}
@@ -1055,7 +1278,7 @@ worse. The trade-off is that partiality has consequences when dealing with ill-f
 
 @inproceedings{bernardy_yi:editor_2008,
 	address = {Victoria, {BC,} Canada},
-	title = {Yi: an editor in haskell for haskell},
+	title = {Yi: an editor in {{Haskell}} for {{Haskell}}},
 	isbn = {978-1-60558-064-7},
 	url = {http://portal.acm.org/citation.cfm?id=1411286.1411294&coll=GUIDE&dl=GUIDE&CFID=13026192&CFTOKEN=34892732},
 	doi = {10.1145/1411286.1411294},
@@ -1191,6 +1414,20 @@ worse. The trade-off is that partiality has consequences when dealing with ill-f
 	keywords = {sibylle,wgp08}
 },
 
+@article{xi_guarded_2003,
+	title = {Guarded recursive datatype constructors},
+	volume = {38},
+	url = {http://portal.acm.org/citation.cfm?id=604150&dl=GUIDE&coll=GUIDE&CFID=38830212&CFTOKEN=12075942},
+	doi = {10.1145/640128.604150},
+	abstract = {We introduce a notion of guarded recursive (g.r.) datatype constructors, generalizing the notion of recursive datatypes in functional programming languages such as {ML} and Haskell. We address both theoretical and practical issues resulted from this generalization. On one hand, we design a type system to formalize the notion of g.r. datatype constructors and then prove the soundness of the type system. On the other hand, we present some significant applications (e.g., implementing objects, implementing staged computation, etc.) of g.r. datatype constructors, arguing that g.r. datatype constructors can have far-reaching consequences in programming. The main contribution of the paper lies in the recognition and then the formalization of a programming notion that is of both theoretical interest and practical use.},
+	number = {1},
+	journal = {{SIGPLAN} Not.},
+	author = {Hongwei Xi and Chiyan Chen and Gang Chen},
+	year = {2003},
+	keywords = {guarded recursive datatype constructors},
+	pages = {224--235}
+},
+
 @article{allison_lazy_1992,
 	title = {Lazy {Dynamic-Programming} Can Be Eager},
 	volume = {43},
@@ -1210,6 +1447,22 @@ worse. The trade-off is that partiality has consequences when dealing with ill-f
 	year = {2007},
 	keywords = {concept,typeclass},
 	pages = {1--71}
+},
+
+@inbook{sozeau_first-class_2008,
+	title = {{First-Class} Type Classes},
+	url = {http://dx.doi.org/10.1007/978-3-540-71067-7_23},
+	abstract = {Type Classes have met a large success in Haskell and Isabelle, as a solution for sharing notations by overloading and for specifying with abstract structures by quantification on contexts.
+However, both systems are limited by second-class implementations of these constructs, and these limitations are only overcomed
+by ad-hoc extensions to the respective systems. We propose an embedding of type classes into a dependent type theory that
+is first-class and supports some of the most popular extensions right away. The implementation is correspondingly cheap, general
+and integrates well inside the system, as we have experimented in Coq. We show how it can be used to help structured programming
+and proving by way of examples.
+},
+	booktitle = {Theorem Proving in Higher Order Logics},
+	author = {Matthieu Sozeau and Nicolas Oury},
+	year = {2008},
+	pages = {278--293}
 },
 
 @inbook{sheard_generic_2007,
@@ -1389,6 +1642,17 @@ worse. The trade-off is that partiality has consequences when dealing with ill-f
 	comment = {{(private-note)Poster} at {DB-IR} Day.}
 },
 
+@inproceedings{hinze_type-indexed_2002,
+	title = {{Type-Indexed} Data Types},
+	isbn = {3-540-43857-2},
+	url = {http://portal.acm.org/citation.cfm?id=747315},
+	booktitle = {Proceedings of the 6th International Conference on Mathematics of Program Construction},
+	publisher = {{Springer-Verlag}},
+	author = {Ralf Hinze and Johan Jeuring and Andres L\"{o}h},
+	year = {2002},
+	pages = {148--174}
+},
+
 @inproceedings{da_silva_lighthouse:_2006,
 	title = {Lighthouse: coordination through emerging design},
 	isbn = {1595936211},
@@ -1450,6 +1714,26 @@ worse. The trade-off is that partiality has consequences when dealing with ill-f
 	year = {1989},
 	keywords = {typeclass},
 	pages = {60--76}
+},
+
+@misc{_main_????,
+	title = {Main Page - How to be a Programmer (2008)},
+	url = {http://www.trickjarrett.com/programmer/index.php/Main_Page}
+},
+
+@inproceedings{runciman_smallcheck_2008,
+	address = {Victoria, {BC,} Canada},
+	title = {Smallcheck and lazy smallcheck: automatic exhaustive testing for small values},
+	isbn = {978-1-60558-064-7},
+	url = {http://portal.acm.org/citation.cfm?id=1411292},
+	doi = {10.1145/1411286.1411292},
+	abstract = {This paper describes two Haskell libraries for property-based testing. Following the lead of {QuickCheck,} these testing libraries {SmallCheck} and Lazy {SmallCheck} also use type-based generators to obtain test-sets of finite values for which properties are checked, and report any counter-examples found. But instead of using a sample of randomly generated values they test properties for all values up to some limiting depth, progressively increasing this limit. The paper explains the design and implementation of both libraries and evaluates them in comparison with each other and with {QuickCheck.}},
+	booktitle = {Proceedings of the first {ACM} {SIGPLAN} symposium on Haskell},
+	publisher = {{ACM}},
+	author = {Colin Runciman and Matthew Naylor and Fredrik Lindblad},
+	year = {2008},
+	keywords = {embedded language,exhaustive search,lazy evaluation,property-based testing,type classes},
+	pages = {37--48}
 },
 
 @inproceedings{danvy_defunctionalization_2001,
@@ -1597,8 +1881,16 @@ worse. The trade-off is that partiality has consequences when dealing with ill-f
 	pages = {396--410}
 },
 
-@article{_general_????,
-	title = {General Terms},
-	url = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.37.1315},
-	doi = {10.1.1.37.1315}
+@article{voigtlnder_much_2008,
+	title = {Much ado about two (pearl): a pearl on parallel prefix computation},
+	volume = {43},
+	url = {http://portal.acm.org/citation.cfm?id=1328445},
+	doi = {10.1145/1328897.1328445},
+	abstract = {This pearl develops a statement about parallel prefix computation in the spirit of Knuth's {0-1-Principle} for oblivious sorting algorithms. It turns out that 0-1 is not quite enough here. The perfect hammer for the nails we are going to drive in is relational parametricity.},
+	number = {1},
+	journal = {{SIGPLAN} Not.},
+	author = {Janis Voigtl\"{a}nder},
+	year = {2008},
+	keywords = {0-1-principle,free theorems,parallel prefix computation,relational parametricity},
+	pages = {29--35}
 }

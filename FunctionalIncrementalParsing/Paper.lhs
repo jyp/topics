@@ -356,7 +356,8 @@ tree offers any reasonable benefit in practice: it seems to be optimizing for a
 special case. This is not very suitable in an interactive system where users
 expect consistent response times.
 
-\item Finally, comparing parser states is very tricky to accomplish in the
+\item Finally, our approach accommodate better to a combinator implementation.
+Indeed, comparing parser states is very tricky to accomplish in the
 context of a combinator library: since parsing states normally contain
 lambda abstractions, it is not clear how they can be compared to one another.
 \end{enumerate}
@@ -411,7 +412,8 @@ Therefore, we think that such an approach would be awkward, if at all applicable
 
 Our approach is firmly anchored in the tradition of parser combinator libraries
 \citep{hutton_monadic_1998}, and particularly close to the Polish parsers of
-\citet{hughes_polish_2003}.
+\citet{hughes_polish_2003}, which were recently refined by
+\citet{swierstra_combinator_2009}.
 
 The introduction of the |Susp| operator is directly inspired by the parallel
 parsing processes of \citet{claessen_parallel_2004}, which features a very similar
@@ -422,21 +424,34 @@ equally have started with parallel parsing processes and extended them with
 ``by-name'' evaluation. The combination of both evaluation techniques is unique
 to our library.
 
-While our error correction mechanism was developed independently, it bears many
-similarities with that presented by \citet{swierstra_fast_1999}: they also
-associate some variant of progress information to parsers and rely on thinning
-and laziness to explore the tree of all possible parses.
+Our error correction mechanism bears many similarities with that presented by
+\citet{swierstra_fast_1999}: they also associate some variant of progress
+information to parsers and rely on thinning and laziness to explore the tree of
+all possible parses. An important difference is that we embed the error reports
+in the tree instead of returning them as a separate tree. This is important, because
+we need to highlight errors in a lazy way. If the errors we reported separately, merely
+checking if an error is present could force parsing the whole file.
 
 \citet{wallace_partial_2008} presents another, simpler approach to online
 parsing, based on the notion of \emph{commitment}. His library features two
 sequencing combinators: the classic monadic bind, and a special application with
 commitment. The former supports backtracking in the classic way, but the latter
-decouples errors occurring on its left hand side from errors occurring on its
-right hand side. This design offers the advantage that no prior linearization of
-applications is needed. The drawback is that the user of the library has to
-decide where errors can be recovered or not. We believe that we could have based
-our library on a similar scheme, with some care: Wallace's parser throws an exception
-in case of error, but we require more precise reporting.
+decouples errors occurring on its left-hand side from errors occurring on its
+right-hand side. If there are two possible ways to parse the left-hand side, the
+parser might choose one which makes the right-hand side fail, while the other
+would have yielded a global success. Such a bold design decision has profound
+consequences on usage of the library: the user has to decide exactly where it
+makes sense to try multiple results. If backtracking is allowed at a given level
+in the parser, the parsing time of the corresponding structure is exponential.
+Therefore, the user of the library is effectively forced to use the operator
+with commitment for all structures which can grow large, in order to prune the
+search. Using commitment means that the wrong result might be picked on the left
+hand side, so lots of care must be exercised in chosing the right sequence
+operator to use. The advantage of this design is that, no linearization of
+applications is needed: since they commit to at most one result, they have
+built-in linearization. We believe that we could have based our library on a
+similar scheme, with some care: Wallace's parser throws an exception in case of
+error, but we require more precise reporting.
 
 \section{Discussion}
 
