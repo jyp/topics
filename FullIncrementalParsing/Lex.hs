@@ -54,9 +54,11 @@ data Monotrans s o = Monotrans (Array s (o,s))
 
 toMono t = Monotrans $ listArray (minBound,maxBound) (map t [minBound..maxBound])
 
-instance (Monoid o, Finite s) => Monoid (Monotrans s o) where
-    mappend (Monotrans f) (Monotrans g) = Monotrans $ listArray bnds [(o <> o',s2) | s0 <- range bnds, let (o,s1) = f ! s0, let (o',s2) <- g ! s1]
-    mempty = Monotrans [(s,mempty,s) | s <- series]
+instance (Ix s, Bounded s, Monoid o, Finite s) => Monoid (Monotrans s o) where
+    mappend (Monotrans f) (Monotrans g) = Monotrans $ listArray bnds [(o <> o',s2) | s0 <- range bnds, let (o,s1) = f ! s0, let (o',s2) = g ! s1]
+        where bnds = bounds f
+    mempty = Monotrans $ listArray bnds [(mempty,s) | s <- range bnds]
+        where bnds = (minBound,maxBound)
 
 
 
