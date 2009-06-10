@@ -247,9 +247,11 @@ second one, presented in this section, enables incremental evaluation of
 intermediate results, and corresponds to a call-by-value transformation of the
 same direct evaluation function. It underlies the |precompute| function.
 
+\comment{
 It is also interesting to note that, apparently, we could have done away
 with the reverse Polish automaton entirely, and just have composed partial applications.
 This solution, while a lot simpler, falls short of our purposes: such compositions of partially
 applied functions are not simplified, given the standard evaluation models for Haskell. 
+}
 
-\comment{Interesting potential for the runtim system or compiler optimisation}
+\comment{Interesting potential for the runtime system or compiler optimisation -- or is it?}

@@ -377,6 +377,7 @@ expressions for syntax highlighting at the lexical level (Emacs, Vim, Textmate,
 % feedback information, but the interface forces the production of output to
 % be synchronized with the reading of input.
 
+
 It is possible that the implementation cost of earlier solutions outweighed
 their benefits. We hope that the simplicity of our approach will permit more
 widespread application. 
@@ -437,21 +438,16 @@ parsing, based on the notion of \emph{commitment}. His library features two
 sequencing combinators: the classic monadic bind, and a special application with
 commitment. The former supports backtracking in the classic way, but the latter
 decouples errors occurring on its left-hand side from errors occurring on its
-right-hand side. If there are two possible ways to parse the left-hand side, the
-parser might choose one which makes the right-hand side fail, while the other
-would have yielded a global success. Such a bold design decision has profound
-consequences on usage of the library: the user has to decide exactly where it
-makes sense to try multiple results. If backtracking is allowed at a given level
-in the parser, the parsing time of the corresponding structure is exponential.
-Therefore, the user of the library is effectively forced to use the operator
-with commitment for all structures which can grow large, in order to prune the
-search. Using commitment means that the wrong result might be picked on the left
-hand side, so lots of care must be exercised in chosing the right sequence
-operator to use. The advantage of this design is that, no linearization of
-applications is needed: since they commit to at most one result, they have
-built-in linearization. We believe that we could have based our library on a
-similar scheme, with some care: Wallace's parser throws an exception in case of
-error, but we require more precise reporting.
+right-hand side: if there are two possible ways to parse the left-hand side, the
+parser chooses the first match. This scheme therefore relies on user annotations
+at determined points in the production of the result to prune the search tree,
+while we prune after the same amount of lookahead in all branches. This
+difference explains why we need to linearize the applications, while it can be
+avoided in Wallace's design. Additionally, we take advantage of the linear shape
+of the parsing process to to feed it with partial inputs, so we cannot spare the
+linearization phase. The addition of a commitment combinator would be a useful
+addition to our library though: pruning the search tree at specific point can speed up
+the parsing and improve error-reporting.
 
 \section{Discussion}
 
