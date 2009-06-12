@@ -63,7 +63,7 @@ module DeBruijnIndices where
 
   data Term : Set where
     v_  : forall (n : ℕ) -> Term
-    λ_  : Term -> Term
+    λ'_  : Term -> Term
     _#_ : Term -> Term -> Term
 
 
@@ -73,21 +73,21 @@ module DeBruijnIndices where
   ↑ c d (v k) with compare k c
   ↑ .(suc (k + x)) d (v k) | less .k x = v k
   ... | _ = v (d + k)
-  ↑ c d (λ t1) = λ (↑ (1 + c) d t1)
+  ↑ c d (λ' t1) = λ' (↑ (1 + c) d t1)
   ↑ c d (t1 # t2) = ↑ c d t1 # ↑ c d t2
 
   subst : ℕ -> Term -> Term -> Term
   subst j s (v k) with compare j k 
   subst j s (v .j)| equal .j = s
   ... | _ = v k
-  subst j s (λ t1) = λ  (subst (1 + j) (↑ 0 1 s) t1)
+  subst j s (λ' t1) = λ'  (subst (1 + j) (↑ 0 1 s) t1)
   subst j s (y # y') = subst j s y # subst j s y'
 
   -- substitution is simpler, but working with this requires rewiring
   -- your brain.
 
 module HOAS where
-  -- Idea: use the λ construct of the host language to represent binding
+  -- Idea: use the λ' construct of the host language to represent binding
 
   data Term : Set where
     App : Term -> Term -> Term
