@@ -65,17 +65,17 @@ sem .(suc n) (π (suc {n} i)) = \t -> sem n (π i)
 [[_]] {n} f = sem n f
 
 lemma< : (q : Funct 1) (x y : Set) -> sem 2 (weaken true q) x y ≡₁ sem 1 q x
-lemma< (K .1 _) x y = ≡₁-refl
-lemma< (p ⊕ q) x y = ≡₁-cong₂ _⊎_ (lemma<  p x y) (lemma<  q x y)
-lemma< (p ⊗ q) x y = ≡₁-cong₂ _×_ (lemma<  p x y) (lemma<  q x y)
-lemma< (π zero) x y = ≡₁-refl
+lemma< (K .1 _) x y = refl
+lemma< (p ⊕ q) x y = cong₂ _⊎_ (lemma<  p x y) (lemma<  q x y)
+lemma< (p ⊗ q) x y = cong₂ _×_ (lemma<  p x y) (lemma<  q x y)
+lemma< (π zero) x y = refl
 lemma< (π (suc ())) x y
 
 lemma> : (q : Funct 1) (x y : Set) -> sem 2 (weaken false q) x y ≡₁ sem 1 q y
-lemma> (K .1 _) x y = ≡₁-refl
-lemma> (p ⊕ q) x y = ≡₁-cong₂ _⊎_ (lemma>  p x y) (lemma>  q x y)
-lemma> (p ⊗ q) x y = ≡₁-cong₂ _×_ (lemma>  p x y) (lemma>  q x y)
-lemma> (π zero) x y = ≡₁-refl
+lemma> (K .1 _) x y = refl
+lemma> (p ⊕ q) x y = cong₂ _⊎_ (lemma>  p x y) (lemma>  q x y)
+lemma> (p ⊗ q) x y = cong₂ _×_ (lemma>  p x y) (lemma>  q x y)
+lemma> (π zero) x y = refl
 lemma> (π (suc ())) x y
 
 if1_then_else_ : {a : Set1} -> Bool -> a -> a -> a
@@ -112,11 +112,11 @@ cvt ≡₁-refl a = a
 
 mutual 
   mndp : forall p q -> forall {c j} -> (j × [[ △ p ]] c j) ⊎ [[ p ]] c -> [[ q ]] j -> (j × [[ △ (p ⊗ q) ]] c j) ⊎ [[ (p ⊗ q) ]] c
-  mndp p q (inj₁ (j , pd)) qj = inj₁ (j , inj₁ (pd , cvt (≡₁-sym (lem {q})) qj))
+  mndp p q (inj₁ (j , pd)) qj = inj₁ (j , inj₁ (pd , cvt (sym (lem {q})) qj))
   mndp p q (inj₂ pc) qj = mndq p q pc (right q (inj₁ qj))
 
   mndq : forall p q -> forall {c j} -> [[ p ]] c -> (j × [[ △ q ]] c j) ⊎ [[ q ]] c -> (j × [[ △ (p ⊗ q) ]] c j) ⊎ [[ (p ⊗ q) ]] c
-  mndq p q pc (inj₁ (j , qd)) = inj₁ (j , inj₂ ( cvt (≡₁-sym (lem {p})) pc , qd))
+  mndq p q pc (inj₁ (j , qd)) = inj₁ (j , inj₂ ( cvt (sym (lem {p})) pc , qd))
   mndq p q pc (inj₂ qc) = inj₂ ( pc , qc)
 
   right : forall {j c : Set} -> (p : Funct 1) -> ([[ p ]] j ⊎ ([[ △ p ]] c j × c)) -> (j × [[ △ p ]] c j) ⊎ [[ p ]] c
