@@ -1,5 +1,5 @@
 % -*- latex -*-
-\documentclass[preprint]{sigplanconf}
+\documentclass{sigplanconf}
 %include lhs2TeX.fmt
 %format :*: = " \applbind"
 %format :|: = " \disjunct"
@@ -37,6 +37,10 @@
 \newcommand{\comment}[1]{}
 
 \begin{document}
+
+\conferenceinfo{Haskell'09,} {September 3, 2009, Edinburgh, Scotland, UK.}
+\CopyrightYear{2009}
+\copyrightdata{978-1-60558-508-6/09/09}
 
 \titlebanner{Draft}        % These are ignored unless
 \preprintfooter{Submitted to Haskell'09}   % 'preprint' option specified.
@@ -445,7 +449,7 @@ while we prune after the same amount of lookahead in all branches. This
 difference explains why we need to linearize the applications, while it can be
 avoided in Wallace's design. Additionally, we take advantage of the linear shape
 of the parsing process to to feed it with partial inputs, so we cannot spare the
-linearization phase. The addition of a commitment combinator would be a useful
+linearization phase. A commitment combinator would be a useful
 addition to our library though: pruning the search tree at specific point can speed up
 the parsing and improve error-reporting.
 
