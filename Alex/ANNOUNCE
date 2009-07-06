@@ -1,0 +1,14 @@
+I am pleased to announce version 2.3 of Alex, the lexical analyser
+generator for Haskell.
+
+Changes in Alex 2.3 vs. 2.2:
+
+  * monadUserState wrapper (Alain Cremieux)
+  * Efficient lexing of strict ByteStrings (Don Stewart)
+  * Works with Cabal 1.2, 1.4 & 1.6
+
+Distributions can be obtained from Alex's home page:
+
+  http://www.haskell.org/alex/
+
+Alex is distributed under a BSD-style license.
