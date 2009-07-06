@@ -1,16 +1,36 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 import Data.Monoid
 import Data.Array
 
-type Trans s o = s -> (s,o)
 
+-- Each symbol of the input can be converted into a transition function:
+class Monoid o => Lexer i s o where
+    transition :: i -> Trans s o
+
+-- A transition transforms the state and yields some output.
+type Trans s o = s -> (s,o)
+    
+
+-- We also assume a monoid on the output data. (It can be put in a tree, parsed by a monoidal parser, go through a 2nd stage of monoidal lexing, etc.)
 (<>) :: Monoid o => o -> o -> o
 (<>) = mappend
 
--- The question: can we make transitions with output monoidal?
+-- So the empty transition is
+emptyTransition s = (s,mempty)
+
+-- We can also assume a finite number of states.
+class (Ix s, Bounded s) => Finite s where
+
+series :: Finite s => [s]
+series = range (minBound, maxBound)
+
+-- Goal: make the lexer monoidal.
+-- That is, we need a conversion function from transitions to a monoid structure.
+
+-- Version 0: not useful, because the ouputs are not reusable/cached
 
 {-
--- Version 0: not useful, because the ouputs are not reusable
-
 
 data Monotrans s o = Monotrans (s -> (s,o))
 
@@ -19,9 +39,8 @@ toMono = Monotrans
 instance (Monoid o, Finite s) => Monoid (Monotrans s o) where
     mappend (Monotrans f) (Monotrans g) = Monotrans (\s0 -> let (s1,o)  = f s0
                                                                (s2,o') = g s1
-                                                     in (s2,o <> o'))
+                                                            in (s2,o <> o'))
     mempty = Monotrans (\s -> (s,mempty))
-
 
 -}
 
@@ -30,8 +49,6 @@ instance (Monoid o, Finite s) => Monoid (Monotrans s o) where
 -- V1
 -- Here the outputs are precomputed/reusable, but the append operation is very slow!
 
-class Eq s => Finite s where
-    series :: [s]
 
 
 data Monotrans s o = Monotrans [(s,o,s)]
@@ -47,17 +64,16 @@ instance (Monoid o, Finite s) => Monoid (Monotrans s o) where
 
 -- V2. 
 
-class Bounded s => Finite s
-
+-- Make it fast by using arrays.
 
 data Monotrans s o = Monotrans (Array s (o,s))
 
 toMono t = Monotrans $ listArray (minBound,maxBound) (map t [minBound..maxBound])
 
-instance (Ix s, Bounded s, Monoid o, Finite s) => Monoid (Monotrans s o) where
+instance (Monoid o, Finite s) => Monoid (Monotrans s o) where
     mappend (Monotrans f) (Monotrans g) = Monotrans $ listArray bnds [(o <> o',s2) | s0 <- range bnds, let (o,s1) = f ! s0, let (o',s2) = g ! s1]
         where bnds = bounds f
-    mempty = Monotrans $ listArray bnds [(mempty,s) | s <- range bnds]
+    mempty = Monotrans $ listArray bnds [(mempty,s) | s <- series]
         where bnds = (minBound,maxBound)
 
 
