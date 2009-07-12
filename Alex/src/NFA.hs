@@ -190,19 +190,20 @@ newState = N $ \s n -> (s+1,n,s)
 
 anyBytes :: SNum -> Int -> SNum -> NFAM ()
 anyBytes from 0 to = epsilonEdge from to
-anyBytes from n to = do
+anyBytes from n to = trace ("anyBytes " ++ show n) $ do
         s <- newState
         byteEdge from (byteSetRange 0 0xff) s
+        anyBytes s (n-1) to
 
 bytesEdge :: SNum -> [Byte] -> [Byte] -> SNum -> NFAM ()
 bytesEdge from [] [] to = epsilonEdge from to
 -- bytesEdge from [x] [y] to = byteEdge from (byteSetRange x y) to OPT
 bytesEdge from (x:xs) (y:ys) to 
-    | x == y = do 
+    | x == y = trace "bytesEdge 1" $ do 
         s <- newState
         byteEdge from (byteSetSingleton x) s
         bytesEdge s xs ys to
-    | x < y = do
+    | x < y = trace "bytesEdge 2" $ do
         do s <- newState
            byteEdge from (byteSetSingleton x) s
            bytesEdge s xs (fmap (const 0xff) ys) to
@@ -211,19 +212,21 @@ bytesEdge from (x:xs) (y:ys) to
            byteEdge from (byteSetSingleton y) t
            bytesEdge t (fmap (const 0x00) xs) ys to
 
-        when ((x+1) <= (y-1)) $ do 
+        when (x+1 <= y-1) $ do 
            u <- newState
            byteEdge from (byteSetRange (x+1) (y-1)) u
            anyBytes u (length xs) to
 
 charEdge :: SNum -> CharSet -> SNum -> NFAM ()
-charEdge from charset to = trace (show $ charset) $ forM_ (byteRanges charset) $ \(xs,ys) -> do
+charEdge from charset to = trace ("charEdge: " ++ (show charset) ++ show (byteRanges charset)) $ 
+ forM_ (byteRanges charset) $ \(xs,ys) -> do
     bytesEdge from xs ys to
     
 
 
 byteEdge :: SNum -> ByteSet -> SNum -> NFAM ()
-byteEdge from charset to = N $ \s n -> (s, addEdge n from charset to, ())
+byteEdge from charset to = -- trace "byteEgde" $
+    N $ \s n -> (s, addEdge n from charset to, ())
  where
    addEdge n from charset to = 
      case Map.lookup from n of
