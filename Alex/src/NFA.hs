@@ -193,7 +193,6 @@ anyBytes from 0 to = epsilonEdge from to
 anyBytes from n to = do
         s <- newState
         byteEdge from (byteSetRange 0 0xff) s
-        anyBytes (n-1) s to
 
 bytesEdge :: SNum -> [Byte] -> [Byte] -> SNum -> NFAM ()
 bytesEdge from [] [] to = epsilonEdge from to
