@@ -75,6 +75,8 @@ executable alex
   build-depends: Ranged-sets
   build-depends: directory  
   build-depends: utf8-string
+  build-depends: utf8-light
+  -- stupid to depend on both!
 
   extensions: CPP
   other-modules:

@@ -34,9 +34,7 @@ type AlexInput = (AlexPosn,     -- current position,
                   [Byte],       -- pending bytes on current char
                   String)       -- current input string
 
-ignoreBytes (p,c,ps,s) = (p,c,s)
-
-accAdapter f = \input -> f (ignoreBytes input)
+ignorePendingBytes (p,c,ps,s) = (p,c,s)
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (p,c,bs,s) = c
@@ -155,7 +153,7 @@ alexMonadScan = do
         alexMonadScan
     AlexToken inp' len action -> do
         alexSetInput inp'
-        action inp len
+        action (ignorePendingBytes inp) len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -244,7 +242,7 @@ alexMonadScan = do
         alexMonadScan
     AlexToken inp' len action -> do
         alexSetInput inp'
-        action inp len
+        action (ignorePendingBytes inp) len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -272,21 +270,25 @@ token t input len = return (t input len)
 -- Basic wrapper
 
 #ifdef ALEX_BASIC
-type AlexInput = (Char,String)
+type AlexInput = (Char,[Byte],String)
 
-alexGetChar (_, [])   = Nothing
-alexGetChar (_, c:cs) = Just (c, (c,cs))
 
 alexInputPrevChar (c,_) = c
 
 -- alexScanTokens :: String -> [token]
-alexScanTokens str = go ('\n',str)
-  where go inp@(_,str) =
+alexScanTokens str = go ('\n',[],str)
+  where go inp@(_,_bs,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
                 AlexToken inp' len act -> act (take len str) : go inp'
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
+alexGetByte (c,[],[]) = Nothing
+alexGetByte (_,[],(c:s)) = let (b:bs) = utf8Encode c
+                           in Just (b, (c, bs, s))
 #endif
 
 
@@ -346,8 +348,8 @@ alexScanTokens str = go (AlexInput '\n' str)
 
 #ifdef ALEX_POSN
 --alexScanTokens :: String -> [token]
-alexScanTokens str = go (alexStartPos,'\n',str)
-  where go inp@(pos,_,str) =
+alexScanTokens str = go (alexStartPos,'\n',[],str)
+  where go inp@(pos,_,bs,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
@@ -377,14 +379,14 @@ alexScanTokens str = go (alexStartPos,'\n',str)
 -- For compatibility with previous versions of Alex, and because we can.
 
 #ifdef ALEX_GSCAN
-alexGScan stop state inp = alex_gscan stop alexStartPos '\n' inp (0,state)
+alexGScan stop state inp = alex_gscan stop alexStartPos '\n' [] inp (0,state)
 
-alex_gscan stop p c inp (sc,state) =
-  case alexScan (p,c,inp) sc of
+alex_gscan stop p c bs inp (sc,state) =
+  case alexScan (p,c,bs,inp) sc of
         AlexEOF     -> stop p c inp (sc,state)
         AlexError _ -> stop p c inp (sc,state)
-        AlexSkip (p',c',inp') len -> alex_gscan stop p' c' inp' (sc,state)
-        AlexToken (p',c',inp') len k ->
-             k p c inp len (\scs -> alex_gscan stop p' c' inp' scs)
+        AlexSkip (p',c',bs',inp') len -> alex_gscan stop p' c' bs' inp' (sc,state)
+        AlexToken (p',c',bs',inp') len k ->
+             k p c inp len (\scs -> alex_gscan stop p' c' bs' inp' scs)
                 (sc,state)
 #endif

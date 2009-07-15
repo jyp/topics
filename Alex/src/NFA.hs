@@ -193,7 +193,7 @@ anyBytes from 0 to = epsilonEdge from to
 anyBytes from n to = do
         s <- newState
         byteEdge from (byteSetRange 0 0xff) s
-        anyBytes (n-1) s to
+        anyBytes s (n-1) to
 
 bytesEdge :: SNum -> [Byte] -> [Byte] -> SNum -> NFAM ()
 bytesEdge from [] [] to = epsilonEdge from to
@@ -218,7 +218,7 @@ bytesEdge from (x:xs) (y:ys) to
            anyBytes u (length xs) to
 
 charEdge :: SNum -> CharSet -> SNum -> NFAM ()
-charEdge from charset to = trace (show $ charset) $ forM_ (byteRanges charset) $ \(xs,ys) -> do
+charEdge from charset to = trace ("charEdge: " ++ (show $ charset) ++ " => " ++ show (byteRanges charset)) $ forM_ (byteRanges charset) $ \(xs,ys) -> do
     bytesEdge from xs ys to
     
 

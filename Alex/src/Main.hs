@@ -40,6 +40,8 @@ import System.IO ( hSetBuffering, BufferMode(..) )
 
 -- `main' decodes the command line arguments and calls `alex'.  
 
+import qualified System.IO.UTF8 as UTF8
+
 main:: IO ()
 main =	do
  args <- getArgs
@@ -70,7 +72,8 @@ runAlex cli file = do
 		'x':'.':r -> return (reverse r)
 		_         -> die (file ++ ": filename must end in \'.x\'\n")
   
-  prg <- readFile file
+  prg <- UTF8.readFile file -- UGLIEST HACK!!! (Waiting for proper unicode handling)
+  UTF8.hPutStrLn stderr prg
   script <- parseScript file prg
   alex cli file basename script
 
@@ -163,7 +166,7 @@ injectCode :: Maybe (AlexPosn,Code) -> FilePath -> Handle -> IO ()
 injectCode Nothing _ _ = return ()
 injectCode (Just (AlexPn _ ln _,code)) filename hdl = do
   hPutStrLn hdl ("{-# LINE " ++ show ln ++ " \"" ++ filename ++ "\" #-}")
-  hPutStrLn hdl code
+  UTF8.hPutStrLn hdl code
 
 optsToInject :: Target -> [CLIFlags] -> String
 optsToInject GhcTarget _ = "{-# OPTIONS -fglasgow-exts -cpp #-}\n"
@@ -261,7 +264,7 @@ initialParserEnv = (initSetEnv, initREEnv)
 
 initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
-		           ("printable", charSet [chr 32 .. chr 126]),
+		           ("printable", charSet [chr 32 .. chr 126] `charSetUnion` charSet ['α'..'ω']), -- This is for testing. TODO: Look it up the unicode standard
 		           (".", charSetComplement emptyCharSet 
 			    `charSetMinus` charSetSingleton '\n')]
 
