@@ -34,7 +34,7 @@ HC_OPTS += -fglasgow-exts
 	./$<
 
 %$(HS_PROG_EXT) : %.o
-	$(HC) $(HC_OPTS) $($*_LD_OPTS) $< -o $@
+	$(HC) $(HC_OPTS) -package utf8-light $($*_LD_OPTS) $< -o $@
 
 all :: $(ALL_TESTS)
 

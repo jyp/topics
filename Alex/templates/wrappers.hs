@@ -4,6 +4,7 @@
 -- This code is in the PUBLIC DOMAIN; you may copy it freely and use
 -- it for any purpose whatsoever.
 
+import Data.Word (Word8)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
 import qualified Data.ByteString.Lazy.Char8 as ByteString
@@ -14,7 +15,15 @@ import qualified Data.ByteString.Char8    as ByteString
 import qualified Data.ByteString.Internal as ByteString
 import qualified Data.ByteString.Unsafe   as ByteString
 
+#else
+import Codec.Binary.UTF8.Light as UTF8
+
+utf8Encode :: Char -> [Byte]
+utf8Encode c = head (UTF8.encodeUTF8' [UTF8.c2w c])
+
 #endif
+
+type Byte = Word8
 
 -- -----------------------------------------------------------------------------
 -- The input type
@@ -22,15 +31,22 @@ import qualified Data.ByteString.Unsafe   as ByteString
 #if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_GSCAN)
 type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
+                  [Byte],       -- pending bytes on current char
                   String)       -- current input string
 
-alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (p,c,s) = c
+ignoreBytes (p,c,ps,s) = (p,c,s)
 
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (p,c,[]) = Nothing
-alexGetChar (p,_,(c:s))  = let p' = alexMove p c in p' `seq`
-                                Just (c, (p', c, s))
+accAdapter f = \input -> f (ignoreBytes input)
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (p,c,bs,s) = c
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
+alexGetByte (p,c,[],[]) = Nothing
+alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c 
+                                  (b:bs) = utf8Encode c
+                              in p' `seq`  Just (b, (p', c, bs, s))
 #endif
 
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
@@ -80,6 +96,7 @@ data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
         alex_inp :: String,     -- the current input
         alex_chr :: !Char,      -- the character before the input
+        alex_bytes :: [Byte],
         alex_scd :: !Int        -- the current startcode
 #ifdef ALEX_MONAD_USER_STATE
       , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
@@ -93,6 +110,7 @@ runAlex input (Alex f)
    = case f (AlexState {alex_pos = alexStartPos,
                         alex_inp = input,       
                         alex_chr = '\n',
+                        alex_bytes = [],
 #ifdef ALEX_MONAD_USER_STATE
                         alex_ust = alexInitUserState,
 #endif
@@ -109,12 +127,12 @@ instance Monad Alex where
 
 alexGetInput :: Alex AlexInput
 alexGetInput
- = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_inp=inp} -> 
-        Right (s, (pos,c,inp))
+ = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp} -> 
+        Right (s, (pos,c,bs,inp))
 
 alexSetInput :: AlexInput -> Alex ()
-alexSetInput (pos,c,inp)
- = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_inp=inp} of
+alexSetInput (pos,c,bs,inp)
+ = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp} of
                   s@(AlexState{}) -> Right (s, ())
 
 alexError :: String -> Alex a

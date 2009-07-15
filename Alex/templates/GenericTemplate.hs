@@ -114,7 +114,7 @@ alexScan input IBOX(sc)
 alexScanUser user input IBOX(sc)
   = case alex_scan_tkn user input ILIT(0) input sc AlexNone of
 	(AlexNone, input') ->
-		case alexGetChar input of
+		case alexGetByte input of
 			Nothing -> 
 #ifdef ALEX_DEBUG
 				   trace ("End of input.") $
@@ -145,10 +145,10 @@ alexScanUser user input IBOX(sc)
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
   let 
-	new_acc = check_accs (alex_accept `quickIndex` IBOX(s))
+	new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
   in
   new_acc `seq`
-  case alexGetChar input of
+  case alexGetByte input of
      Nothing -> (new_acc, input)
      Just (c, new_input) -> 
 #ifdef ALEX_DEBUG
@@ -156,7 +156,7 @@ alex_scan_tkn user orig_input len input s last_acc =
 #endif
 	let
 		base   = alexIndexInt32OffAddr alex_base s
-		IBOX(ord_c) = ord c
+		IBOX(ord_c) = fromIntegral c
 		offset = PLUS(base,ord_c)
 		check  = alexIndexInt16OffAddr alex_check offset
 		
@@ -187,6 +187,11 @@ data AlexLastAcc a
   = AlexNone
   | AlexLastAcc a !AlexInput !Int
   | AlexLastSkip  !AlexInput !Int
+
+instance Functor AlexLastAcc where
+    fmap f AlexNone = AlexNone
+    fmap f (AlexLastAcc x y z) = AlexLastAcc (f x) y z
+    fmap f (AlexLastSkip x y) = AlexLastSkip x y
 
 data AlexAcc a user
   = AlexAcc a
