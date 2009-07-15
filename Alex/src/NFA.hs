@@ -218,8 +218,8 @@ bytesEdge from (x:xs) (y:ys) to
            anyBytes u (length xs) to
 
 charEdge :: SNum -> CharSet -> SNum -> NFAM ()
-charEdge from charset to = trace ("charEdge: " ++ (show charset) ++ show (byteRanges charset)) $ 
- forM_ (byteRanges charset) $ \(xs,ys) -> do
+charEdge from charset to = trace ("charEdge: " ++ (show $ charset) ++ " => " ++ show (byteRanges charset)) $ 
+  forM_ (byteRanges charset) $ \(xs,ys) -> do
     bytesEdge from xs ys to
     
 

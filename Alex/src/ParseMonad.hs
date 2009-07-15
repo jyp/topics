@@ -7,7 +7,7 @@
 -- ----------------------------------------------------------------------------}
 
 module ParseMonad (
-  	AlexInput, alexInputPrevChar, alexGetChar,
+  	AlexInput, alexInputPrevChar, alexGetChar, alexGetByte,
   	AlexPosn(..), alexStartPos,
  
 	P, runP, StartCode, failP, lookupSMac, lookupRMac, newSMac, newRMac,
@@ -21,18 +21,33 @@ import qualified Map hiding ( Map )
 
 -- -----------------------------------------------------------------------------
 -- The input type
+import Codec.Binary.UTF8.Light as UTF8
+
+utf8Encode :: Char -> [Byte]
+utf8Encode c = head (UTF8.encodeUTF8' [UTF8.c2w c])
+
+type Byte = Word8
 
 type AlexInput = (AlexPosn, 	-- current position,
 		  Char,		-- previous char
+                  [Byte],
 		  String)	-- current input string
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (p,c,s) = c
+alexInputPrevChar (p,c,bs,s) = c
+
 
 alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (p,c,[]) = Nothing
-alexGetChar (p,_,(c:s))  = let p' = alexMove p c in p' `seq`
-				Just (c, (p', c, s))
+alexGetChar (p,c,[],[]) = Nothing
+alexGetChar (p,_,[],(c:s))  = let p' = alexMove p c in p' `seq`
+				Just (c, (p', c, [], s))
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
+alexGetByte (p,c,[],[]) = Nothing
+alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c 
+                                  (b:bs) = utf8Encode c
+                              in p' `seq`  Just (b, (p', c, bs, s))
 
 -- -----------------------------------------------------------------------------
 -- Token positions
@@ -84,9 +99,9 @@ runP str (senv,renv) (P p)
 	Right (_,a) -> Right a
  where initial_state = 
  	  PState{ smac_env=senv, rmac_env=renv,
-	     startcode = 0, input=(alexStartPos,'\n',str) }
+	     startcode = 0, input=(alexStartPos,'\n',[],str) }
 
-failP str = P $ \PState{ input = (p,_,_) } -> Left (Just p,str)
+failP str = P $ \PState{ input = (p,_,_,_) } -> Left (Just p,str)
 
 -- Macros are expanded during parsing, to simplify the abstract
 -- syntax.  The parsing monad passes around two environments mapping
