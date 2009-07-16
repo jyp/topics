@@ -88,6 +88,7 @@ charToUtf8Set = makeRangedSet . concat . fmap (toUtfRange . mapR toUtf) . rSetRa
 
 toUtf c = encode [c]
 
+toUtfRange :: Range [Byte] -> [Range [Byte]]
 toUtfRange (Range x BoundaryAboveAll) = toUtfRange (Range x (BoundaryAbove [0xFE, 0xBF, 0xBF, 0xBF]))
 toUtfRange (Range BoundaryBelowAll x) = toUtfRange (Range (BoundaryAbove [0]) x)
 toUtfRange (Range (BoundaryBelow x) (BoundaryBelow y)) = fix BoundaryBelow BoundaryBelow x y
@@ -97,9 +98,9 @@ toUtfRange (Range (BoundaryAbove x) (BoundaryAbove y)) = fix BoundaryAbove Bound
 
 fix a b x y 
     | length x == length y = [Range (a x) (b y)]
-    | length x == 1 = Range (a x) (BoundaryAbove [0x7F]) : fix BoundaryBelow b [0xC1,0x80] y    
-    | length x == 2 = Range (a x) (BoundaryAbove [0xCD,0xBF]) : fix BoundaryBelow b [0xE0,0xA0,0x80] y
-    | length x == 3 = Range (a x) (BoundaryAbove [0xEF,0xBF,0xBF]) : fix BoundaryBelow b [0xF0,0x90,0x80,0x80] y
+    | length x == 1 = Range (a x) (BoundaryAbove [0x7F]) : fix BoundaryBelow b [0xC2,0x80] y    
+    | length x == 2 = Range (a x) (BoundaryAbove [0xDF,0xBF]) : fix BoundaryBelow b [0xE0,0x80,0x80] y
+    | length x == 3 = Range (a x) (BoundaryAbove [0xEF,0xBF,0xBF]) : fix BoundaryBelow b [0xF0,0x80,0x80,0x80] y
 
 
 instance Functor Boundary where

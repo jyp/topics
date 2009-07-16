@@ -264,7 +264,7 @@ initialParserEnv = (initSetEnv, initREEnv)
 
 initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
-		           ("printable", charSet [chr 32 .. chr 126] `charSetUnion` charSet ['α'..'ω']), -- This is for testing. TODO: Look it up the unicode standard
+		           ("printable", charSetRange (chr 32) (chr 0x10FFFF)), -- FIXME: Look it up the unicode standard
 		           (".", charSetComplement emptyCharSet 
 			    `charSetMinus` charSetSingleton '\n')]
 
