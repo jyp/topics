@@ -1,0 +1,15 @@
+
+
+digraph progress {
+rankdir=LR;
+ranksep=0.5;
+node [height=.1,shape=box, width = 0.5];
+node [style=filled, color=lightgrey];
+edge [headport=w]
+
+Text -> AST [label="parser"];
+AST -> "Highlighted code";
+AST -> "Paren-matching hints";
+AST -> "Indentation hints";
+
+}

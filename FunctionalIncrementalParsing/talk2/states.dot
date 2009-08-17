@@ -1,0 +1,12 @@
+
+
+digraph states {
+rankdir=RL;
+ranksep=0.7;
+node [height=.1, width = 0.2, height=0.2 ];
+
+node[label="",shape=box,color=black];
+B[label=" ... ", style=filled,color=white];
+
+A -> B -> C -> D -> E;
+}
