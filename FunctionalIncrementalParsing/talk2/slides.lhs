@@ -72,10 +72,10 @@
 
 
 \begin{frame}
-    \frametitle{Approach}
+    \frametitle{Approach to incrementality}
     \begin{itemize}
-        \item Save intermediate parser states.
-        \item Use lazy evalutation to expose each state as a tree.
+        \item Save intermediate parser states.    
+        \item<2-> Use lazy evalutation to expose each state as a tree.
     \end{itemize}
 
 \begin{center}
@@ -83,8 +83,9 @@
   \pgfsetlinewidth{1bp}
 %include states.tex
 \end{tikzpicture}
-
-\includegraphics{progress}
+\begin{overlayarea}{\textwidth}{3cm}
+\includegraphics<2->{progress}
+\end{overlayarea}
 \end{center}
 
 \end{frame}
@@ -238,6 +239,8 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
 \item
   Error correction
 \end{itemize}
+\end{itemize}
+
 
 }
 
