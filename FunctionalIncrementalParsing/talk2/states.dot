@@ -1,12 +1,23 @@
 
 
 digraph states {
-rankdir=RL;
+rankdir=LR;
 ranksep=0.7;
 node [height=.1, width = 0.2, height=0.2 ];
 
 node[label="",shape=box,color=black];
-B[label=" ... ", style=filled,color=white];
+D[label=" ... ", style=filled,color=white];
 
-A -> B -> C -> D -> E;
+A -> B -> C -> D -> E [dir=back];
+
+node[style=filled,color=white, fontsize=8];
+nA [label="module"]
+nB [label="M"]
+nC [label="where"]
+nD [label="..."]
+nE [label="z"]
+
+nA -> nB -> nC -> nD -> nE [dir=none,color=white]
+
 }
+

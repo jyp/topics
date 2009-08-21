@@ -21,6 +21,10 @@ slides.pdf: states.tex overview.tex progress.pdf
 %.tex: %.lhs
 	lhs2TeX $< > $@
 
+states.tex: states.dot
+	dot -Txdot $< | dot2tex --texmode=raw --codeonly > $@
+#	dot2tex --preproc $< | dot2tex --figonly > $@
+
 
 %.tex: %.dot
 #	dot -Txdot $< | dot2tex --texmode=raw --figonly > $@

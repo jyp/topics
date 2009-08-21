@@ -16,6 +16,8 @@
 \pgfdeclareimage[height=1cm]{yi-logo}{../talk/yi+lambda-fat}
 \pgfdeclareimage[height=1cm]{university-logo}{../talk/ChalmGUmarke}
 % \logo{\pgfuseimage{university-logo}}
+
+\newtheorem{idea}{Idea}
  
 \newcommand{\applbind}{\mathbin{:\!\!*\!\!:}}
 \newcommand{\disjunct}{\mathbin{:\!\!||\!\!:}}
@@ -38,61 +40,54 @@
   \begin{center} \pgfuseimage{university-logo} \end{center}
 }
 
-
-% \frame{
-%   \begin{center}
-% \begin{tikzpicture}[->,auto,node distance=2.8cm, semithick]
-%   \tikzstyle{object}=[]
-% 
-%   \node[object]         (A)              {Text};
-%   \node[object]         (B) [right of=A]  {AST};
-%   \node[object]         (C) [right of=B] {Highlighted text};
-%   \node[object]         (D) [below of=C] {Paren-matching hints};
-%   \node[object]         (D) [above of=C] {Indentation hints};
-% 
-%   \path (A) edge              node {parser} (B);
-%   \path (B) edge              node {} (C);
-%   \path (B) edge              node {} (C);
-%         
-% \end{tikzpicture}
-%   \end{center}
-% }
-% 
-% \frame{
-%   \begin{center}
-%     \include{overview}
-%   
-%   \end{center}
-% }
+\frame{
+    \frametitle{Outline}
+    \begin{itemize}
+        \item From motivation to specification.
+        \item Some essential components of incremental parsing.
+    \end{itemize}
+}
 
 \frame{
   \frametitle{Motivation: Interactive Parsing}
-  All syntax-dependent applications should use the same interface: the AST
+
+  \begin{idea}
+     All syntax-dependent applications should use the same interface: the AST
+  \end{idea}
   \include{overview}
 
-  What kind of parser?
-  \begin{description}
-      \item[Error-correcting] Must cope with all inputs
-      \item[Incremental] Quick response to user input
-  \end{description}
-
-
-
-
-
 }
+
+
 
 \frame{
+  \frametitle{A special kind of parser}
+
+  \begin{itemize}
+      \item \emph{Incremental}: In sync with input (ie. fast)
+      \item \emph{Error-correcting}: Must cope with all inputs
+  \end{itemize}
+}
+
+
+
+\begin{frame}
     \frametitle{Approach}
     \begin{itemize}
-        \item Save intermediate parser states. (That's old!)
+        \item Save intermediate parser states.
         \item Use lazy evalutation to expose each state as a tree.
     \end{itemize}
+
 \begin{center}
-\include{states}
+\begin{tikzpicture}[scale=0.75,transform shape,>=latex,join=bevel]
+  \pgfsetlinewidth{1bp}
+%include states.tex
+\end{tikzpicture}
+
 \includegraphics{progress}
 \end{center}
-}
+
+\end{frame}
 
 
 
@@ -102,8 +97,9 @@
   \item Parser-combinator library
   \item Two types of parsing: eager and lazy.
   \begin{itemize}
-    \item |runEager :: Process s a -> [a] -> Process s a|
+    \item |runEager :: Process s a -> [s] -> Process s a|
     \item |runLazy  :: Process s a -> [s] -> a|
+    \item (|mkProcess :: Parser s a -> Process s a|)
   \end{itemize}
 
   \item Error correction
@@ -119,11 +115,10 @@
 data Parser s a where
   Pure  :: a                               -> Parser s a
   (:*:) :: Parser s (b -> a) -> Parser s b -> Parser s a
-  Symb  :: Parser s a -> (s -> Parser s a) -> Parser s a
+  Symb  :: (Maybe s -> Parser s a)         -> Parser s a
   Disj  :: Parser s a -> Parser s a        -> Parser s a
   Yuck  :: Parser s a                      -> Parser s a
 
-  mkProcess :: Parser s a -> Process s a
 
 \end{verbatim}
 \end{frame}
@@ -131,18 +126,8 @@ data Parser s a where
 \begin{frame}[fragile]
   \frametitle{Supporting this interface}
 
-\begin{itemize}
- \item Input is linear... linearize everything.
- \item Linearizing |(:*:)|
- \item Linearizing |Disj| 
- \item Compute results in online way.
- \item Compute results in offline way.
-\end{itemize}
-
-\end{frame}
-
-\frame{
-  \frametitle{Linearizing |(:*:)|}
+    Starting point: Polish Parsers (Hughes \& Swierstra 2001).
+    Idea: linearizing |(:*:)|.
 
 \begin{verbatim}
 data Polish r where
@@ -159,16 +144,16 @@ toPolish expr = toP expr Done
         toP (Pure x)   = Push x
 \end{verbatim}
   
-}
+\end{frame}
 
 \frame{
   \frametitle{Online}
 \begin{verbatim}
-evalR :: Polish r -> r
-evalR (Push a r)  = a :< evalR r
-evalR (App s)     = apply (evalR s)
+evalLazy :: Polish r -> r
+evalLazy (Push a r)  = a :< evalLazy r
+evalLazy (App s)     = apply (evalLazy s)
     where  apply ~(f :< ~(a:<r))  = f a :< r
-evalR (Done)      = Nil
+evalLazy (Done)      = Nil
 \end{verbatim}
   
 }
@@ -177,9 +162,9 @@ evalR (Done)      = Nil
     \frametitle{Offline (idea)}
     Precompute prefixes of polish expression.
 \begin{verbatim}
-evalL :: Polish s a -> Polish s a
-evalL (Push x r) = Push x (evalL r)
-evalL (App f) = case evalL f of
+evalEager :: Polish s a -> Polish s a
+evalEager (Push x r) = Push x (evalEager r)
+evalEager (App f) = case evalEager f of
                   (Push g (Push b r)) -> Push (g b) r
                   r -> App r
 \end{verbatim}
@@ -219,49 +204,56 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
 \end{verbatim}
 }
 
-\frame{
-  \frametitle{Input}
-  
-\begin{verbatim}
-data Polish s r where
-  Push  :: a -> Polish s r                 -> Polish s (a :< r)
-  App   :: Polish s ((b -> a) :< b :< r)   -> Polish s (a :< r)
-  Done  ::                                    Polish s Nil
-  Susp  :: Polish s r -> (s -> Polish s r) -> Polish s r
-\end{verbatim}
-
-\begin{verbatim}
-feed :: [s] -> Polish s r -> Polish s r
-feed  []      p                = p
-feed  (s:ss)  (Susp nil cons)  = feed ss (cons s)
-feed  ss      (Push x p)       = Push x  (feed ss p)  
-feed  ss      (App p)          = App     (feed ss p)  
-feed  ss      Done             = Done                 
-\end{verbatim}
+\frame {
+    \frametitle{Error reporting}
+    Where should errors be put?
+    \begin{itemize}
+        \item In the syntax tree (placeholder nodes)
+        \item As a separate list of errors
+    \end{itemize}
 }
 
 
+
 \frame{
-\frametitle{Contributions}
+\frametitle{Results}
 
 \begin{itemize}
-\item
-  Functional approach to incremental parsing;
-\item
-  Essential use of lazy evaluation;
 
 \item
-  Error correction;
+  Functional approach to incremental parsing (AST never updated, only state-list is updated)
 
 \item
-  Parser-combinator library;
+  No startup cost
 
 \item
-  Used in a real editor.
+  Usable
 
+\item
+   Available as a parser-combinator library
+\begin{itemize}
+\item
+  Eager+Lazy
+
+\item
+  Error correction
+\end{itemize}
+
+}
+
+\frame{
+\frametitle{Issues}
+\begin{itemize}
+\item Lots of constraints of the user:
+\item AST must be consumed lazily
+\item Grammar must not use too much lookahead
 \end{itemize}
 }
 
+\frame{
+\frametitle{Future work}
+Bottom up parsing?
+}
 
 
 \end{document}
