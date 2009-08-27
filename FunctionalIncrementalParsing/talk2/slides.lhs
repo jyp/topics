@@ -42,11 +42,10 @@
 
 \frame{
     \frametitle{Outline}
-    \begin{itemize}
-        \item From motivation to specification.
-        \item Some essential components of incremental parsing.
-    \end{itemize}
+    \tableofcontents
 }
+
+\section{From motivation to specification}
 
 \frame{
   \frametitle{Motivation: Interactive Parsing}
@@ -78,6 +77,7 @@
         \item<2-> Use lazy evalutation to expose each state as a tree.
     \end{itemize}
 
+
 \begin{center}
 \begin{tikzpicture}[scale=0.75,transform shape,>=latex,join=bevel]
   \pgfsetlinewidth{1bp}
@@ -87,6 +87,10 @@
 \includegraphics<2->{progress}
 \end{overlayarea}
 \end{center}
+\note{
+    From here on the eagerly computed part of the AST is the ``dark part'', the 
+    lazily computed on is called the ``light part''.
+}
 
 \end{frame}
 
@@ -107,6 +111,7 @@
   \end{itemize}
 }
 
+\section{Some essential components}
 
 
 \begin{frame}[fragile]
@@ -124,8 +129,10 @@ data Parser s a where
 \end{verbatim}
 \end{frame}
 
+\subsection{Incrementality}
+
 \begin{frame}[fragile]
-  \frametitle{Supporting this interface}
+  \frametitle{Support of eager + lazy}
 
     Starting point: Polish Parsers (Hughes \& Swierstra 2001).
     Idea: linearizing |(:*:)|.
@@ -137,6 +144,8 @@ data Polish r where
   Done ::                                Polish Nil
 \end{verbatim}
 
+\note{|:<| represents a stack of things}
+
 \begin{verbatim}
 toPolish :: Parser s a -> Polish (a :< Nil)
 toPolish expr = toP expr Done
@@ -144,7 +153,14 @@ toPolish expr = toP expr Done
         toP (f :*: x)  = App . toP f . toP x
         toP (Pure x)   = Push x
 \end{verbatim}
-  
+
+\note{Making the structure of applications allows to 
+\begin{itemize}
+    \item add more features (dependence of inputs)
+    \item control precisely the evaluation mechanism
+\end{itemize}
+}  
+
 \end{frame}
 
 \frame{
@@ -203,7 +219,10 @@ evalRP (RPush v r) acc    = evalRP r (v :< acc)
 evalRP (RApp r) ~(f :< ~(a :< acc)) 
                           = evalRP r (f a :< acc)
 \end{verbatim}
+\note{Dark part: an ast with holes; light parts: plugs for these holes.}
 }
+
+\subsection{Error-correction}
 
 \frame {
     \frametitle{Error reporting}
@@ -214,49 +233,53 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
     \end{itemize}
 }
 
-
+\section{Conclusion}
 
 \frame{
-\frametitle{Results}
+\frametitle{Summary}
 
+A Haskell Bestiary
 \begin{itemize}
+\item Lazy evaluation
+\item Zipper
+\item Sexy types
+\item ...
+\end{itemize}
 
-\item
-  Functional approach to incremental parsing (AST never updated, only state-list is updated)
-
-\item
-  No startup cost
-
-\item
-  Usable
-
-\item
-   Available as a parser-combinator library
+\pause
+Parser-combinator library
 \begin{itemize}
-\item
-  Eager+Lazy
-
 \item
   Error correction
-\end{itemize}
-\end{itemize}
+\item
+  Incremental
 
-
-}
-
-\frame{
-\frametitle{Issues}
 \begin{itemize}
-\item Lots of constraints of the user:
-\item AST must be consumed lazily
-\item Grammar must not use too much lookahead
+   \item eager + lazy
+   \item no AST update
 \end{itemize}
+\item
+  Usable
+\end{itemize}
+
+
+
 }
 
+
 \frame{
-\frametitle{Future work}
-Bottom up parsing?
+\frametitle{Perspective}
+\begin{tabular}{lcc}
+  Method & Forward & \uncover<2->{Bottom-up} \\
+  \hline 
+  Update & List of states & \uncover<2->{The parser state}  \\
+  AST Consumer & Must be lazy & \uncover<2->{No constraint} \\
+  Parser & limited lookahead & \uncover<2->{No constraint}  \\
+  Startup cost & none & \uncover<2->{one full parse} \\
+\end{tabular}
 }
+
+
 
 
 \end{document}
