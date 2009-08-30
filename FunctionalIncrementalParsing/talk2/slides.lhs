@@ -48,9 +48,9 @@
 \section{From motivation to specification}
 
 \frame{
-  \frametitle{Motivation: Interactive Parsing}
+  \frametitle{Motivation: Syntax-aware editor}
 
-  \begin{idea}
+  \begin{idea}[Syntax-aware editor]
      All syntax-dependent applications should use the same interface: the AST
   \end{idea}
   \include{overview}
@@ -62,10 +62,14 @@
 \frame{
   \frametitle{A special kind of parser}
 
+  Requirements on the parser:
   \begin{itemize}
-      \item \emph{Incremental}: In sync with input (ie. fast)
+      \item \emph{Incremental}: In sync with input (i.e. fast) 
+      \note{fast => independent from length of input}
       \item \emph{Error-correcting}: Must cope with all inputs
-  \end{itemize}
+  \end{itemize} 
+  \pause
+  ... so I cannot re-use the parser of my favourite compiler.
 }
 
 
@@ -73,8 +77,8 @@
 \begin{frame}
     \frametitle{Approach to incrementality}
     \begin{itemize}
-        \item Save intermediate parser states.    
-        \item<2-> Use lazy evalutation to expose each state as a tree.
+        \item Save intermediate parser states
+        \item<2-> Use lazy evalutation to expose each state as a tree
     \end{itemize}
 
 
@@ -99,15 +103,18 @@
 \frame{
   \frametitle{Technical Goals}
   \begin{itemize}
-  \item Parser-combinator library
   \item Two types of parsing: eager and lazy.
   \begin{itemize}
     \item |runEager :: Process s a -> [s] -> Process s a|
     \item |runLazy  :: Process s a -> [s] -> a|
-    \item (|mkProcess :: Parser s a -> Process s a|)
   \end{itemize}
 
   \item Error correction
+
+  \item Parser-combinator library
+  \begin{itemize}
+    \item |mkProcess :: Parser s a -> Process s a|
+  \end{itemize}
   \end{itemize}
 }
 
@@ -115,7 +122,7 @@
 
 
 \begin{frame}[fragile]
-  \frametitle{Interface}
+  \frametitle{Combinators}
 
 \begin{verbatim}
 data Parser s a where
@@ -135,7 +142,9 @@ data Parser s a where
   \frametitle{Support of eager + lazy}
 
     Starting point: Polish Parsers (Hughes \& Swierstra 2001).
-    Idea: linearizing |(:*:)|.
+\begin{idea}
+    Linearize |(:*:)|
+\end{idea}
 
 \begin{verbatim}
 data Polish r where
@@ -144,17 +153,18 @@ data Polish r where
   Done ::                                Polish Nil
 \end{verbatim}
 
+\note{Polish expressions can be understood as stack transformers}
 \note{|:<| represents a stack of things}
 
 \begin{verbatim}
 toPolish :: Parser s a -> Polish (a :< Nil)
 toPolish expr = toP expr Done
   where toP :: Parser s a -> (Polish r -> Polish (a :< r))
-        toP (f :*: x)  = App . toP f . toP x
         toP (Pure x)   = Push x
+        toP (f :*: x)  = App . toP f . toP x
 \end{verbatim}
 
-\note{Making the structure of applications allows to 
+\note{Making the structure of applications explicit allows to 
 \begin{itemize}
     \item add more features (dependence of inputs)
     \item control precisely the evaluation mechanism
@@ -164,7 +174,7 @@ toPolish expr = toP expr Done
 \end{frame}
 
 \frame{
-  \frametitle{Online}
+  \frametitle{Lazy evaluation}
 \begin{verbatim}
 evalLazy :: Polish r -> r
 evalLazy (Push a r)  = a :< evalLazy r
@@ -176,19 +186,20 @@ evalLazy (Done)      = Nil
 }
 
 \frame{
-    \frametitle{Offline (idea)}
+    \frametitle{Eager evaluation (sketch)}
     Precompute prefixes of polish expression.
 \begin{verbatim}
 evalEager :: Polish s a -> Polish s a
 evalEager (Push x r) = Push x (evalEager r)
 evalEager (App f) = case evalEager f of
-                  (Push g (Push b r)) -> Push (g b) r
-                  r -> App r
+     (Push g (Push b r)) -> Push (g b) r
+     r -> App r
+evalEager p = p
 \end{verbatim}
 }
 
 \frame{
-  \frametitle{Offline (zipper)}
+  \frametitle{Polish Zipper}
 \begin{verbatim}
 data Zip s out where
   Zip :: RPolish stack out -> Polish s stack -> Zip s out
@@ -211,13 +222,13 @@ right (Zip l s)           = Zip l s
 }
 
 \frame{
-  \frametitle{Offline (computation)}
+  \frametitle{Eager evaluation revisited}
+Keep the reverse automaton normalized: after moving to the right, simplify.
 \begin{verbatim}
-evalRP :: RPolish inp out -> inp -> out
-evalRP RStop acc          = acc 
-evalRP (RPush v r) acc    = evalRP r (v :< acc)
-evalRP (RApp r) ~(f :< ~(a :< acc)) 
-                          = evalRP r (f a :< acc)
+simplify :: RPolish s output -> RPolish s output
+simplify (RPush a (RPush f (RApp r))) = 
+    simplify (RPush (f a) r)
+simplify x = x
 \end{verbatim}
 \note{Dark part: an ast with holes; light parts: plugs for these holes.}
 }
@@ -238,7 +249,7 @@ evalRP (RApp r) ~(f :< ~(a :< acc))
 \frame{
 \frametitle{Summary}
 
-A Haskell Bestiary
+Ingredients:
 \begin{itemize}
 \item Lazy evaluation
 \item Zipper
@@ -247,7 +258,7 @@ A Haskell Bestiary
 \end{itemize}
 
 \pause
-Parser-combinator library
+Result: Parser-combinator library
 \begin{itemize}
 \item
   Error correction
@@ -258,12 +269,10 @@ Parser-combinator library
    \item eager + lazy
    \item no AST update
 \end{itemize}
-\item
-  Usable
 \end{itemize}
 
-
-
+\pause
+Application: Syntax-aware editor
 }
 
 
