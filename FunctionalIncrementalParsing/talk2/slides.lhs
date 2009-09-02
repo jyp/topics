@@ -8,6 +8,8 @@
 \usepackage{graphicx}
 \usepackage[utf8x]{inputenc}
 \usepackage{pgf}
+\usepackage{pgfpages}
+% \setbeameroption{notes on second screen}
 \usepackage{tikz}
 \usetikzlibrary{trees,positioning,arrows}
 
@@ -51,7 +53,7 @@
   \frametitle{Motivation: Syntax-aware editor}
 
   \begin{idea}[Syntax-aware editor]
-     All syntax-dependent applications should use the same interface: the AST
+     All syntax-dependent features should be based on the \textbf{same} AST
   \end{idea}
   \include{overview}
 
@@ -67,6 +69,7 @@
       \item \emph{Incremental}: In sync with input (i.e. fast) 
       \note{fast => independent from length of input}
       \item \emph{Error-correcting}: Must cope with all inputs
+      \note{The user can edit in partially correct states!}
   \end{itemize} 
   \pause
   ... so I cannot re-use the parser of my favourite compiler.
@@ -77,8 +80,31 @@
 \begin{frame}
     \frametitle{Approach to incrementality}
     \begin{itemize}
-        \item Save intermediate parser states
+        \item Save intermediate parser states after each symbol
+\note{
+    Each parser state record the state of the parsing process after
+    having fully processed the input up to the corresponding point.
+
+Moving down the file, parse some more symbol using the state at the current
+point. Moving up: just go up the list. Edit: discard the right part of the list.
+
+    Cacheing these provide incrementality of parsing, if you are only
+    interested at the parser state at the current point of input.
+}
+
         \item<2-> Use lazy evalutation to expose each state as a tree
+\note{
+    
+    One cannot do much with the parser state. We want an AST!
+    The state normally contains the AST "so far" though. (The dark part).
+    Idea: lazily complete the AST with a "thunk" dependent on the rest of the input.
+
+    (In other words, Each parser states contains a partially computed AST, with
+    "holes" that correspond to the parts of the unprocessed input.)
+
+    From here on the eagerly computed part of the AST is the ``dark part'', the 
+    lazily computed on is called the ``light part''.
+}
     \end{itemize}
 
 
@@ -91,14 +117,34 @@
 \includegraphics<2->{progress}
 \end{overlayarea}
 \end{center}
-\note{
-    From here on the eagerly computed part of the AST is the ``dark part'', the 
-    lazily computed on is called the ``light part''.
-}
+
 
 \end{frame}
 
+\frame{
+\frametitle{Zoom on the current AST}
+\begin{center}
+    \includegraphics[height=4cm]{ast}
+\end{center}
 
+\begin{itemize}
+    \item Incremental 
+\note{
+    The situation:
+      * Accessing the dark part is for free (cached) thus "truly" incremental; 
+      * Accessing the light part is costly, more so to the extreme right.
+      * Displaying may force a little more
+        parsing, up to the end of the window (the blue part).
+}
+    \item Functional 
+\note{
+    The beauty of this system is that there is never any update of the AST, only
+    the list of cached states is updated. The state is simple.
+}
+    % \item Lazy \note{We take advantage of laziness! -- does not require explanation}
+\end{itemize}
+
+}
 
 \frame{
   \frametitle{Technical Goals}
@@ -106,6 +152,8 @@
   \item Two types of parsing: eager and lazy.
   \begin{itemize}
     \item |runEager :: Process s a -> [s] -> Process s a|
+    \note{Because the parser states must fully process the input
+          so far, we have to provide an eager parsing procedure.}
     \item |runLazy  :: Process s a -> [s] -> a|
   \end{itemize}
 
@@ -123,6 +171,12 @@
 
 \begin{frame}[fragile]
   \frametitle{Combinators}
+ 
+\begin{itemize}
+ \item Applicative interface
+ \item Dependence on input 
+ \item Alternative interface (beware of errors!)
+\end{itemize}
 
 \begin{verbatim}
 data Parser s a where
@@ -131,9 +185,11 @@ data Parser s a where
   Symb  :: (Maybe s -> Parser s a)         -> Parser s a
   Disj  :: Parser s a -> Parser s a        -> Parser s a
   Yuck  :: Parser s a                      -> Parser s a
-
-
 \end{verbatim}
+% Bin   (Bin   (Leaf   1)   (Leaf   2))   (Symb ...            )
+% Bin $ (Bin $ (Leaf $ 1) $ (Leaf $ 2)) $ (Symb ...            )
+
+
 \end{frame}
 
 \subsection{Incrementality}
@@ -143,9 +199,19 @@ data Parser s a where
 
     Starting point: Polish Parsers (Hughes \& Swierstra 2001).
 \begin{idea}
-    Linearize |(:*:)|
+    Linearize applications by transforming to polish form. |(:*:)|
 \end{idea}
 
+\note{just a simple example to remind what polish notation looks like}
+| (7 - (2 * 3)) + (1 - ...) |\\
+| + - 7 * 2 3 - 1 ... |
+
+
+%     Bin $ (    Bin $ (  Leaf $ 1) $ (  Leaf $ 2)) $ (Symb   )
+% $ $ Bin    $ $ Bin    $ Leaf   1  $  $ Leaf   2     (Susp   )
+% \end{verbatim}
+\pause
+\note{It's the same for Parser, but there is just one operator (application)}
 \begin{verbatim}
 data Polish r where
   Push :: a -> Polish r               -> Polish (a :< r)
@@ -181,15 +247,20 @@ evalLazy (Push a r)  = a :< evalLazy r
 evalLazy (App s)     = apply (evalLazy s)
     where  apply ~(f :< ~(a:<r))  = f a :< r
 evalLazy (Done)      = Nil
-\end{verbatim}
-  
+\end{verbatim}  
 }
 
 \frame{
     \frametitle{Eager evaluation (sketch)}
-    Precompute prefixes of polish expression.
+    Precompute (in prefixes of) polish expression.
+
+| + - 7 * 2 3 - 1 ... |
+
+% \begin{verbatim}
+% $ $ Bin    $ $ Bin    $ Leaf   1   $ Leaf   2     (Susp )
+% \end{verbatim}
 \begin{verbatim}
-evalEager :: Polish s a -> Polish s a
+evalEager :: Polish r -> Polish r
 evalEager (Push x r) = Push x (evalEager r)
 evalEager (App f) = case evalEager f of
      (Push g (Push b r)) -> Push (g b) r
@@ -200,9 +271,13 @@ evalEager p = p
 
 \frame{
   \frametitle{Polish Zipper}
+| + - 7 * 2 3 || - 1 ... |
+% $ $ Bin    $ $ Bin    $ Leaf  |  1    $ Leaf   2    (Susp )
+\pause
 \begin{verbatim}
+
 data Zip s out where
-  Zip :: RPolish stack out -> Polish s stack -> Zip s out
+  Zip :: RPolish stack out -> Polish stack -> Zip out
 
 data RPolish inp out where
   RPush :: a -> RPolish (a :< r) out ->
@@ -223,14 +298,42 @@ right (Zip l s)           = Zip l s
 
 \frame{
   \frametitle{Eager evaluation revisited}
-Keep the reverse automaton normalized: after moving to the right, simplify.
+Keep the reverse automaton normalized: after moving to the right, iterate simplify.
+% \begin{verbatim}
+% + - 7 * 2 3 | - 1 ...
+% + - 7 6     | - 1 ...
+% + 1         | - 1 ...
+% \end{verbatim}
+
+|+ - 7 * 2 3 || - 1 ... | \\
+|+ - 7 6     || - 1 ... | \\
+|+ 1         || - 1 ... | \\
+
 \begin{verbatim}
 simplify :: RPolish s output -> RPolish s output
 simplify (RPush a (RPush f (RApp r))) = 
     simplify (RPush (f a) r)
 simplify x = x
 \end{verbatim}
-\note{Dark part: an ast with holes; light parts: plugs for these holes.}
+
+
+
+% $ $ Bin    $ $ Bin    $ Leaf   1 | $ Leaf   2     (Susp  )
+% $ $ Bin    $ $ Bin    (Leaf 1)   | $ Leaf   2     (Susp  )
+% $ $ Bin    $ (Bin (Leaf 1))      | $ Leaf   2     (Susp  )
+
+\note{Dark part: an AST with holes; light parts: plugs for these holes.}
+}
+
+\frame{
+  \frametitle{Summary}
+  \begin{itemize}
+      \item State = Polish Zipper structure
+      \item runEager = resolve some suspensions; traverse right and simplify.
+      \item runLazy = resolve all suspensions; traverse left and lazy evaluate. (lazily)
+      \item Left Part ↝ Dark green
+      \item Right Part ↝ Light green
+  \end{itemize}
 }
 
 \subsection{Error-correction}
