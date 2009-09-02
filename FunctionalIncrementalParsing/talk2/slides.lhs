@@ -88,11 +88,11 @@
 Moving down the file, parse some more symbol using the state at the current
 point. Moving up: just go up the list. Edit: discard the right part of the list.
 
-    Cacheing these provide incrementality of parsing, if you are only
+    Caching these provide incrementality of parsing, if you are only
     interested at the parser state at the current point of input.
 }
 
-        \item<2-> Use lazy evalutation to expose each state as a tree
+        \item<2-> Use lazy evaluation to expose each state as a tree
 \note{
     
     One cannot do much with the parser state. We want an AST!
@@ -298,7 +298,7 @@ right (Zip l s)           = Zip l s
 
 \frame{
   \frametitle{Eager evaluation revisited}
-Keep the reverse automaton normalized: after moving to the right, iterate simplify.
+Keep the reverse automaton normalised: after moving to the right, iterate simplify.
 % \begin{verbatim}
 % + - 7 * 2 3 | - 1 ...
 % + - 7 6     | - 1 ...
@@ -387,7 +387,7 @@ Application: Syntax-aware editor
   Update & List of states & \uncover<2->{The parser state}  \\
   AST Consumer & Must be lazy & \uncover<2->{No constraint} \\
   Parser & limited lookahead & \uncover<2->{No constraint}  \\
-  Startup cost & none & \uncover<2->{one full parse} \\
+  Start-up cost & none & \uncover<2->{one full parse} \\
 \end{tabular}
 }
 
