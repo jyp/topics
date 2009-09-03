@@ -12,7 +12,7 @@ module Code(
             finish,
             precompute,
             feedEof, feed) where
-
+                
 -- Parser specification
 data Parser s a where
     Pure   :: a                                ->  Parser s a

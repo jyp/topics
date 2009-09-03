@@ -122,7 +122,7 @@ point. Moving up: just go up the list. Edit: discard the right part of the list.
 \end{frame}
 
 \frame{
-\frametitle{Zoom on the current AST}
+\frametitle{Zoom in on the current AST}
 \begin{center}
     \includegraphics[height=4cm]{ast}
 \end{center}
@@ -194,7 +194,8 @@ data Parser s a where
 
 \subsection{Incrementality}
 
-\begin{frame}[fragile]
+\begin{frame}
+%[fragile]
   \frametitle{Support of eager + lazy}
 
     Starting point: Polish Parsers (Hughes \& Swierstra 2001).
@@ -203,20 +204,22 @@ data Parser s a where
 \end{idea}
 
 \note{just a simple example to remind what polish notation looks like}
-| (7 - (2 * 3)) + (1 - ...) |\\
-| + - 7 * 2 3 - 1 ... |
+\only<1>{| (7 - (2 * 3)) + (1 - ...) |}
+\only<2>{| + (- 7 (* 2 3)) (- 1 ...) |}
+\only<3->{| + - 7 * 2 3 - 1 ... |}
 
 
 %     Bin $ (    Bin $ (  Leaf $ 1) $ (  Leaf $ 2)) $ (Symb   )
 % $ $ Bin    $ $ Bin    $ Leaf   1  $  $ Leaf   2     (Susp   )
 % \end{verbatim}
-\pause
+\only<4->{
 \note{It's the same for Parser, but there is just one operator (application)}
 \begin{verbatim}
 data Polish r where
   Push :: a -> Polish r               -> Polish (a :< r)
   App  :: Polish ((b -> a) :< b :< r) -> Polish (a :< r)
   Done ::                                Polish Nil
+  Susp ...
 \end{verbatim}
 
 \note{Polish expressions can be understood as stack transformers}
@@ -235,6 +238,7 @@ toPolish expr = toP expr Done
     \item add more features (dependence of inputs)
     \item control precisely the evaluation mechanism
 \end{itemize}
+}
 }  
 
 \end{frame}
@@ -250,24 +254,24 @@ evalLazy (Done)      = Nil
 \end{verbatim}  
 }
 
-\frame{
-    \frametitle{Eager evaluation (sketch)}
-    Precompute (in prefixes of) polish expression.
-
-| + - 7 * 2 3 - 1 ... |
-
+% \frame{
+%     \frametitle{Eager evaluation (sketch)}
+%     Precompute (in prefixes of) polish expression.
+% 
+% | + - 7 * 2 3 - 1 ... |
+% 
+% % \begin{verbatim}
+% % $ $ Bin    $ $ Bin    $ Leaf   1   $ Leaf   2     (Susp )
+% % \end{verbatim}
 % \begin{verbatim}
-% $ $ Bin    $ $ Bin    $ Leaf   1   $ Leaf   2     (Susp )
+% evalEager :: Polish r -> Polish r
+% evalEager (Push x r) = Push x (evalEager r)
+% evalEager (App f) = case evalEager f of
+%      (Push g (Push b r)) -> Push (g b) r
+%      r -> App r
+% evalEager p = p
 % \end{verbatim}
-\begin{verbatim}
-evalEager :: Polish r -> Polish r
-evalEager (Push x r) = Push x (evalEager r)
-evalEager (App f) = case evalEager f of
-     (Push g (Push b r)) -> Push (g b) r
-     r -> App r
-evalEager p = p
-\end{verbatim}
-}
+% }
 
 \frame{
   \frametitle{Polish Zipper}
@@ -275,8 +279,7 @@ evalEager p = p
 % $ $ Bin    $ $ Bin    $ Leaf  |  1    $ Leaf   2    (Susp )
 \pause
 \begin{verbatim}
-
-data Zip s out where
+data Zip out where
   Zip :: RPolish stack out -> Polish stack -> Zip out
 
 data RPolish inp out where
@@ -332,8 +335,11 @@ simplify x = x
       \item runEager = resolve some suspensions; traverse right and simplify.
       \item runLazy = resolve all suspensions; traverse left and lazy evaluate. (lazily)
       \item Left Part ↝ Dark green
-      \item Right Part ↝ Light green
-  \end{itemize}
+      \item Right Part ↝ Light green 
+  \end{itemize} 
+\vspace{-1.5cm} \hspace{\fill} \includegraphics[height=3cm]{ast}
+    
+
 }
 
 \subsection{Error-correction}
