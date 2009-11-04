@@ -69,7 +69,7 @@
       \item \emph{Incremental}: In sync with input (i.e. fast) 
       \note{fast => independent from length of input}
       \item \emph{Error-correcting}: Must cope with all inputs
-      \note{The user can edit in partially correct states!}
+      \note{The user can edit in partially correct texts!}
   \end{itemize} 
   \pause
   ... so I cannot re-use the parser of my favourite compiler.
